@@ -1,0 +1,11 @@
+{
+  "common": {
+    "SERPER_KEY_ID": "your_serper_api_key",
+    "JINA_API_KEYS": "your_jina_api_key",
+    "API_KEY": "your_openai_api_key",
+    "SUMMARY_MODEL_NAME": "gpt-5-mini",
+    "MEMORY_MODEL_NAME": "gpt-5-mini",
+    "MEMORY_OPENAI_API_KEY": "your_openai_api_key",
+    "TORCH_COMPILE_CACHE_DIR": "./cache"
+  }
+}
