@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Manager</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Toolbar -->
+    <header id="toolbar">
+        <div class="toolbar-left">
+            <button id="btn-open" class="toolbar-btn" title="Open cache folder (Ctrl+O)">
+                <span class="icon">&#128193;</span> Open
+            </button>
+            <button id="btn-refresh" class="toolbar-btn" title="Refresh &amp; scan" disabled>
+                <span class="icon">&#8635;</span> Refresh
+            </button>
+            <div class="toolbar-sep"></div>
+            <button id="btn-prev-issue" class="toolbar-btn" title="Previous issue (Shift+N)" disabled>
+                &#9664; Prev
+            </button>
+            <button id="btn-next-issue" class="toolbar-btn" title="Next issue (N)" disabled>
+                Next &#9654;
+            </button>
+            <span id="issue-counter" class="toolbar-info"></span>
+            <div class="toolbar-sep"></div>
+            <button id="btn-batch" class="toolbar-btn" title="Batch recapture all red URLs" disabled>
+                Batch Recapture
+            </button>
+            <span id="batch-status" class="toolbar-info"></span>
+            <div class="toolbar-sep"></div>
+            <button id="btn-shortcuts-help" class="toolbar-btn" title="Keyboard shortcuts (?)">
+                ?
+            </button>
+        </div>
+        <div class="toolbar-right">
+            <span id="review-progress" class="toolbar-info"></span>
+            <span id="agent-info" class="toolbar-info muted">No cache loaded</span>
+        </div>
+    </header>
+
+    <!-- Main three-panel layout -->
+    <main id="app">
+        <!-- Task Panel -->
+        <section id="task-panel" class="panel">
+            <div class="panel-header">
+                <h2>Tasks</h2>
+            </div>
+            <div class="panel-controls">
+                <input type="text" id="task-search" placeholder="Search tasks..." class="search-input">
+                <label class="toggle-label">
+                    <input type="checkbox" id="task-issues-only"> Issues only
+                </label>
+            </div>
+            <div id="task-list" class="item-list"></div>
+            <div id="task-stats" class="panel-footer">No tasks loaded</div>
+        </section>
+
+        <!-- URL Panel -->
+        <section id="url-panel" class="panel">
+            <div class="panel-header">
+                <h2>URLs</h2>
+            </div>
+            <div class="panel-controls">
+                <input type="text" id="url-search" placeholder="Search URLs..." class="search-input">
+                <div class="filter-row">
+                    <span class="filter-label">Show:</span>
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="web">Web</button>
+                    <button class="filter-btn" data-filter="pdf">PDF</button>
+                    <span class="filter-sep">|</span>
+                    <button class="filter-btn" data-filter="issues">Issues</button>
+                    <button class="filter-btn" data-filter="todo">Todo</button>
+                </div>
+                <div id="url-progress-bar" class="progress-bar" style="display:none">
+                    <div class="progress-fill"></div>
+                    <span class="progress-text"></span>
+                </div>
+            </div>
+            <div id="url-list" class="item-list"></div>
+            <div class="panel-footer" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button id="btn-mark-reviewed" class="action-btn" disabled title="Mark reviewed (r)">
+                    &#10003; Reviewed
+                </button>
+                <button id="btn-open-browser" class="action-btn" disabled title="Open in browser (o)">
+                    &#8599; Open
+                </button>
+                <button id="btn-flag-issue" class="action-btn" disabled title="Flag as issue (f)">
+                    &#9873; Flag
+                </button>
+                <button id="btn-reset-url" class="action-btn" disabled title="Reset cache &amp; flag (x)">
+                    &#8634; Reset
+                </button>
+                <button id="btn-edit-url" class="action-btn" disabled title="Edit URL link (e)">
+                    &#9998; Edit
+                </button>
+                <span style="flex:1"></span>
+                <button id="btn-add-url" class="action-btn" disabled title="Add new URL (a)">+ Add URL</button>
+                <button id="btn-delete-url" class="action-btn danger" disabled title="Delete URL (d)">Delete</button>
+            </div>
+            <div id="url-stats" class="panel-footer">Select a task</div>
+        </section>
+
+        <!-- Preview Panel -->
+        <section id="preview-panel" class="panel">
+            <div class="panel-header">
+                <h2>Preview</h2>
+                <div id="preview-url" class="preview-url">No URL selected</div>
+            </div>
+            <div class="panel-controls">
+                <div class="mode-tabs">
+                    <button class="mode-btn active" data-mode="screenshot" title="View screenshot (1)">Screenshot</button>
+                    <button class="mode-btn" data-mode="text" title="View extracted text (2)">Text</button>
+                    <button class="mode-btn" data-mode="answer" title="View answer files (3)">Answer</button>
+                </div>
+                <div id="screenshot-controls" class="screenshot-controls">
+                    <span id="screenshot-info" class="muted"></span>
+                    <span style="flex:1"></span>
+                    <span id="zoom-label" class="muted">Fit</span>
+                    <button id="btn-fit-width" class="small-btn active" title="Fit to width">Fit</button>
+                    <button id="btn-zoom-in" class="small-btn" title="Zoom in (Ctrl+Wheel)">+</button>
+                    <button id="btn-zoom-out" class="small-btn" title="Zoom out (Ctrl+Wheel)">&minus;</button>
+                </div>
+                <div id="answer-controls" class="answer-controls" style="display:none">
+                    <label>File: <select id="answer-file-select"></select></label>
+                </div>
+            </div>
+
+            <div id="preview-content" class="preview-content">
+                <!-- Screenshot view -->
+                <div id="view-screenshot" class="view active">
+                    <div id="screenshot-container" class="screenshot-container">
+                        <div class="placeholder">Select a URL to preview</div>
+                    </div>
+                </div>
+                <!-- Text view -->
+                <div id="view-text" class="view">
+                    <pre id="text-content" class="text-content">Select a URL to view text content</pre>
+                </div>
+                <!-- Answer view -->
+                <div id="view-answer" class="view">
+                    <div id="answer-content" class="markdown-content">Select a task to view answers</div>
+                </div>
+            </div>
+
+            <div class="panel-footer">
+                <span id="preview-status" class="status-text">Ready</span>
+                <span style="flex:1"></span>
+                <button id="btn-upload-pdf" class="action-btn" disabled title="Upload PDF to replace content">
+                    Upload PDF
+                </button>
+                <button id="btn-upload-mhtml" class="action-btn" disabled title="Upload MHTML file">
+                    Upload MHTML
+                </button>
+                <button id="btn-recapture" class="action-btn primary" disabled title="Open in browser for recapture (u)">
+                    Recapture Live
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Help & Guide modal -->
+    <div id="shortcuts-modal" class="modal-overlay" style="display:none">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h3>Help &amp; Usage Guide</h3>
+                <button class="modal-close" id="shortcuts-close">&times;</button>
+            </div>
+            <div class="modal-body modal-body-scroll">
+                <div class="guide-columns">
+                    <!-- Left column: Guide -->
+                    <div class="guide-col">
+                        <h4 class="guide-section-title">Getting Started</h4>
+                        <ol class="guide-steps">
+                            <li>Start the server: <code>uv run python3 cache_manager_web/run.py &lt;agent&gt;</code></li>
+                            <li>The web UI opens automatically. Select a task from the left panel.</li>
+                            <li>Browse URLs &mdash; red = definite issue, yellow = possible issue, green = reviewed.</li>
+                            <li>Use <kbd>j</kbd>/<kbd>k</kbd> to navigate URLs, <kbd>Space</kbd> to toggle screenshot/text.</li>
+                        </ol>
+
+                        <h4 class="guide-section-title">Chrome Extension Setup</h4>
+                        <ol class="guide-steps">
+                            <li>Open <code>chrome://extensions</code>, enable Developer mode.</li>
+                            <li>Click "Load unpacked" and select the <code>cache_manager_web/extension/</code> folder.</li>
+                            <li>Pin the extension icon for easy access.</li>
+                        </ol>
+
+                        <h4 class="guide-section-title">Fixing a Single URL</h4>
+                        <ol class="guide-steps">
+                            <li>Select the red URL in the list.</li>
+                            <li>Click <strong>Recapture Live</strong> (or <kbd>Ctrl+U</kbd>) &mdash; the page opens in a new tab.</li>
+                            <li>If there's a CAPTCHA or login, solve it manually in the browser.</li>
+                            <li>Click the extension icon &rarr; <strong>Capture This Page</strong>.</li>
+                            <li>The UI updates automatically via SSE. The URL turns green.</li>
+                        </ol>
+
+                        <h4 class="guide-section-title">Batch Recapture</h4>
+                        <ol class="guide-steps">
+                            <li>Click <strong>Batch Recapture</strong> in the toolbar (queues all red URLs).</li>
+                            <li>Click the extension icon &rarr; <strong>Start Auto-Capture</strong>.</li>
+                            <li>The extension opens each URL, waits for load, captures, and advances automatically.</li>
+                            <li>If a CAPTCHA is detected, solve it in the browser tab &mdash; the extension waits.</li>
+                            <li>After batch completes, recaptured URLs show as blue (needs human review).</li>
+                        </ol>
+
+                        <h4 class="guide-section-title">URL Management</h4>
+                        <ul class="guide-list">
+                            <li><strong>Flag</strong> &mdash; manually mark a URL as broken (red). For batch recapture later.</li>
+                            <li><strong>Reset</strong> &mdash; clear all cached content and flag. Use when cache is corrupted.</li>
+                            <li><strong>Edit</strong> &mdash; change the URL link (content moves to the new URL).</li>
+                            <li><strong>Add URL</strong> &mdash; add a new URL (auto-flagged). PDF URLs detected by <code>.pdf</code> suffix.</li>
+                            <li><strong>Delete</strong> &mdash; permanently remove a URL and its files.</li>
+                            <li><strong>Upload PDF / MHTML</strong> &mdash; manually replace content by file upload or drag-and-drop.</li>
+                        </ul>
+
+                        <h4 class="guide-section-title">Recommended Workflow</h4>
+                        <ol class="guide-steps">
+                            <li>Load an agent cache and review the issue count.</li>
+                            <li>Use <kbd>n</kbd> to jump through issues. Quick-check screenshot vs text.</li>
+                            <li>For false positives (yellow), just viewing auto-marks as reviewed.</li>
+                            <li>For real issues (red), use <strong>Batch Recapture</strong> to fix them all at once.</li>
+                            <li>After batch, review blue URLs &mdash; press <kbd>r</kbd> to confirm each is fixed.</li>
+                            <li>For stubborn pages (anti-bot, login), use <strong>Recapture Live</strong> one by one.</li>
+                            <li>For PDF pages misrecorded as web, use <strong>Upload PDF</strong> or let the extension auto-detect.</li>
+                        </ol>
+                    </div>
+
+                    <!-- Right column: Shortcuts -->
+                    <div class="guide-col">
+                        <h4 class="guide-section-title">Keyboard Shortcuts</h4>
+                        <table class="shortcuts-table">
+                            <tr><th colspan="2">Navigation</th></tr>
+                            <tr><td><kbd>&#8595;</kbd> / <kbd>j</kbd></td><td>Next URL</td></tr>
+                            <tr><td><kbd>&#8593;</kbd> / <kbd>k</kbd></td><td>Previous URL</td></tr>
+                            <tr><td><kbd>n</kbd></td><td>Next issue (cross-task)</td></tr>
+                            <tr><td><kbd>N</kbd></td><td>Previous issue (cross-task)</td></tr>
+                            <tr><th colspan="2">Preview</th></tr>
+                            <tr><td><kbd>1</kbd></td><td>Screenshot view</td></tr>
+                            <tr><td><kbd>2</kbd></td><td>Text view</td></tr>
+                            <tr><td><kbd>3</kbd></td><td>Answer view</td></tr>
+                            <tr><td><kbd>Space</kbd></td><td>Toggle Screenshot / Text</td></tr>
+                            <tr><td><kbd>Ctrl+Wheel</kbd></td><td>Zoom screenshot</td></tr>
+                            <tr><th colspan="2">Actions</th></tr>
+                            <tr><td><kbd>r</kbd> / <kbd>Ctrl+Enter</kbd></td><td>Mark as reviewed</td></tr>
+                            <tr><td><kbd>f</kbd></td><td>Flag as issue (red)</td></tr>
+                            <tr><td><kbd>d</kbd> / <kbd>Backspace</kbd></td><td>Delete URL</td></tr>
+                            <tr><td><kbd>x</kbd></td><td>Reset URL cache &amp; flag</td></tr>
+                            <tr><td><kbd>e</kbd></td><td>Edit URL link</td></tr>
+                            <tr><td><kbd>a</kbd></td><td>Add new URL</td></tr>
+                            <tr><td><kbd>o</kbd></td><td>Open in browser</td></tr>
+                            <tr><td><kbd>u</kbd> / <kbd>Ctrl+U</kbd></td><td>Recapture live</td></tr>
+                            <tr><td><kbd>Ctrl+O</kbd></td><td>Open cache folder</td></tr>
+                        </table>
+
+                        <h4 class="guide-section-title" style="margin-top:18px">URL Color Legend</h4>
+                        <table class="shortcuts-table">
+                            <tr><td><span class="legend-dot" style="background:#e74c3c"></span> Red</td><td>Definite issue &mdash; needs recapture</td></tr>
+                            <tr><td><span class="legend-dot" style="background:#f39c12"></span> Yellow</td><td>Possible issue &mdash; check manually</td></tr>
+                            <tr><td><span class="legend-dot" style="background:#2196f3"></span> Blue</td><td>Batch-recaptured &mdash; needs human review</td></tr>
+                            <tr><td><span class="legend-dot" style="background:#27ae60"></span> Green</td><td>Reviewed OK / Fixed</td></tr>
+                            <tr><td><span class="legend-dot" style="background:#555"></span> Grey</td><td>No issues detected</td></tr>
+                        </table>
+
+                        <h4 class="guide-section-title" style="margin-top:18px">Tips</h4>
+                        <ul class="guide-list">
+                            <li>Drag-and-drop <code>.pdf</code> or <code>.mhtml</code> files onto the preview panel to upload.</li>
+                            <li>The extension auto-detects PDF pages and uploads them directly.</li>
+                            <li>Use the <strong>Issues</strong> and <strong>Todo</strong> filters to focus on unresolved URLs.</li>
+                            <li>The Answer view (<kbd>3</kbd>) shows agent answer markdown files for the current task.</li>
+                            <li>After batch recapture, use <kbd>n</kbd> to jump only to remaining issues.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="mhtml-picker" accept=".mhtml,.mht" style="display:none">
+    <input type="file" id="pdf-picker" accept=".pdf" style="display:none">
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module" src="/static/js/main.js"></script>
+    <script>
+        // Keyboard shortcuts modal
+        document.getElementById('btn-shortcuts-help').addEventListener('click', () => {
+            document.getElementById('shortcuts-modal').style.display = '';
+        });
+        document.getElementById('shortcuts-close').addEventListener('click', () => {
+            document.getElementById('shortcuts-modal').style.display = 'none';
+        });
+        document.getElementById('shortcuts-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'shortcuts-modal') {
+                e.target.style.display = 'none';
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('shortcuts-modal').style.display = 'none';
+            }
+            if (e.key === '?' && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) {
+                document.getElementById('shortcuts-modal').style.display = '';
+            }
+        });
+    </script>
+</body>
+</html>

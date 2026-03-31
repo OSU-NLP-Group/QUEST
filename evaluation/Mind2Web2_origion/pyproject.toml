@@ -1,0 +1,60 @@
+# pyproject.toml  ── Located at the root of Mind2Web2/
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mind2web2"
+version = "0.1.0"
+description = "Mind2Web2: tools, agents and code generation utilities for web‑based reasoning benchmarks"
+readme = "README.md"
+requires-python = ">=3.11"
+
+authors = [
+    { name = "Boyu Gou", email = "gou.43@osu.edu" }
+]
+
+# ── Runtime dependencies ───────────────────────────────────────────────
+dependencies = [
+    "openai",
+    "backoff",
+    "pydantic>=1.10", # If already migrated to v2, change to pydantic>=2
+    "tqdm",
+    "pandas>=1.4",
+    "patchright>=1.58.0",
+    "arxiv",
+    "googlemaps",
+    "aiohttp",
+    "httpx",
+    "dill",
+    "python-json-logger",
+    "beautifulsoup4",
+    "PyMuPDF",
+    "google-auth",
+    "google-api-python-client",
+    "gspread",
+    "fastapi",
+    "jinja2",
+    "markdown",
+    "uvicorn[standard]",
+    "markdownify",
+    "html2text>=2025.4.15",
+    "pillow>=11.3.0",
+    "validators>=0.35.0",
+    "python-multipart>=0.0.22",
+]
+
+# ── Optional: Code generation dependencies ─────────────────────────────
+[project.optional-dependencies]
+code-gen = [
+    "anthropic[bedrock]" # Only required for code generation users
+]
+
+# ── setuptools settings ────────────────────────────────────────────────
+[tool.setuptools]
+include-package-data = true          # Include non-.py files in the package
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mind2web2*"]
+exclude = ["code_gen*", "InfoVisualizer*", "dataset*", "eval_scripts*", "scripts*"]

@@ -1,0 +1,1 @@
+Please download the latest full evaluation script from [😊 Dataset (Tasks) and Evaluation Scripts (Judge Agents)](https://huggingface.co/datasets/osunlp/Mind2Web-2)

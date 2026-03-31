@@ -1,0 +1,24 @@
+# One node per line (recommended):
+#   a0012
+# It will automatically expand to ports in VLLM_PORTS (default: 6000,6001,6002,6003).
+#
+# Also supports:
+#   1) host:port
+#   2) http://host:port/v1
+#   3) comma-separated entries on one line
+#
+# You can edit this file while evaluation is running.
+# LOCAL_OPENAI_ENDPOINTS_RELOAD_SECONDS controls refresh interval.
+
+a0012 
+a0015 
+a0016 
+a0020 
+a0001 
+a0003 
+a0005 
+a0007 
+a0004 
+a0008 
+a0017 
+a0019

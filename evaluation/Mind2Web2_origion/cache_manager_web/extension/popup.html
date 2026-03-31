@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            width: 360px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 13px;
+            color: #1a1a2e;
+            padding: 16px;
+        }
+        h1 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+        .status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+        .status.connected { background: #dcfce7; color: #166534; }
+        .status.disconnected { background: #fee2e2; color: #991b1b; }
+        .target-info {
+            background: #f1f5f9;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            font-size: 11px;
+        }
+        .target-info .label { color: #64748b; margin-bottom: 2px; }
+        .target-info .value {
+            font-weight: 600;
+            word-break: break-all;
+            color: #0f172a;
+        }
+        .target-info .task-id { color: #2563eb; font-size: 12px; }
+        .capture-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .capture-btn:hover { background: #1d4ed8; }
+        .capture-btn:disabled { background: #94a3b8; cursor: default; }
+        .capture-btn.success { background: #22c55e; }
+        .capture-btn.error { background: #dc2626; }
+        .capture-btn.batch { background: #059669; margin-bottom: 2px; }
+        .capture-btn.batch:hover { background: #047857; }
+        .capture-btn.batch-pause { background: #2563eb; margin-bottom: 2px; font-size: 12px; padding: 7px; }
+        .capture-btn.batch-pause:hover { background: #1d4ed8; }
+        .batch-start-hint {
+            font-size: 10px;
+            color: #94a3b8;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .capture-btn.stop { background: #dc2626; font-size: 12px; padding: 7px; }
+        .capture-btn.stop:hover { background: #b91c1c; }
+        .hint {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .no-target {
+            text-align: center;
+            padding: 16px 8px;
+            color: #64748b;
+            font-size: 12px;
+        }
+        .batch-info {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #065f46;
+        }
+        .batch-info .batch-count {
+            font-size: 18px;
+            font-weight: 700;
+            color: #059669;
+        }
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* Batch running - rich display */
+        .batch-progress {
+            margin-bottom: 10px;
+        }
+        .batch-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .batch-progress-count {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2563eb;
+        }
+        .batch-progress-count .skipped {
+            font-size: 11px;
+            font-weight: 400;
+            color: #dc2626;
+        }
+        .batch-status-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .batch-status-badge.loading { background: #dbeafe; color: #1d4ed8; }
+        .batch-status-badge.capturing { background: #dcfce7; color: #166534; }
+        .batch-status-badge.retrying { background: #fef3c7; color: #92400e; }
+        .batch-status-badge.captcha { background: #fee2e2; color: #991b1b; }
+        .batch-status-badge.timeout { background: #fef3c7; color: #92400e; }
+        .batch-status-badge.advancing { background: #e0e7ff; color: #3730a3; }
+        .batch-status-badge.done { background: #dcfce7; color: #166534; }
+
+        .batch-progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .batch-progress-fill {
+            height: 100%;
+            background: #2563eb;
+            border-radius: 3px;
+            transition: width .3s;
+        }
+        .batch-mode-indicator {
+            font-size: 10px;
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 6px;
+            font-style: italic;
+        }
+        .batch-current-url {
+            font-size: 11px;
+            color: #64748b;
+            word-break: break-all;
+            margin-bottom: 10px;
+            padding: 6px 8px;
+            background: #f8fafc;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+        .batch-current-url .label {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+        }
+        .batch-log {
+            max-height: 140px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 10px;
+            font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+        }
+        .batch-log::-webkit-scrollbar { width: 4px; }
+        .batch-log::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        .log-entry {
+            padding: 3px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            gap: 6px;
+        }
+        .log-entry:last-child { border-bottom: none; }
+        .log-entry .log-time { color: #94a3b8; flex-shrink: 0; }
+        .log-entry .log-msg { color: #334155; flex: 1; word-break: break-all; }
+        .log-entry.success .log-msg { color: #166534; }
+        .log-entry.warn .log-msg { color: #92400e; }
+        .log-entry.error .log-msg { color: #991b1b; }
+    </style>
+</head>
+<body>
+    <h1>&#128247; Cache Manager Capture</h1>
+    <div id="status" class="status disconnected">Checking connection...</div>
+
+    <!-- Batch section (shown when batch is queued but not started) -->
+    <div id="batch-section" class="section">
+        <div id="batch-info" class="batch-info"></div>
+        <button id="batch-start-btn" class="capture-btn batch">Start Batch (auto)</button>
+        <div class="batch-start-hint">Captures everything, skips past CAPTCHAs</div>
+        <button id="batch-start-pause-btn" class="capture-btn batch-pause">Start Batch (pause on CAPTCHA)</button>
+        <div class="batch-start-hint">Stops on CAPTCHA pages for manual solving</div>
+        <button id="batch-stop-btn" class="capture-btn stop">Cancel Batch</button>
+    </div>
+
+    <!-- Batch running section (rich display) -->
+    <div id="batch-running-section" class="section">
+        <div class="batch-progress">
+            <div class="batch-progress-header">
+                <span class="batch-progress-count">
+                    <span id="br-completed">0</span>/<span id="br-total">0</span>
+                    <span id="br-skipped" class="skipped"></span>
+                </span>
+                <span id="br-status" class="batch-status-badge loading">Loading</span>
+            </div>
+            <div class="batch-progress-bar">
+                <div id="br-progress-fill" class="batch-progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+        <div id="br-mode" class="batch-mode-indicator">Mode: auto (skip CAPTCHA)</div>
+        <div id="br-current-url" class="batch-current-url">
+            <div class="label">Current URL:</div>
+            <div id="br-url-text">—</div>
+        </div>
+        <div id="br-log" class="batch-log"></div>
+        <button id="batch-stop-btn-2" class="capture-btn stop">Stop Batch</button>
+    </div>
+
+    <!-- Single capture section (default) -->
+    <div id="single-section" class="section active">
+        <div id="target-section"></div>
+        <button id="capture-btn" class="capture-btn" disabled>Capture This Page</button>
+    </div>
+
+    <div class="hint">Shortcut: Alt+Shift+C</div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
