@@ -1,0 +1,396 @@
+{
+  "task_description": "Find three U.S. patents or patent applications in the field of autonomous driving that were published in the last year, regardless of whether they have been granted. For each, include the title, the inventors' names, the organization or assignee, the filing date, the publication date, and a link to the corresponding Google Patents page.",
+  "rubric_tree":
+    {
+      "node_name": "root",
+      "description": "Find three U.S. patents or patent applications in the field of autonomous driving that were published in the last year, regardless of whether they have been granted. For each, include the title, the inventors' names, the organization or assignee, the filing date, the publication date, and a link to the corresponding Google Patents page.",
+      "critical": false,
+      "aggregation_strategy": "parallel",
+      "children": [
+        {
+          "node_name": "patent_0",
+          "description": "Patent #1 verification",
+          "critical": false,
+          "aggregation_strategy": "sequential",
+          "children": [
+            {
+              "node_name": "patent_0_required_info",
+              "description": "Patent #1 has required information (title and Google Patents URL)",
+              "critical": true,
+              "is_leaf": true
+            },
+            {
+              "node_name": "patent_0_constraints",
+              "description": "Patent #1 meets all constraints",
+              "critical": false,
+              "aggregation_strategy": "parallel",
+              "children": [
+                {
+                  "node_name": "patent_0_title_url_match",
+                  "description": "Google Patents URL corresponds to the patent with the claimed title",
+                  "critical": true,
+                  "is_leaf": true
+                },
+                {
+                  "node_name": "patent_0_autonomous_driving",
+                  "description": "Patent is in the field of autonomous driving",
+                  "critical": true,
+                  "is_leaf": true
+                },
+                {
+                  "node_name": "patent_0_published_last_year",
+                  "description": "Patent was published in the last year",
+                  "critical": true,
+                  "is_leaf": true
+                }
+              ]
+            },
+            {
+              "node_name": "patent_0_additional_info",
+              "description": "Patent #1 additional information verification",
+              "critical": false,
+              "aggregation_strategy": "parallel",
+              "children": [
+                {
+                  "node_name": "patent_0_inventors_main",
+                  "description": "Inventors information for patent #1",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_0_inventors_provided",
+                      "description": "Inventors information is provided for patent #1",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_0_inventors_accurate",
+                      "description": "Inventors are accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                },
+                {
+                  "node_name": "patent_0_assignee_main",
+                  "description": "Organization/assignee information for patent #1",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_0_assignee_provided",
+                      "description": "Organization/assignee information is provided for patent #1",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_0_assignee_accurate",
+                      "description": "Assignee is accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                },
+                {
+                  "node_name": "patent_0_filing_date_main",
+                  "description": "Filing date information for patent #1",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_0_filing_date_provided",
+                      "description": "Filing date information is provided for patent #1",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_0_filing_date_accurate",
+                      "description": "Filing date is accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                },
+                {
+                  "node_name": "patent_0_pub_date_main",
+                  "description": "Publication date information for patent #1",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_0_pub_date_provided",
+                      "description": "Publication date information is provided for patent #1",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_0_pub_date_accurate",
+                      "description": "Publication date is accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "node_name": "patent_1",
+          "description": "Patent #2 verification",
+          "critical": false,
+          "aggregation_strategy": "sequential",
+          "children": [
+            {
+              "node_name": "patent_1_required_info",
+              "description": "Patent #2 has required information (title and Google Patents URL)",
+              "critical": true,
+              "is_leaf": true
+            },
+            {
+              "node_name": "patent_1_constraints",
+              "description": "Patent #2 meets all constraints",
+              "critical": false,
+              "aggregation_strategy": "parallel",
+              "children": [
+                {
+                  "node_name": "patent_1_title_url_match",
+                  "description": "Google Patents URL corresponds to the patent with the claimed title",
+                  "critical": true,
+                  "is_leaf": true
+                },
+                {
+                  "node_name": "patent_1_autonomous_driving",
+                  "description": "Patent is in the field of autonomous driving",
+                  "critical": true,
+                  "is_leaf": true
+                },
+                {
+                  "node_name": "patent_1_published_last_year",
+                  "description": "Patent was published in the last year",
+                  "critical": true,
+                  "is_leaf": true
+                }
+              ]
+            },
+            {
+              "node_name": "patent_1_additional_info",
+              "description": "Patent #2 additional information verification",
+              "critical": false,
+              "aggregation_strategy": "parallel",
+              "children": [
+                {
+                  "node_name": "patent_1_inventors_main",
+                  "description": "Inventors information for patent #2",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_1_inventors_provided",
+                      "description": "Inventors information is provided for patent #2",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_1_inventors_accurate",
+                      "description": "Inventors are accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                },
+                {
+                  "node_name": "patent_1_assignee_main",
+                  "description": "Organization/assignee information for patent #2",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_1_assignee_provided",
+                      "description": "Organization/assignee information is provided for patent #2",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_1_assignee_accurate",
+                      "description": "Assignee is accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                },
+                {
+                  "node_name": "patent_1_filing_date_main",
+                  "description": "Filing date information for patent #2",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_1_filing_date_provided",
+                      "description": "Filing date information is provided for patent #2",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_1_filing_date_accurate",
+                      "description": "Filing date is accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                },
+                {
+                  "node_name": "patent_1_pub_date_main",
+                  "description": "Publication date information for patent #2",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_1_pub_date_provided",
+                      "description": "Publication date information is provided for patent #2",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_1_pub_date_accurate",
+                      "description": "Publication date is accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "node_name": "patent_2",
+          "description": "Patent #3 verification",
+          "critical": false,
+          "aggregation_strategy": "sequential",
+          "children": [
+            {
+              "node_name": "patent_2_required_info",
+              "description": "Patent #3 has required information (title and Google Patents URL)",
+              "critical": true,
+              "is_leaf": true
+            },
+            {
+              "node_name": "patent_2_constraints",
+              "description": "Patent #3 meets all constraints",
+              "critical": false,
+              "aggregation_strategy": "parallel",
+              "children": [
+                {
+                  "node_name": "patent_2_title_url_match",
+                  "description": "Google Patents URL corresponds to the patent with the claimed title",
+                  "critical": true,
+                  "is_leaf": true
+                },
+                {
+                  "node_name": "patent_2_autonomous_driving",
+                  "description": "Patent is in the field of autonomous driving",
+                  "critical": true,
+                  "is_leaf": true
+                },
+                {
+                  "node_name": "patent_2_published_last_year",
+                  "description": "Patent was published in the last year",
+                  "critical": true,
+                  "is_leaf": true
+                }
+              ]
+            },
+            {
+              "node_name": "patent_2_additional_info",
+              "description": "Patent #3 additional information verification",
+              "critical": false,
+              "aggregation_strategy": "parallel",
+              "children": [
+                {
+                  "node_name": "patent_2_inventors_main",
+                  "description": "Inventors information for patent #3",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_2_inventors_provided",
+                      "description": "Inventors information is provided for patent #3",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_2_inventors_accurate",
+                      "description": "Inventors are accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                },
+                {
+                  "node_name": "patent_2_assignee_main",
+                  "description": "Organization/assignee information for patent #3",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_2_assignee_provided",
+                      "description": "Organization/assignee information is provided for patent #3",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_2_assignee_accurate",
+                      "description": "Assignee is accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                },
+                {
+                  "node_name": "patent_2_filing_date_main",
+                  "description": "Filing date information for patent #3",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_2_filing_date_provided",
+                      "description": "Filing date information is provided for patent #3",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_2_filing_date_accurate",
+                      "description": "Filing date is accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                },
+                {
+                  "node_name": "patent_2_pub_date_main",
+                  "description": "Publication date information for patent #3",
+                  "critical": false,
+                  "aggregation_strategy": "parallel",
+                  "children": [
+                    {
+                      "node_name": "patent_2_pub_date_provided",
+                      "description": "Publication date information is provided for patent #3",
+                      "critical": true,
+                      "is_leaf": true
+                    },
+                    {
+                      "node_name": "patent_2_pub_date_accurate",
+                      "description": "Publication date is accurately cited",
+                      "critical": true,
+                      "is_leaf": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+}

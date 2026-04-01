@@ -1,0 +1,127 @@
+{ 
+  "task_description": "Identify the academic lineage of Prof. Yu Su at The Ohio State University by tracing his doctoral advisor and continuing upward through advisor-advisee relationships for five generations (excluding Yu Su himself)",
+  "rubric_tree":
+    {
+      "node_name": "root",
+      "description": "Identify the academic lineage of Prof. Yu Su at The Ohio State University by tracing his doctoral advisor and continuing upward through advisor-advisee relationships for five generations (excluding Yu Su himself)",
+      "critical": false,
+      "aggregation_strategy": "sequential",
+      "children": [
+        {
+          "node_name": "generation_1",
+          "description": "Generation 1: The advisor is correctly identified as Xifeng Yan with supporting evidence",
+          "critical": false,
+          "aggregation_strategy": "parallel",
+          "children": [
+            {
+              "node_name": "generation_1_exists",
+              "description": "Generation 1: Advisor is identified with sources",
+              "critical": true
+            },
+            {
+              "node_name": "generation_1_match",
+              "description": "Generation 1: The identified advisor matches the expected advisor 'Xifeng Yan'",
+              "critical": true
+            },
+            {
+              "node_name": "generation_1_source",
+              "description": "Generation 1: The advisor-advisee relationship between Xifeng Yan and Yu Su is supported by cited sources",
+              "critical": true
+            }
+          ]
+        },
+        {
+          "node_name": "generation_2",
+          "description": "Generation 2: The advisor is correctly identified as Jiawei Han with supporting evidence",
+          "critical": false,
+          "aggregation_strategy": "parallel",
+          "children": [
+            {
+              "node_name": "generation_2_exists",
+              "description": "Generation 2: Advisor is identified with sources",
+              "critical": true
+            },
+            {
+              "node_name": "generation_2_match",
+              "description": "Generation 2: The identified advisor matches the expected advisor 'Jiawei Han'",
+              "critical": true
+            },
+            {
+              "node_name": "generation_2_source",
+              "description": "Generation 2: The advisor-advisee relationship between Jiawei Han and Xifeng Yan is supported by cited sources",
+              "critical": true
+            }
+          ]
+        },
+        {
+          "node_name": "generation_3",
+          "description": "Generation 3: The advisor is correctly identified as Larry E. Travis with supporting evidence",
+          "critical": false,
+          "aggregation_strategy": "parallel",
+          "children": [
+            {
+              "node_name": "generation_3_exists",
+              "description": "Generation 3: Advisor is identified with sources",
+              "critical": true
+            },
+            {
+              "node_name": "generation_3_match",
+              "description": "Generation 3: The identified advisor matches the expected advisor 'Larry E. Travis'",
+              "critical": true
+            },
+            {
+              "node_name": "generation_3_source",
+              "description": "Generation 3: The advisor-advisee relationship between Larry E. Travis and Jiawei Han is supported by cited sources",
+              "critical": true
+            }
+          ]
+        },
+        {
+          "node_name": "generation_4",
+          "description": "Generation 4: The advisor is correctly identified as Abraham Robinson with supporting evidence",
+          "critical": false,
+          "aggregation_strategy": "parallel",
+          "children": [
+            {
+              "node_name": "generation_4_exists",
+              "description": "Generation 4: Advisor is identified with sources",
+              "critical": true
+            },
+            {
+              "node_name": "generation_4_match",
+              "description": "Generation 4: The identified advisor matches the expected advisor 'Abraham Robinson'",
+              "critical": true
+            },
+            {
+              "node_name": "generation_4_source",
+              "description": "Generation 4: The advisor-advisee relationship between Abraham Robinson and Larry E. Travis is supported by cited sources",
+              "critical": true
+            }
+          ]
+        },
+        {
+          "node_name": "generation_5",
+          "description": "Generation 5: The advisor is correctly identified as Paul Dienes with supporting evidence",
+          "critical": false,
+          "aggregation_strategy": "parallel",
+          "children": [
+            {
+              "node_name": "generation_5_exists",
+              "description": "Generation 5: Advisor is identified with sources",
+              "critical": true
+            },
+            {
+              "node_name": "generation_5_match",
+              "description": "Generation 5: The identified advisor matches the expected advisor 'Paul Dienes'",
+              "critical": true
+            },
+            {
+              "node_name": "generation_5_source",
+              "description": "Generation 5: The advisor-advisee relationship between Paul Dienes and Abraham Robinson is supported by cited sources",
+              "critical": true
+            }
+          ]
+        }
+      ]
+    }
+}
