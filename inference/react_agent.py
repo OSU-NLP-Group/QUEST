@@ -28,6 +28,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
+from tool_scholar import *
 from tool_python import *
 from tool_search import *
 from tool_visit import *
@@ -38,22 +39,44 @@ OBS_END = '\n</tool_response>'
 
 MAX_LLM_CALL_PER_RUN = int(os.getenv('MAX_LLM_CALL_PER_RUN', 100))
 
-TOOL_CLASS = [
-    Visit(),
-    Search(),
-    PythonInterpreter(),
-    Memory(),
-]
+def is_python_tool_enabled():
+    enable_python = os.getenv("ENABLE_PYTHON_TOOL", "true").strip().lower()
+    return enable_python not in {"0", "false", "no", "off"}
+
+
+PYTHON_TOOL_ENABLED = is_python_tool_enabled()
+
+
+def is_scholar_tool_enabled():
+    enable_scholar = os.getenv("ENABLE_SCHOLAR_TOOL", "false").strip().lower()
+    return enable_scholar not in {"0", "false", "no", "off"}
+
+
+SCHOLAR_TOOL_ENABLED = is_scholar_tool_enabled()
+
+TOOL_CLASS = [Visit(), Search(), Memory()]
+if SCHOLAR_TOOL_ENABLED:
+    TOOL_CLASS.append(Scholar())
+if PYTHON_TOOL_ENABLED:
+    TOOL_CLASS.append(PythonInterpreter())
 TOOL_MAP = {tool.name: tool for tool in TOOL_CLASS}
 
 import random
+
+PYTHON_TOOL_PROMPT = """{"type": "function", "function": {"name": "PythonInterpreter", "description": "Executes Python code in a sandboxed environment. To use this tool, you must follow this format:\n1. The 'arguments' JSON object must be empty: {}.\n2. The Python code to be executed must be placed immediately after the JSON block, enclosed within <code> and </code> tags.\n\nIMPORTANT: Any output you want to see MUST be printed to standard output using the print() function.\n\nExample of a correct call:\n<tool_call>\n{\"name\": \"PythonInterpreter\", \"arguments\": {}}\n<code>\nimport numpy as np\n# Your code here\nprint(f\"The result is: {np.mean([1,2,3])}\")\n</code>\n</tool_call>", "parameters": {"type": "object", "properties": {}}}}
+"""
 
 def today_date():
     return date.today().strftime("%Y-%m-%d")
 
 
-def build_system_prompt() -> str:
-    return SYSTEM_PROMPT
+def build_system_prompt(enable_python_tool: bool) -> str:
+    prompt = SYSTEM_PROMPT
+    if SCHOLAR_TOOL_ENABLED:
+        prompt = prompt.replace("</tools>", f"{SCHOLAR_TOOL_PROMPT}</tools>")
+    if enable_python_tool:
+        return prompt.replace("</tools>", f"{PYTHON_TOOL_PROMPT}</tools>")
+    return prompt
 
 
 class MultiTurnReactAgent(FnCallAgent):
@@ -64,13 +87,18 @@ class MultiTurnReactAgent(FnCallAgent):
 
         self.llm_generate_cfg = llm["generate_cfg"]
         self.llm_local_path = llm["model_path"]
+        self.python_tool_enabled = PYTHON_TOOL_ENABLED
+        self.scholar_tool_enabled = SCHOLAR_TOOL_ENABLED
         self.function_list = function_list or []
         
         # Base configuration (not modified concurrently)
-        memory_threshold_str = os.getenv('MEMORY_THRESHOLD', '16000')
-        self.base_memory_context_threshold = int(memory_threshold_str)  # Base threshold
+        self.base_memory_context_threshold = int(os.getenv('MEMORY_CONTEXT_THRESHOLD', '16000'))
         print(f"Base memory context threshold: {self.base_memory_context_threshold}")
+        print(f"Python tool enabled: {self.python_tool_enabled}")
+        print(f"Scholar tool enabled: {self.scholar_tool_enabled}")
         self.memory_enabled = os.getenv('MEMORY_ENABLED', 'true').lower() == 'true'
+        self.memory_strategy = os.getenv('MEMORY_STRATEGY', 'condenser').strip().lower()
+        print(f"Memory strategy: {self.memory_strategy}")
         
         # Base log directory(not modified concurrently)
         self.base_log_dir = os.getenv('TASK_LOG_DIR', './task_logs')
@@ -90,6 +118,12 @@ class MultiTurnReactAgent(FnCallAgent):
         """Initialize the current thread state"""
         tl = self._thread_local
         tl.initialized = True
+        tl.url_filter_stats = {
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+            "total_cost": 0.0,
+        }
         tl.memory_state = None  # prev_state for memory tool
         tl.memory_context_threshold = self.base_memory_context_threshold
         tl.context_threshold_triggered = False
@@ -308,7 +342,8 @@ class MultiTurnReactAgent(FnCallAgent):
 
     def _save_trajectory_for_distillation(self, messages: List[Dict], state: Optional[Dict] = None, 
                                          trigger_reason: str = "unknown", round_num: int = 0,
-                                         is_final: bool = False):
+                                         is_final: bool = False,
+                                         no_memory_messages: Optional[List[Dict]] = None):
         """
         Save the trajectory used for distillation training
         Save the messages actually seen by the model (before updating prev_state), rather than the updated messages
@@ -358,18 +393,18 @@ class MultiTurnReactAgent(FnCallAgent):
             with open(trajectory_file, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(trajectory_data, ensure_ascii=False) + "\n")
             
-            # Only at final save time, also save the original version with prev_state removed (for the no-memory case)
-            # Intermediate trajectories are not very useful without memory; only the final full conversation history is needed
-            if is_final:
-                # Use full_messages (full message history, not compressed by condenser) instead of messages
-                # This preserves the full conversation history while removing only the prev_state section
-                full_msgs = tl.full_messages if tl.full_messages else messages
-                messages_no_memory = self._remove_prev_state_from_messages(full_msgs)
+            should_save_no_memory = is_final or no_memory_messages is not None
+            if should_save_no_memory:
+                if no_memory_messages is not None:
+                    messages_no_memory = copy.deepcopy(no_memory_messages)
+                else:
+                    full_msgs = tl.full_messages if tl.full_messages else messages
+                    messages_no_memory = self._remove_prev_state_from_messages(full_msgs)
                 trajectory_data_no_memory = {
                     "question": tl.current_question,
-                    "is_final": True,
-                    "condenser_update_id": None,  # the final trajectory has no update_id
-                    "condenser_call_id": None,  # the final trajectory has no call_id
+                    "is_final": is_final,
+                    "condenser_update_id": tl.trajectory_update_count if not is_final else None,
+                    "condenser_call_id": tl.condenser_call_count if not is_final else None,
                     "timestamp": timestamp,
                     "datetime": datetime.now().isoformat(),
                     "round": round_num,
@@ -482,6 +517,142 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
         # Save the trajectory used for distillation training (messages actually seen by the model, i.e. original_messages before the update)
         # Note:This saves the messages seen by the model before calling condenser, including the old prev_state(if any)
         self._save_trajectory_for_distillation(original_messages, state, trigger_reason, round_num)
+
+    def _discard_all_memory_context(self, messages: List[Dict],
+                                   original_messages: List[Dict] = None,
+                                   trigger_reason: str = "CONTEXT_THRESHOLD_DISCARD_ALL",
+                                   round_num: int = 0):
+        """
+        Drop the current context and keep only the system prompt plus the first user message.
+        Any existing prev_state is removed, so the next round restarts without injected memory.
+        """
+        if original_messages is None:
+            original_messages = copy.deepcopy(messages)
+
+        tl = self._get_thread_state()
+        tl.memory_state = None
+
+        first_user_idx = None
+        for i, msg in enumerate(messages):
+            if msg.get("role") == "user":
+                first_user_idx = i
+                break
+
+        if first_user_idx is None:
+            print("[Memory] Warning: No user message found to reset")
+            return
+
+        first_user_content = messages[first_user_idx]["content"]
+        if "RESEARCH STATE SUMMARY (prev_state)" in first_user_content:
+            prev_state_start = first_user_content.find("====================\nRESEARCH STATE SUMMARY")
+            if prev_state_start != -1:
+                first_user_content = first_user_content[:prev_state_start].rstrip()
+                messages[first_user_idx]["content"] = first_user_content
+
+        messages_to_keep = first_user_idx + 1
+        removed_count = len(messages) - messages_to_keep
+        if removed_count > 0:
+            messages[:] = messages[:messages_to_keep]
+            print(f"[Memory] {trigger_reason}: Removed {removed_count} subsequent messages and cleared prev_state")
+        else:
+            print(f"[Memory] {trigger_reason}: No messages to remove")
+
+        compressed_messages = copy.deepcopy(messages)
+        discard_state = {
+            "strategy": "discard_all",
+            "discarded": True,
+            "threshold": self.base_memory_context_threshold,
+        }
+        self._save_memory_log(original_messages, compressed_messages, discard_state, trigger_reason, round_num)
+        self._save_trajectory_for_distillation(
+            original_messages,
+            None,
+            trigger_reason,
+            round_num,
+            no_memory_messages=copy.deepcopy(tl.full_messages if tl.full_messages else original_messages),
+        )
+
+    def _hide_old_tool_results(self, messages: List[Dict],
+                              original_messages: List[Dict] = None,
+                              trigger_reason: str = "CONTEXT_THRESHOLD_HIDE_TOOL_RESULT",
+                              round_num: int = 0):
+        """
+        Retain the reasoning chain but prune bulky tool results.
+        Keep:
+        - system message(s)
+        - the first user message
+        - all assistant messages (think + tool calls)
+        - only the most recent tool_response user message
+        Drop:
+        - older tool_response user messages
+        """
+        if original_messages is None:
+            original_messages = copy.deepcopy(messages)
+
+        first_user_idx = None
+        tool_response_indices = []
+        for i, msg in enumerate(messages):
+            role = msg.get("role")
+            content = msg.get("content", "")
+            if role == "user" and first_user_idx is None:
+                first_user_idx = i
+            if role == "user" and isinstance(content, str) and content.startswith(OBS_START) and content.rstrip().endswith("</tool_response>"):
+                tool_response_indices.append(i)
+
+        if first_user_idx is None:
+            print("[Memory] Warning: No user message found to prune")
+            return
+
+        latest_tool_response_idx = tool_response_indices[-1] if tool_response_indices else None
+
+        first_user_msg = copy.deepcopy(messages[first_user_idx])
+        first_user_content = first_user_msg.get("content", "")
+        if "RESEARCH STATE SUMMARY (prev_state)" in first_user_content:
+            prev_state_start = first_user_content.find("====================\nRESEARCH STATE SUMMARY")
+            if prev_state_start != -1:
+                first_user_msg["content"] = first_user_content[:prev_state_start].rstrip()
+
+        pruned_messages = []
+        removed_tool_results = 0
+        for i, msg in enumerate(messages):
+            if i == first_user_idx:
+                pruned_messages.append(first_user_msg)
+                continue
+
+            role = msg.get("role")
+            content = msg.get("content", "")
+            if role == "user" and isinstance(content, str) and content.startswith(OBS_START) and content.rstrip().endswith("</tool_response>"):
+                if i == latest_tool_response_idx:
+                    pruned_messages.append(copy.deepcopy(msg))
+                else:
+                    removed_tool_results += 1
+                continue
+
+            pruned_messages.append(copy.deepcopy(msg))
+
+        old_message_count = len(messages)
+        messages[:] = pruned_messages
+        new_message_count = len(messages)
+        print(
+            f"[Memory] {trigger_reason}: removed {removed_tool_results} old tool result messages "
+            f"({old_message_count} -> {new_message_count} messages)"
+        )
+
+        compressed_messages = copy.deepcopy(messages)
+        hide_state = {
+            "strategy": "hide_tool_result",
+            "removed_tool_results": removed_tool_results,
+            "kept_latest_tool_result": latest_tool_response_idx is not None,
+            "threshold": self.base_memory_context_threshold,
+        }
+        self._save_memory_log(original_messages, compressed_messages, hide_state, trigger_reason, round_num)
+        self._save_trajectory_for_distillation(
+            original_messages,
+            None,
+            trigger_reason,
+            round_num,
+            no_memory_messages=compressed_messages,
+        )
     
     def _call_condenser_directly(self, messages: List[Dict], round_num: int = 0) -> Optional[Dict]:
         """
@@ -784,7 +955,7 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
         ref_interactions = data["item"].get("interactions")
 
         tl.user_prompt = question
-        system_prompt = build_system_prompt()
+        system_prompt = build_system_prompt(self.python_tool_enabled)
         cur_date = today_date()
         system_prompt = system_prompt + str(cur_date)
 
@@ -933,32 +1104,57 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
                 self.memory_enabled and 
                 not tl.context_threshold_triggered):
                 print(f"[Memory] CONTEXT_THRESHOLD trigger: token_count ({token_count}) >= dynamic threshold ({dynamic_threshold}, base: {self.base_memory_context_threshold})")
-                # Call the condenser tool directly
-                new_state = self._call_condenser_directly(messages, round_num=round)
-                if new_state:
-                    # Recompute token_count because messages have already been compressed
+                if self.memory_strategy == "discard_all":
+                    original_token_count = token_count
+                    self._discard_all_memory_context(messages, round_num=round)
                     token_count_after = self.count_tokens(messages)
-                    reduction = token_count - token_count_after
-                    reduction_percent = (reduction / token_count * 100) if token_count > 0 else 0
-                    print(f"[Memory] Context summarized successfully, continuing with updated state")
-                    print(f"[Memory] Token count reduced: {token_count} -> {token_count_after} (reduced by {reduction} tokens, {reduction_percent:.1f}%)")
-                    token_count = token_count_after  # Update the token_count variable
-                    
-                    # If token_count is still above the threshold after memory processing, randomly scale the threshold to 1.2-1.5x the current value
+                    reduction = original_token_count - token_count_after
+                    reduction_percent = (reduction / original_token_count * 100) if original_token_count > 0 else 0
+                    print(f"[Memory] Discard-all reset completed, continuing from fresh context")
+                    print(f"[Memory] Token count reduced: {original_token_count} -> {token_count_after} (reduced by {reduction} tokens, {reduction_percent:.1f}%)")
+                    token_count = token_count_after
+                    tl.memory_context_threshold = self.base_memory_context_threshold
+                    tl.context_threshold_triggered = False
+                elif self.memory_strategy == "hide_tool_result":
+                    original_token_count = token_count
+                    self._hide_old_tool_results(messages, round_num=round)
+                    token_count_after = self.count_tokens(messages)
+                    reduction = original_token_count - token_count_after
+                    reduction_percent = (reduction / original_token_count * 100) if original_token_count > 0 else 0
+                    print(f"[Memory] Hide-tool-result pruning completed, keeping only the latest tool result")
+                    print(f"[Memory] Token count reduced: {original_token_count} -> {token_count_after} (reduced by {reduction} tokens, {reduction_percent:.1f}%)")
+                    token_count = token_count_after
                     if token_count_after >= dynamic_threshold:
-                        # Randomly choose a multiplier between 1.2 and 1.5
                         multiplier = random.uniform(1.2, 1.5)
                         old_threshold = dynamic_threshold
                         new_threshold = int(dynamic_threshold * multiplier)
                         tl.memory_context_threshold = new_threshold
-                        print(f"[Memory] Token count after compression ({token_count_after}) still >= threshold ({old_threshold})")
+                        print(f"[Memory] Token count after pruning ({token_count_after}) still >= threshold ({old_threshold})")
                         print(f"[Memory] Adjusting threshold: {old_threshold} -> {new_threshold} (multiplier: {multiplier:.3f})")
                     else:
-                        # If the compressed token count falls below the threshold, reset it to the base threshold(allowing it to restart next time)
                         tl.memory_context_threshold = self.base_memory_context_threshold
-                    
-                    # Reset the flag so it can trigger again in the next round(if token_count exceeds the threshold again)
                     tl.context_threshold_triggered = False
+                else:
+                    new_state = self._call_condenser_directly(messages, round_num=round)
+                    if new_state:
+                        token_count_after = self.count_tokens(messages)
+                        reduction = token_count - token_count_after
+                        reduction_percent = (reduction / token_count * 100) if token_count > 0 else 0
+                        print(f"[Memory] Context summarized successfully, continuing with updated state")
+                        print(f"[Memory] Token count reduced: {token_count} -> {token_count_after} (reduced by {reduction} tokens, {reduction_percent:.1f}%)")
+                        token_count = token_count_after
+
+                        if token_count_after >= dynamic_threshold:
+                            multiplier = random.uniform(1.2, 1.5)
+                            old_threshold = dynamic_threshold
+                            new_threshold = int(dynamic_threshold * multiplier)
+                            tl.memory_context_threshold = new_threshold
+                            print(f"[Memory] Token count after compression ({token_count_after}) still >= threshold ({old_threshold})")
+                            print(f"[Memory] Adjusting threshold: {old_threshold} -> {new_threshold} (multiplier: {multiplier:.3f})")
+                        else:
+                            tl.memory_context_threshold = self.base_memory_context_threshold
+
+                        tl.context_threshold_triggered = False
 
             
             if '<answer>' in content and '</answer>' in content:

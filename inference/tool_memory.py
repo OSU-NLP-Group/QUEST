@@ -192,7 +192,7 @@ class Memory(BaseTool):
             self.tokenizer = None
         
         # Read the threshold from environment variables; default is None(no limit)
-        threshold_str = os.environ.get("MEMORY_THRESHOLD", "")
+        threshold_str = os.environ.get("MEMORY_TOKEN_THRESHOLD", "") or os.environ.get("MEMORY_THRESHOLD", "")
         if threshold_str:
             try:
                 self.token_threshold = int(threshold_str)

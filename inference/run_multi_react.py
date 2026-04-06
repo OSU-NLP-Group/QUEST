@@ -6,7 +6,7 @@ import concurrent.futures
 from tqdm import tqdm
 import threading
 from datetime import datetime
-from react_agent import MultiTurnReactAgent
+from react_agent import MultiTurnReactAgent, PYTHON_TOOL_ENABLED, SCHOLAR_TOOL_ENABLED
 import time
 import math
 
@@ -195,7 +195,11 @@ if __name__ == "__main__":
     if not tasks_to_run_all:
         print("All rollouts have been completed and no execution is required.")
     else:
-        function_list = ["search", "visit", "PythonInterpreter", "condenser"]
+        function_list = ["search", "visit", "condenser"]
+        if SCHOLAR_TOOL_ENABLED:
+            function_list.append("google_scholar")
+        if PYTHON_TOOL_ENABLED:
+            function_list.append("PythonInterpreter")
         print(f"Function list: {function_list}")
 
         llm_cfg = {

@@ -7,7 +7,7 @@ from typing import List, Union, Tuple, Optional, Dict
 import requests
 from qwen_agent.tools.base import BaseTool, register_tool
 from prompt import EXTRACTOR_PROMPT 
-from openai import OpenAI
+from openai import OpenAI, AzureOpenAI
 import random
 from urllib.parse import urlparse, unquote
 import time 
@@ -17,6 +17,7 @@ import hashlib
 import sqlite3
 from contextlib import contextmanager
 import atexit
+import fcntl
 
 VISIT_SERVER_TIMEOUT = int(os.getenv("VISIT_SERVER_TIMEOUT", 200))
 WEBCONTENT_MAXLENGTH = int(os.getenv("WEBCONTENT_MAXLENGTH", 150000))
@@ -24,13 +25,26 @@ WEBCONTENT_MAXLENGTH = int(os.getenv("WEBCONTENT_MAXLENGTH", 150000))
 JINA_API_KEYS = os.getenv("JINA_API_KEYS", "")
 
 # Cache configuration
-# Default cache file path:points to the database directory
-_default_cache_dir = os.getenv("CACHE_DIR", "/fs/ess/PAA0201/jianxie/database_only_for_eval")
+_default_cache_dir = os.getenv("CACHE_DIR", "/fs/scratch/PAS1576/jianxie/DeepResearch/proposer_v1/inference/database_only_for_eval")
 os.makedirs(_default_cache_dir, exist_ok=True)
 _default_visit_cache_file = os.path.join(_default_cache_dir, "visit_cache_merged.db")
 VISIT_CACHE_FILE = os.getenv("VISIT_CACHE_FILE", _default_visit_cache_file)
+VISIT_CACHE_SHARD_DIR = os.getenv("VISIT_CACHE_SHARD_DIR", _default_cache_dir)
 VISIT_CACHE_ENABLED = os.getenv("VISIT_CACHE_ENABLED", "true").lower() == "true"
 VISIT_CACHE_RESUME = os.getenv("VISIT_CACHE_RESUME", "true").lower() == "true"
+VISIT_CACHE_SHARDS = max(1, int(os.getenv("VISIT_CACHE_SHARDS", "32")))
+VISIT_CACHE_AUTO_MERGE = os.getenv("VISIT_CACHE_AUTO_MERGE", "true").lower() == "true"
+
+
+def _is_cache_merge_leader() -> bool:
+    for env in ("RANK", "SLURM_PROCID", "LOCAL_RANK"):
+        val = os.getenv(env)
+        if val is not None:
+            try:
+                return int(val) == 0
+            except ValueError:
+                return False
+    return True
 
 
 def truncate_to_tokens(text: str, max_tokens: int = 95000) -> str:
@@ -50,243 +64,135 @@ OSS_JSON_FORMAT = """# Response Formats
 
 
 class VisitCache:
-    """
-    Visit tool cache class, Uses SQLite to store cache data and supports fast indexed lookups
-    
-    Data model:
-    - url_content table: stores URL -> content (URL is the primary key because content depends only on URL)
-    - url_goal_info table: stores (url, goal) -> useful_information (composite primary key)
-    
-    Features:
-    - Uses SQLite with indexing for fast queries
-    - Quickly locates content via the URL primary key
-    - Quickly locates useful_information via the (URL, goal) composite primary key
-    - Supports concurrent access(SQLite handles locking automatically with WAL enabled)
-    - Supports append writes and updates
-    - Reduces data redundancy: content for the same URL is stored only once
-    
-    Usage example:
-        # Default resume=True: connect directly if the database exists; otherwise create it
-        cache = VisitCache()
-        
-        # Force reinitialization (even if the database already exists)
-        cache = VisitCache(resume=False)
-        
-        # Quickly fetch content by URL
-        content = cache.get_content_by_url("https://example.com")
-        
-        # Quickly fetch useful_information by URL + goal
-        info = cache.get_useful_information("https://example.com", "find pricing information")
-        
-        # Get full cached data
-        data = cache.get("https://example.com", "find pricing information")
-        
-        # Write to cache
-        cache.set("https://example.com", "find pricing information", "raw content", "useful information")
-    """
-    
-    def __init__(self, cache_file: str = VISIT_CACHE_FILE, resume: bool = True):
-        """
-        Initialize the cache and create a persistent connection
-        
-        Args:
-            cache_file: cache database file path
-            resume: if True and the database exists, connect directly without reinitializing; if False or the database is missing, create a new database
-        """
+    """Visit tool cache backed by sharded SQLite databases."""
+
+    def __init__(self, cache_file: str = VISIT_CACHE_FILE, resume: bool = True, shards: int = VISIT_CACHE_SHARDS):
         self.cache_file = cache_file
         self.resume = resume
-        self._lock = threading.Lock()  # Thread lock to ensure thread safety
-        
-        # Check whether the database file exists
-        db_exists = os.path.exists(cache_file)
-        
-        # Create a persistent connection
-        self._conn = sqlite3.connect(cache_file, timeout=30.0, check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
-        
-        # Initialize database settings (only needs to be done once)
-        cursor = self._conn.cursor()
+        self.shards = max(1, int(shards))
+        self.auto_merge = VISIT_CACHE_AUTO_MERGE
+        self.is_merge_leader = _is_cache_merge_leader()
+        self.shard_dir = VISIT_CACHE_SHARD_DIR
+        os.makedirs(self.shard_dir, exist_ok=True)
+        self._master_lock = threading.Lock()
+        self._conns: dict[int, sqlite3.Connection] = {}
+        self._locks: dict[int, threading.Lock] = {}
+
+        base_name = os.path.splitext(os.path.basename(self.cache_file))[0]
+        self._shard_files = [os.path.join(self.shard_dir, f"{base_name}_shard{idx}.db") for idx in range(self.shards)]
+        self._master_read_conn = None
+        if self.resume and os.path.exists(self.cache_file):
+            self._master_read_conn = self._open_conn(self.cache_file)
+
+        if self.shards == 1:
+            self._get_conn(0)
+
+        if self.shards > 1 and self.auto_merge and self.is_merge_leader:
+            atexit.register(self.merge_shards)
+        atexit.register(self.close)
+
+    def close(self):
+        if self._master_read_conn:
+            try:
+                self._master_read_conn.close()
+            except Exception:
+                pass
+        for conn in self._conns.values():
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    def _open_conn(self, path: str) -> sqlite3.Connection:
+        conn = sqlite3.connect(path, timeout=30.0, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.execute("PRAGMA cache_size=-8000")
-        self._conn.commit()
-        
-        # If resume=True and the database exists, skip initialization
-        if resume and db_exists:
-            # Validate the database(basic connectivity check)
-            try:
-                cursor = self._conn.cursor()
-                # Check all tables
-                cursor.execute("""
-                    SELECT name FROM sqlite_master 
-                    WHERE type='table'
-                """)
-                all_tables = {row['name'] for row in cursor.fetchall()}
-                
-                # Check whether the new schema exists
-                has_new_tables = 'url_content' in all_tables and 'url_goal_info' in all_tables
-                # Check whether the old schema exists
-                has_old_table = 'visit_cache' in all_tables
-                
-                if has_new_tables:
-                    # The new schema already exists; no action needed
-                    pass
-                elif has_old_table:
-                    # Old schema detected; run data migration
-                    print(f"[VisitCache] Detected old table structure, migrating data...")
-                    self._migrate_from_old_structure()
-                else:
-                    # Tables are missing or incomplete; initialization is required
-                    print(f"[VisitCache] Tables missing or incomplete, initializing...")
-                    self._init_database()
-            except Exception as e:
-                # Database is corrupted or invalid; reinitialize it
-                print(f"[VisitCache] Database validation failed: {e}, reinitializing...")
-                self._init_database()
-        else:
-            # resume=False or database missing; run initialization
-            self._init_database()
-        
-        # Register connection cleanup at exit
-        atexit.register(self.close)
-    
-    def close(self):
-        """Close the database connection"""
-        if hasattr(self, '_conn') and self._conn:
-            try:
-                self._conn.close()
-            except:
-                pass
-    
-    def _execute_read(self, query: str, params: tuple = ()):
-        """Execute a read-only query (thread-safe)"""
-        with self._lock:
-            cursor = self._conn.cursor()
-            cursor.execute(query, params)
-            return cursor.fetchone()
-    
-    def _execute_write(self, query: str, params: tuple = ()):
-        """Execute a write operation (thread-safe)"""
-        with self._lock:
-            cursor = self._conn.cursor()
-            cursor.execute(query, params)
-            self._conn.commit()
-    
+        conn.commit()
+        self._ensure_tables(conn)
+        return conn
+
+    def _ensure_tables(self, conn: sqlite3.Connection) -> None:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS url_content (
+                url TEXT PRIMARY KEY,
+                content TEXT NOT NULL,
+                timestamp REAL NOT NULL
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS url_goal_info (
+                url TEXT NOT NULL,
+                goal TEXT NOT NULL,
+                useful_information TEXT NOT NULL,
+                timestamp REAL NOT NULL,
+                PRIMARY KEY (url, goal)
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_url_goal_info_url
+            ON url_goal_info(url)
+        """)
+        conn.commit()
+
+    def _get_conn(self, shard_id: int) -> sqlite3.Connection:
+        if shard_id not in self._conns:
+            path = self.cache_file if self.shards == 1 else self._shard_files[shard_id]
+            self._conns[shard_id] = self._open_conn(path)
+            self._locks[shard_id] = threading.Lock()
+        return self._conns[shard_id]
+
+    def _shard_id(self, url: str) -> int:
+        if self.shards == 1:
+            return 0
+        digest = hashlib.md5(url.encode("utf-8")).digest()
+        return int.from_bytes(digest[:4], "little") % self.shards
+
     def _init_database(self):
-        """Initialize the database schema and create indexes"""
-        with self._lock:
-            cursor = self._conn.cursor()
-            
-            # Create the url_content table: store URL -> content
-            # URL is the primary key because content depends only on URL
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS url_content (
-                    url TEXT PRIMARY KEY,
-                    content TEXT NOT NULL,
-                    timestamp REAL NOT NULL
-                )
-            """)
-            
-            # Create the url_goal_info table: store (url, goal) -> useful_information
-            # (url, goal) is the composite primary key
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS url_goal_info (
-                    url TEXT NOT NULL,
-                    goal TEXT NOT NULL,
-                    useful_information TEXT NOT NULL,
-                    timestamp REAL NOT NULL,
-                    PRIMARY KEY (url, goal)
-                )
-            """)
-            
-            # Create foreign-key indexes(although SQLite does not enforce foreign keys, indexes help JOIN query performance)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_url_goal_info_url 
-                ON url_goal_info(url)
-            """)
-            
-            self._conn.commit()
-    
-    def _migrate_from_old_structure(self):
-        """
-        Migrate data from the old table schema (visit_cache) to the new schema (url_content + url_goal_info)
-        
-        Migration logic:
-        1. Read all data from the old visit_cache table
-        2. For each (url, goal) pair:
-           - Write content to the url_content table (if the URL is not already present)
-           - Write useful_information to the url_goal_info table
-        3. Keep the old table as a backup (optional: it can be deleted manually)
-        """
+        if self.shards == 1:
+            self._get_conn(0)
+
+    def merge_shards(self) -> None:
+        if self.shards <= 1:
+            return
         try:
-            with self._lock:
-                cursor = self._conn.cursor()
-                
-                # 1. Create the new schema first
-                self._init_database()
-                
-                # 2. Check whether the old table exists
-                cursor.execute("""
-                    SELECT name FROM sqlite_master 
-                    WHERE type='table' AND name='visit_cache'
-                """)
-                if cursor.fetchone() is None:
-                    print(f"[VisitCache] Old table 'visit_cache' not found, skipping migration")
-                    return
-                
-                # 3. Read all data from the old table
-                cursor.execute("""
-                    SELECT url, goal, content, useful_information, timestamp 
-                    FROM visit_cache
-                    ORDER BY timestamp DESC
-                """)
-                old_records = cursor.fetchall()
-                
-                if not old_records:
-                    print(f"[VisitCache] No data to migrate from old table")
-                    return
-                
-                print(f"[VisitCache] Migrating {len(old_records)} records from old table structure...")
-                
-                # 4. Migrate the data to the new tables
-                migrated_urls = set()  # Track migrated URLs to avoid inserting duplicate content
-                migrated_count = 0
-                
-                for row in old_records:
-                    url = row['url']
-                    goal = row['goal']
-                    content = row['content']
-                    useful_information = row['useful_information']
-                    timestamp = row['timestamp']
-                    
-                    # 4.1 Migrate content to the url_content table (once per URL, keeping the latest)
-                    if url not in migrated_urls and content:
-                        cursor.execute("""
-                            INSERT OR REPLACE INTO url_content 
+            lock_path = f"{self.cache_file}.merge.lock"
+            os.makedirs(os.path.dirname(lock_path) or ".", exist_ok=True)
+            with open(lock_path, "w") as lock_file:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+                master_conn = self._open_conn(self.cache_file)
+                master_cursor = master_conn.cursor()
+                for shard_file in self._shard_files:
+                    if not os.path.exists(shard_file):
+                        continue
+                    shard_conn = sqlite3.connect(shard_file, timeout=60.0, check_same_thread=False)
+                    shard_conn.row_factory = sqlite3.Row
+                    shard_cursor = shard_conn.cursor()
+                    shard_cursor.execute("SELECT url, content, timestamp FROM url_content")
+                    for row in shard_cursor.fetchall():
+                        master_cursor.execute("""
+                            INSERT OR REPLACE INTO url_content
                             (url, content, timestamp)
                             VALUES (?, ?, ?)
-                        """, (url, content, timestamp))
-                        migrated_urls.add(url)
-                    
-                    # 4.2 Migrate useful_information to the url_goal_info table
-                    if useful_information:
-                        cursor.execute("""
-                            INSERT OR REPLACE INTO url_goal_info 
+                        """, (row["url"], row["content"], row["timestamp"]))
+                    shard_cursor.execute("SELECT url, goal, useful_information, timestamp FROM url_goal_info")
+                    for row in shard_cursor.fetchall():
+                        master_cursor.execute("""
+                            INSERT OR REPLACE INTO url_goal_info
                             (url, goal, useful_information, timestamp)
                             VALUES (?, ?, ?, ?)
-                        """, (url, goal, useful_information, timestamp))
-                        migrated_count += 1
-                
-                self._conn.commit()
-                print(f"[VisitCache] Migration completed: {len(migrated_urls)} URLs and {migrated_count} (url, goal) pairs migrated")
-                print(f"[VisitCache] Note: Old table 'visit_cache' is kept as backup. You can delete it manually if needed.")
-                
+                        """, (row["url"], row["goal"], row["useful_information"], row["timestamp"]))
+                    master_conn.commit()
+                    shard_conn.close()
+                master_conn.close()
         except Exception as e:
-            print(f"[VisitCache] Error during migration: {e}")
-            # If migration fails, still create the new schema, but old data may be lost
-            print(f"[VisitCache] Creating new table structure anyway...")
-            self._init_database()
-            raise
+            print(f"[VisitCache] Error merging shard cache into '{self.cache_file}': {e}")
+
+    def _migrate_from_old_structure(self):
+        print("[VisitCache] Legacy inline migration is disabled in sharded mode. Keep visit_cache_merged.db as read-only fallback or migrate offline.")
     
     def get_content_by_url(self, url: str) -> Optional[str]:
         """
@@ -302,10 +208,23 @@ class VisitCache:
             return None
         
         try:
-            row = self._execute_read("""
-                SELECT content FROM url_content 
-                WHERE url = ?
-            """, (url,))
+            shard_id = self._shard_id(url)
+            conn = self._get_conn(shard_id)
+            with self._locks[shard_id]:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT content FROM url_content
+                    WHERE url = ?
+                """, (url,))
+                row = cursor.fetchone()
+            if not row and self._master_read_conn and self.shards > 1:
+                with self._master_lock:
+                    cursor = self._master_read_conn.cursor()
+                    cursor.execute("""
+                        SELECT content FROM url_content
+                        WHERE url = ?
+                    """, (url,))
+                    row = cursor.fetchone()
             return row['content'] if row else None
         except Exception as e:
             print(f"[VisitCache] Error getting content by URL {url}: {e}")
@@ -326,10 +245,23 @@ class VisitCache:
             return None
         
         try:
-            row = self._execute_read("""
-                SELECT useful_information FROM url_goal_info 
-                WHERE url = ? AND goal = ?
-            """, (url, goal))
+            shard_id = self._shard_id(url)
+            conn = self._get_conn(shard_id)
+            with self._locks[shard_id]:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT useful_information FROM url_goal_info
+                    WHERE url = ? AND goal = ?
+                """, (url, goal))
+                row = cursor.fetchone()
+            if not row and self._master_read_conn and self.shards > 1:
+                with self._master_lock:
+                    cursor = self._master_read_conn.cursor()
+                    cursor.execute("""
+                        SELECT useful_information FROM url_goal_info
+                        WHERE url = ? AND goal = ?
+                    """, (url, goal))
+                    row = cursor.fetchone()
             return row['useful_information'] if row else None
         except Exception as e:
             print(f"[VisitCache] Error getting useful_information for url={url}, goal={goal}: {e}")
@@ -351,19 +283,40 @@ class VisitCache:
             return None
         
         try:
-            row = self._execute_read("""
-                SELECT 
-                    uc.url,
-                    ugi.goal,
-                    uc.content,
-                    ugi.useful_information,
-                    uc.timestamp as content_timestamp,
-                    ugi.timestamp as info_timestamp
-                FROM url_content uc
-                LEFT JOIN url_goal_info ugi ON uc.url = ugi.url AND ugi.goal = ?
-                WHERE uc.url = ?
-            """, (goal, url))
-            if row and row['useful_information']:  # Ensure useful_information exists
+            shard_id = self._shard_id(url)
+            conn = self._get_conn(shard_id)
+            with self._locks[shard_id]:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT
+                        uc.url,
+                        ugi.goal,
+                        uc.content,
+                        ugi.useful_information,
+                        uc.timestamp as content_timestamp,
+                        ugi.timestamp as info_timestamp
+                    FROM url_content uc
+                    LEFT JOIN url_goal_info ugi ON uc.url = ugi.url AND ugi.goal = ?
+                    WHERE uc.url = ?
+                """, (goal, url))
+                row = cursor.fetchone()
+            if (not row or not row['useful_information']) and self._master_read_conn and self.shards > 1:
+                with self._master_lock:
+                    cursor = self._master_read_conn.cursor()
+                    cursor.execute("""
+                        SELECT
+                            uc.url,
+                            ugi.goal,
+                            uc.content,
+                            ugi.useful_information,
+                            uc.timestamp as content_timestamp,
+                            ugi.timestamp as info_timestamp
+                        FROM url_content uc
+                        LEFT JOIN url_goal_info ugi ON uc.url = ugi.url AND ugi.goal = ?
+                        WHERE uc.url = ?
+                    """, (goal, url))
+                    row = cursor.fetchone()
+            if row and row['useful_information']:
                 return {
                     'url': row['url'],
                     'goal': row['goal'],
@@ -391,20 +344,21 @@ class VisitCache:
         
         try:
             current_time = time.time()
-            
-            # 1. Insert or update the url_content table (URL is the primary key and is stored only once)
-            self._execute_write("""
-                INSERT OR REPLACE INTO url_content 
-                (url, content, timestamp)
-                VALUES (?, ?, ?)
-            """, (url, content, current_time))
-            
-            # 2. Insert or update the url_goal_info table ((url, goal) is the composite primary key)
-            self._execute_write("""
-                INSERT OR REPLACE INTO url_goal_info 
-                (url, goal, useful_information, timestamp)
-                VALUES (?, ?, ?, ?)
-            """, (url, goal, useful_information, current_time))
+            shard_id = self._shard_id(url)
+            conn = self._get_conn(shard_id)
+            with self._locks[shard_id]:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT OR REPLACE INTO url_content
+                    (url, content, timestamp)
+                    VALUES (?, ?, ?)
+                """, (url, content, current_time))
+                cursor.execute("""
+                    INSERT OR REPLACE INTO url_goal_info
+                    (url, goal, useful_information, timestamp)
+                    VALUES (?, ?, ?, ?)
+                """, (url, goal, useful_information, current_time))
+                conn.commit()
         except Exception as e:
             print(f"[VisitCache] Error writing cache for url={url}, goal={goal}: {e}")
 
@@ -437,7 +391,7 @@ class Visit(BaseTool):
     def __init__(self, *args, **kwargs):
         """Initialize the Visit tool and create the cache instance"""
         super().__init__(*args, **kwargs)
-        self.cache = VisitCache(resume=VISIT_CACHE_RESUME) if VISIT_CACHE_ENABLED else None
+        self.cache = VisitCache(resume=VISIT_CACHE_RESUME, shards=VISIT_CACHE_SHARDS) if VISIT_CACHE_ENABLED else None
     
     def _validate_url(self, url: str) -> Tuple[bool, str]:
         """
@@ -640,8 +594,29 @@ class Visit(BaseTool):
         
     def call_server(self, msgs, max_retries=2):
         api_key = os.environ.get("API_KEY")
+        url_llm = os.environ.get("API_BASE")
         model_name = os.environ.get("SUMMARY_MODEL_NAME", "")
-        client = OpenAI(api_key=api_key)
+        azure_endpoint = (
+            os.getenv("AZURE_OPENAI_ENDPOINT")
+            or os.getenv("AZURE_ENDPOINT")
+        )
+        azure_api_version = (
+            os.getenv("AZURE_OPENAI_API_VERSION")
+            or os.getenv("AZURE_API_VERSION")
+            or "2024-08-01-preview"
+        )
+        if azure_endpoint:
+            model_name = os.environ.get("AZURE_OPENAI_DEPLOYMENT")
+            client = AzureOpenAI(
+                api_key=api_key,
+                api_version=azure_api_version,
+                azure_endpoint=azure_endpoint,
+            )
+        else:
+            client = OpenAI(
+                api_key=api_key,
+                base_url=url_llm,
+            )
         for attempt in range(max_retries):
             try:
                 chat_response = client.chat.completions.create(
