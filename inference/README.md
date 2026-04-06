@@ -28,6 +28,19 @@
 - LiveResearch Bench + DeepResearch Bench: Yuting
 - WideSearch + BrowseComp Plus: Zhehao
 
+## Adding A New Benchmark
+
+When adding a new benchmark, you need to provide an input dataset file in a format similar to [`browsecomp.jsonl`](/fs/scratch/PAS1576/jianxie/QUEST-github/QUEST/evaluation/browsecomp/browsecomp.jsonl).
+
+- The new benchmark should have a dataset file that matches the input style expected by the inference pipeline.
+- The evaluation script for a new benchmark needs to be written separately by you.
+- For evaluation-side expectations and organization, refer to [`evaluation/README.md`](/fs/scratch/PAS1576/jianxie/QUEST-github/QUEST/evaluation/README.md).
+
+## Resume
+
+- The current codebase supports `resume`.
+- If a run is interrupted or only partially completed, you usually only need to rerun the corresponding `run_*.sh` script to continue.
+
 ## Before A New Test
 
 When starting a new test run, check and update the following fields in the corresponding `run_react_infer_*.sh` script.
@@ -72,4 +85,4 @@ When starting a new test run, check and update the following fields in the corre
 
 - If you are running a new benchmark, first update `DATASET`, `OUTPUT_PATH`, and `TASK_LOG_DIR`.
 - If you are changing the model setup, update `MODEL_PATH`, `MEMORY_THRESHOLD`, `LLM_MAX_TOKENS`, `MAX_TURN`, and `MAX_WORKERS`.
-- If you are switching machines or serving nodes, update `HOSTNAME_LIST`, `PORTS`, or `server_endpoints.conf`.
+- If you are switching machines or serving nodes, update `server_endpoints.conf`.
