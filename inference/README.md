@@ -24,7 +24,7 @@
 ### Python Sandbox Endpoints
 
 - The Python tool endpoint configuration is hot-reloadable.
-- It reads from [`python_nodes.conf`](/fs/scratch/PAS1576/jianxie/DeepResearch/verl/recipe/deepresearch/config/python_nodes.conf).
+- It reads from [`python_nodes.conf`](/fs/ess/PAA0201/jianxie/config/python_nodes.conf).
 - In practice, this usually does not need to be modified here.
 - Internal hint: for now, keep it synchronized with the RL codebase and simply copy the corresponding config when needed.
 
