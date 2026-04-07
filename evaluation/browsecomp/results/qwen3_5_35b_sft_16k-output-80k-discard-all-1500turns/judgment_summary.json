@@ -1,0 +1,37 @@
+{
+  "total_questions": 130,
+  "best_at_k": {
+    "best@1": {
+      "correct": 73,
+      "total": 130,
+      "accuracy": 0.5615384615384615
+    },
+    "best@2": {
+      "correct": 83,
+      "total": 130,
+      "accuracy": 0.6384615384615384
+    },
+    "best@3": {
+      "correct": 95,
+      "total": 130,
+      "accuracy": 0.7307692307692307
+    }
+  },
+  "by_file": {
+    "iter1.jsonl": {
+      "total": 130,
+      "correct": 73,
+      "accuracy": 0.5615384615384615
+    },
+    "iter2.jsonl": {
+      "total": 127,
+      "correct": 69,
+      "accuracy": 0.5433070866141733
+    },
+    "iter3.jsonl": {
+      "total": 117,
+      "correct": 77,
+      "accuracy": 0.6581196581196581
+    }
+  }
+}

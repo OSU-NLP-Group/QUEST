@@ -1083,7 +1083,7 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
                 tl.full_messages.append(copy.deepcopy(user_msg))  # Sync to the full message history
             
             # After completing the tool call and tool response, check whether CONTEXT_THRESHOLD should be triggered
-            max_tokens = 110 * 1024
+            max_tokens = 256 * 1024
             token_count = self.count_tokens(messages)
             
             # Use the current dynamic threshold(if it has already been adjusted, use the adjusted value; otherwise use the base threshold)
