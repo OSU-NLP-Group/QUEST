@@ -62,7 +62,7 @@ export CACHE_DIR=/fs/ess/PAA0201/jianxie/database_only_for_eval/$USER
 
 # Model and Inference Hyperparameters
 export MODEL_NAME=deepresearch
-export MODEL_PATH=/fs/scratch/PAS1576/jianxie/quest_upload/qwen3-a3b-base-mid-training-20260223-post-training-20260227
+export MODEL_PATH=Alibaba-NLP/Tongyi-DeepResearch-30B-A3B
 export DATASET=/fs/ess/PAA0201/zilu/DeepResearch_v2/inference/eval_data/mind2web2_test.jsonl
 export OUTPUT_PATH=/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/m2w2/a3b-results/qwen3-moe-rl-45steps-16k-output-80k-memory-200turns/results
 export TASK_LOG_DIR=/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/m2w2/a3b-results/qwen3-moe-rl-45steps-16k-output-80k-memory-200turns/memory_logs
