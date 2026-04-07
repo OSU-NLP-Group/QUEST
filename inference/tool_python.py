@@ -59,7 +59,7 @@ def _parse_python_nodes_conf(config_path: str) -> List[str]:
     if hosts and ports:
         for host in hosts:
             for port in ports:
-                endpoints.append(f"http://{host}:{port}/run_code")
+                endpoints.append(f"http://{host}:{port}")
 
     deduped: List[str] = []
     seen = set()
