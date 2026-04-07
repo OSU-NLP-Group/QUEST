@@ -11,18 +11,80 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 CHINESE_CHAR_RE = re.compile(r'[\u4e00-\u9fff]')
+DEFAULT_PYTHON_NODES_CONF = "/fs/scratch/PAS1576/jianxie/DeepResearch/verl/recipe/deepresearch/config/python_nodes.conf"
 
 
 def has_chinese_chars(data: Any) -> bool:
     text = f'{data}'
     return bool(CHINESE_CHAR_RE.search(text))
 
-# Array of sandbox fusion endpoints
-SANDBOX_FUSION_ENDPOINTS = []
+def _normalize_csv_value(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        value = value[1:-1]
+    return value.strip()
 
-# Fallback to single endpoint if environment variable exists
-if 'SANDBOX_FUSION_ENDPOINT' in os.environ:
-    SANDBOX_FUSION_ENDPOINTS = os.environ['SANDBOX_FUSION_ENDPOINT'].split(',')
+
+def _parse_python_nodes_conf(config_path: str) -> List[str]:
+    endpoints: List[str] = []
+    hosts: List[str] = []
+    ports: List[str] = []
+
+    if not config_path or not os.path.exists(config_path):
+        return endpoints
+
+    with open(config_path, "r", encoding="utf-8") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = _normalize_csv_value(value)
+            if not value:
+                continue
+
+            if key in {"endpoint", "url"}:
+                endpoints.append(value)
+            elif key in {"endpoints", "urls"}:
+                endpoints.extend(
+                    item.strip() for item in value.split(",") if item.strip()
+                )
+            elif key == "hosts":
+                hosts = [item.strip() for item in value.split(",") if item.strip()]
+            elif key == "ports":
+                ports = [item.strip() for item in value.split(",") if item.strip()]
+
+    if hosts and ports:
+        for host in hosts:
+            for port in ports:
+                endpoints.append(f"http://{host}:{port}/run_code")
+
+    deduped: List[str] = []
+    seen = set()
+    for endpoint in endpoints:
+        if endpoint not in seen:
+            seen.add(endpoint)
+            deduped.append(endpoint)
+    return deduped
+
+
+def _get_sandbox_fusion_endpoints() -> List[str]:
+    config_path = os.getenv("PYTHON_NODES_CONF", DEFAULT_PYTHON_NODES_CONF)
+    endpoints = _parse_python_nodes_conf(config_path)
+    if endpoints:
+        return endpoints
+
+    env_endpoints = os.getenv("SANDBOX_FUSION_ENDPOINTS", "")
+    if env_endpoints.strip():
+        return [item.strip() for item in env_endpoints.split(",") if item.strip()]
+
+    env_endpoint = os.getenv("SANDBOX_FUSION_ENDPOINT", "")
+    if env_endpoint.strip():
+        return [item.strip() for item in env_endpoint.split(",") if item.strip()]
+
+    return []
 
 
 @register_tool('PythonInterpreter', allow_overwrite=True)
@@ -71,6 +133,10 @@ class PythonInterpreter(BaseToolWithFileAccess):
 
     def call(self, params, files= None, timeout = 50, **kwargs) -> str:
         try:
+            endpoints = _get_sandbox_fusion_endpoints()
+            if not endpoints:
+                return "[Python Interpreter Error]: No sandbox endpoints configured."
+
             if isinstance(params, dict):
                 code = params.get('code', '') or params.get('raw', '')
             elif isinstance(params, str):
@@ -95,7 +161,7 @@ class PythonInterpreter(BaseToolWithFileAccess):
             for attempt in range(8):
                 try:
                     # Randomly sample an endpoint for each attempt
-                    endpoint = random.choice(SANDBOX_FUSION_ENDPOINTS)
+                    endpoint = random.choice(endpoints)
                     print(f"Attempt {attempt + 1}/5 using endpoint: {endpoint}")
 
                     code_result = run_code(RunCodeRequest(code=code, language='python', run_timeout=timeout), max_attempts=1, client_timeout=timeout, endpoint=endpoint)

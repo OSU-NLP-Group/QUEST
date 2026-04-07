@@ -21,6 +21,13 @@
 - `server_point` is adjustable.
   This controls which inference or service endpoint the run is routed to, so it can be changed based on available servers or deployment setup.
 
+### Python Sandbox Endpoints
+
+- The Python tool endpoint configuration is hot-reloadable.
+- It reads from [`python_nodes.conf`](/fs/scratch/PAS1576/jianxie/DeepResearch/verl/recipe/deepresearch/config/python_nodes.conf).
+- In practice, this usually does not need to be modified here.
+- Internal hint: for now, keep it synchronized with the RL codebase and simply copy the corresponding config when needed.
+
 ## Benchmark
 
 - BrowseComp + HLE + GAIA: Tianhe
