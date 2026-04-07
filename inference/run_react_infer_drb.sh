@@ -58,6 +58,7 @@ export NLP_WEB_SEARCH_ENABLE_SFILTER=false
 export QWEN_SEARCH_ENABLE_CSI=false
 export SPECIAL_CODE_MODE=false
 export PYTHONDONTWRITEBYTECODE=1
+export CACHE_DIR=/fs/ess/PAA0201/jianxie/database_only_for_eval/$USER
 
 # Model and Inference Hyperparameters
 export MODEL_NAME=deepresearch

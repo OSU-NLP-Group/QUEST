@@ -14,11 +14,13 @@ import fcntl
 
 SERPER_KEY = os.environ.get('SERPER_KEY_ID')
 
-_default_cache_dir = os.getenv("CACHE_DIR", "/fs/scratch/PAS1576/jianxie/DeepResearch/proposer_v1/inference/database_only_for_eval")
+_shared_cache_dir = "/fs/ess/PAA0201/jianxie/database_only_for_eval"
+_default_cache_dir = os.getenv("CACHE_DIR", _shared_cache_dir)
 os.makedirs(_default_cache_dir, exist_ok=True)
 _default_scholar_cache_file = os.path.join(_default_cache_dir, "scholar_cache_merged.db")
 SCHOLAR_CACHE_FILE = os.getenv("SCHOLAR_CACHE_FILE", _default_scholar_cache_file)
 SCHOLAR_CACHE_SHARD_DIR = os.getenv("SCHOLAR_CACHE_SHARD_DIR", _default_cache_dir)
+SCHOLAR_CACHE_SHARED_FILE = os.getenv("SCHOLAR_CACHE_SHARED_FILE", os.path.join(_shared_cache_dir, "scholar_cache_merged.db"))
 SCHOLAR_CACHE_ENABLED = os.getenv("SCHOLAR_CACHE_ENABLED", "true").lower() == "true"
 SCHOLAR_CACHE_RESUME = os.getenv("SCHOLAR_CACHE_RESUME", "true").lower() == "true"
 SCHOLAR_CACHE_SHARDS = max(1, int(os.getenv("SCHOLAR_CACHE_SHARDS", "32")))
@@ -52,8 +54,13 @@ class ScholarCache:
         base_name = os.path.splitext(os.path.basename(self.cache_file))[0]
         self._shard_files = [os.path.join(self.shard_dir, f"{base_name}_shard{idx}.db") for idx in range(self.shards)]
         self._master_read_conn = None
-        if self.resume and os.path.exists(self.cache_file):
-            self._master_read_conn = self._open_conn(self.cache_file)
+        self._user_read_conn = None
+        if self.resume:
+            shared = SCHOLAR_CACHE_SHARED_FILE
+            if shared and os.path.exists(shared):
+                self._master_read_conn = self._open_readonly_conn(shared)
+            if os.path.exists(self.cache_file) and self.cache_file != SCHOLAR_CACHE_SHARED_FILE:
+                self._user_read_conn = self._open_readonly_conn(self.cache_file)
 
         if self.shards == 1:
             self._get_conn(0)
@@ -66,6 +73,11 @@ class ScholarCache:
         if self._master_read_conn:
             try:
                 self._master_read_conn.close()
+            except Exception:
+                pass
+        if self._user_read_conn:
+            try:
+                self._user_read_conn.close()
             except Exception:
                 pass
         for conn in self._conns.values():
@@ -83,6 +95,11 @@ class ScholarCache:
         cursor.execute("PRAGMA cache_size=-8000")
         conn.commit()
         self._ensure_table(conn)
+        return conn
+
+    def _open_readonly_conn(self, path: str) -> sqlite3.Connection:
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=30.0, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
         return conn
 
     def _ensure_table(self, conn: sqlite3.Connection) -> None:
@@ -154,7 +171,15 @@ class ScholarCache:
                 row = cursor.fetchone()
             if row:
                 return row["result"]
-            if self._master_read_conn and self.shards > 1:
+            if not row and self._user_read_conn and self.shards > 1:
+                with self._master_lock:
+                    cursor = self._user_read_conn.cursor()
+                    cursor.execute("""
+                        SELECT result FROM scholar_cache
+                        WHERE query = ?
+                    """, (query,))
+                    row = cursor.fetchone()
+            if not row and self._master_read_conn and self.shards > 1:
                 with self._master_lock:
                     cursor = self._master_read_conn.cursor()
                     cursor.execute("""

@@ -25,11 +25,13 @@ WEBCONTENT_MAXLENGTH = int(os.getenv("WEBCONTENT_MAXLENGTH", 150000))
 JINA_API_KEYS = os.getenv("JINA_API_KEYS", "")
 
 # Cache configuration
-_default_cache_dir = os.getenv("CACHE_DIR", "/fs/scratch/PAS1576/jianxie/DeepResearch/proposer_v1/inference/database_only_for_eval")
+_shared_cache_dir = "/fs/ess/PAA0201/jianxie/database_only_for_eval"
+_default_cache_dir = os.getenv("CACHE_DIR", _shared_cache_dir)
 os.makedirs(_default_cache_dir, exist_ok=True)
 _default_visit_cache_file = os.path.join(_default_cache_dir, "visit_cache_merged.db")
 VISIT_CACHE_FILE = os.getenv("VISIT_CACHE_FILE", _default_visit_cache_file)
 VISIT_CACHE_SHARD_DIR = os.getenv("VISIT_CACHE_SHARD_DIR", _default_cache_dir)
+VISIT_CACHE_SHARED_FILE = os.getenv("VISIT_CACHE_SHARED_FILE", os.path.join(_shared_cache_dir, "visit_cache_merged.db"))
 VISIT_CACHE_ENABLED = os.getenv("VISIT_CACHE_ENABLED", "true").lower() == "true"
 VISIT_CACHE_RESUME = os.getenv("VISIT_CACHE_RESUME", "true").lower() == "true"
 VISIT_CACHE_SHARDS = max(1, int(os.getenv("VISIT_CACHE_SHARDS", "32")))
@@ -81,8 +83,13 @@ class VisitCache:
         base_name = os.path.splitext(os.path.basename(self.cache_file))[0]
         self._shard_files = [os.path.join(self.shard_dir, f"{base_name}_shard{idx}.db") for idx in range(self.shards)]
         self._master_read_conn = None
-        if self.resume and os.path.exists(self.cache_file):
-            self._master_read_conn = self._open_conn(self.cache_file)
+        self._user_read_conn = None
+        if self.resume:
+            shared = VISIT_CACHE_SHARED_FILE
+            if shared and os.path.exists(shared):
+                self._master_read_conn = self._open_readonly_conn(shared)
+            if os.path.exists(self.cache_file) and self.cache_file != VISIT_CACHE_SHARED_FILE:
+                self._user_read_conn = self._open_readonly_conn(self.cache_file)
 
         if self.shards == 1:
             self._get_conn(0)
@@ -95,6 +102,11 @@ class VisitCache:
         if self._master_read_conn:
             try:
                 self._master_read_conn.close()
+            except Exception:
+                pass
+        if self._user_read_conn:
+            try:
+                self._user_read_conn.close()
             except Exception:
                 pass
         for conn in self._conns.values():
@@ -112,6 +124,11 @@ class VisitCache:
         cursor.execute("PRAGMA cache_size=-8000")
         conn.commit()
         self._ensure_tables(conn)
+        return conn
+
+    def _open_readonly_conn(self, path: str) -> sqlite3.Connection:
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=30.0, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
         return conn
 
     def _ensure_tables(self, conn: sqlite3.Connection) -> None:
@@ -217,6 +234,14 @@ class VisitCache:
                     WHERE url = ?
                 """, (url,))
                 row = cursor.fetchone()
+            if not row and self._user_read_conn and self.shards > 1:
+                with self._master_lock:
+                    cursor = self._user_read_conn.cursor()
+                    cursor.execute("""
+                        SELECT content FROM url_content
+                        WHERE url = ?
+                    """, (url,))
+                    row = cursor.fetchone()
             if not row and self._master_read_conn and self.shards > 1:
                 with self._master_lock:
                     cursor = self._master_read_conn.cursor()
@@ -254,6 +279,14 @@ class VisitCache:
                     WHERE url = ? AND goal = ?
                 """, (url, goal))
                 row = cursor.fetchone()
+            if not row and self._user_read_conn and self.shards > 1:
+                with self._master_lock:
+                    cursor = self._user_read_conn.cursor()
+                    cursor.execute("""
+                        SELECT useful_information FROM url_goal_info
+                        WHERE url = ? AND goal = ?
+                    """, (url, goal))
+                    row = cursor.fetchone()
             if not row and self._master_read_conn and self.shards > 1:
                 with self._master_lock:
                     cursor = self._master_read_conn.cursor()
@@ -300,6 +333,22 @@ class VisitCache:
                     WHERE uc.url = ?
                 """, (goal, url))
                 row = cursor.fetchone()
+            if (not row or not row['useful_information']) and self._user_read_conn and self.shards > 1:
+                with self._master_lock:
+                    cursor = self._user_read_conn.cursor()
+                    cursor.execute("""
+                        SELECT
+                            uc.url,
+                            ugi.goal,
+                            uc.content,
+                            ugi.useful_information,
+                            uc.timestamp as content_timestamp,
+                            ugi.timestamp as info_timestamp
+                        FROM url_content uc
+                        LEFT JOIN url_goal_info ugi ON uc.url = ugi.url AND ugi.goal = ?
+                        WHERE uc.url = ?
+                    """, (goal, url))
+                    row = cursor.fetchone()
             if (not row or not row['useful_information']) and self._master_read_conn and self.shards > 1:
                 with self._master_lock:
                     cursor = self._master_read_conn.cursor()
