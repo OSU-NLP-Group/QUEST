@@ -92,8 +92,14 @@ class MultiTurnReactAgent(FnCallAgent):
         self.function_list = function_list or []
         
         # Base configuration (not modified concurrently)
-        self.base_memory_context_threshold = int(os.getenv('MEMORY_CONTEXT_THRESHOLD', '16000'))
-        print(f"Base memory context threshold: {self.base_memory_context_threshold}")
+        memory_threshold_str = (
+            os.getenv('MEMORY_THRESHOLD')
+            or os.getenv('MEMORY_CONTEXT_THRESHOLD')
+            or os.getenv('MEMORY_TOKEN_THRESHOLD')
+            or '16000'
+        )
+        self.base_memory_context_threshold = int(memory_threshold_str)
+        print(f"Base memory threshold: {self.base_memory_context_threshold}")
         print(f"Python tool enabled: {self.python_tool_enabled}")
         print(f"Scholar tool enabled: {self.scholar_tool_enabled}")
         self.memory_enabled = os.getenv('MEMORY_ENABLED', 'true').lower() == 'true'
