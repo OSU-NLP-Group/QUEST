@@ -8,6 +8,7 @@ The overall workflow is:
 2. Extract proposed questions from JSON trajectory files
 3. Generate evaluation criteria
 4. Polish evaluation criteria
+5. Generate reference answers
 
 ## Files
 
@@ -27,6 +28,12 @@ Criteria Generation:
 
 Criteria Polishing:
 - `longform_rubric/polish_criteria.py`
+
+Reference Generation:
+- `ref_gen/run.sh`
+- `ref_gen/run_multi_react_ref_gen.py`
+- `ref_gen/react_agent_ref_gen.py`
+- `ref_gen/prompt_ref_gen.py`
 
 ## Step-by-step
 
@@ -134,6 +141,30 @@ Typical command:
 ```bash
 python longform_rubric/polish_criteria.py --input_file criteria.jsonl --output_file polished_criteria.jsonl
 ```
+
+### Step 5: Generate reference answers
+
+Entry point:
+- `ref_gen/run.sh`
+
+What it does:
+- Sets environment variables for API keys and model configuration
+- Runs `run_multi_react_ref_gen.py` to generate reference answers using a powerful research agent
+- The agent uses search and visit tools to conduct multi-turn research
+- Outputs JSONL files with reference answers for each question
+
+Important environment variables in `ref_gen/run.sh`:
+- `DATASET`: Input dataset file path (default: `extracted_questions.jsonl`)
+- `OUTPUT_PATH`: Output file path (default: `inference_results/ref.jsonl`)
+- `ROLLOUT_COUNT`: Number of answer for each question (default: 1)
+- `MAX_WORKERS`: Number of concurrent workers (default: 10)
+
+Typical command:
+
+```bash
+bash ref_gen/run.sh
+```
+
 
 ## Notes
 
