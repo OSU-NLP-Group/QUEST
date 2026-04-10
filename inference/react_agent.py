@@ -1020,9 +1020,9 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
         
         while num_llm_calls_available > 0:
             # Check whether time is reached
-            if time.time() - start_time > 300 * 60:  # 300 minutes in seconds
-                prediction = 'No answer found after 5h'
-                termination = 'No answer found after 5h'
+            if time.time() - start_time > 24 * 60 * 60:  # 300 minutes in seconds
+                prediction = 'No answer found after 24h'
+                termination = 'No answer found after 24h'
                 
                 # Save the final trajectory(timeout case)
                 if self.memory_enabled and tl.task_log_dir:

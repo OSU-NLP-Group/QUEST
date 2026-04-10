@@ -82,11 +82,11 @@ When starting a new test run, check and update the following fields in the corre
 - `run_react_infer_bc.sh`
   Uses BrowseComp dataset, `MAX_TURN=400`, `MEMORY_THRESHOLD=80000`, and `LLM_MAX_TOKENS=20000`.
 - `run_react_infer_hle.sh`
-  Uses HLE dataset, `MAX_TURN=200`, `MEMORY_THRESHOLD=96000`, and `LLM_MAX_TOKENS=32000`.
+  Uses HLE dataset, `MAX_TURN=400`, `MEMORY_THRESHOLD=80000`, and `LLM_MAX_TOKENS=16000`.
 - `run_react_infer_drb.sh`
-  Uses DeepResearch Bench dataset, `MAX_TURN=200`, `MEMORY_THRESHOLD=16000`, and `LLM_MAX_TOKENS=10000`.
+  Uses DeepResearch Bench dataset, `MAX_TURN=400`, `MEMORY_THRESHOLD=40000`, and `LLM_MAX_TOKENS=10000`.
 - `run_react_infer_m2w2.sh`
-  Uses Mind2Web2 dataset, `MAX_TURN=200`, `MEMORY_THRESHOLD=80000`, and `LLM_MAX_TOKENS=16000`.
+  Uses Mind2Web2 dataset, `MAX_TURN=400`, `MEMORY_THRESHOLD=80000`, and `LLM_MAX_TOKENS=16000`.
 
 ## Practical Rule
 
