@@ -21,6 +21,7 @@ import fcntl
 
 VISIT_SERVER_TIMEOUT = int(os.getenv("VISIT_SERVER_TIMEOUT", 200))
 WEBCONTENT_MAXLENGTH = int(os.getenv("WEBCONTENT_MAXLENGTH", 150000))
+BLOCK_HUGGINGFACE = os.getenv("BLOCK_HUGGINGFACE", "false").lower() == "true"
 
 JINA_API_KEYS = os.getenv("JINA_API_KEYS", "")
 
@@ -445,10 +446,10 @@ class Visit(BaseTool):
     def _validate_url(self, url: str) -> Tuple[bool, str]:
         """
         Validate whether the URL is valid by checking invalid prefixes
-        
+
         Args:
             url: URL to validate
-            
+
         Returns:
             (is_valid, error_message): if invalid, return False and an error message; otherwise return True and an empty string
         """
@@ -468,6 +469,10 @@ class Visit(BaseTool):
             return False, "[Visit] Invalid URL protocol: 'data:' is not allowed."
         if lowered.startswith("file:"):
             return False, "[Visit] Invalid URL protocol: 'file:' is not allowed."
+        # Block huggingface.co if enabled
+        if BLOCK_HUGGINGFACE and "huggingface.co" in lowered:
+            print("[Visit] Access to huggingface.co is forbidden.")
+            return False, "[Visit] Access to huggingface.co is forbidden."
         return True, ""
     
     def _process_content_to_summary(self, url: str, goal: str, content: str) -> str:

@@ -1,4 +1,5 @@
 import json
+import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Union
 import requests
@@ -18,6 +19,9 @@ import hashlib
 import fcntl
 
 SERPER_KEY = os.environ.get('SERPER_KEY_ID')
+BLOCK_HUGGINGFACE = os.getenv("BLOCK_HUGGINGFACE", "false").lower() == "true"
+if BLOCK_HUGGINGFACE:
+    print("[Warining] BLOCK_HUGGINGFACE is enabled.")
 
 # Cache configuration
 _shared_cache_dir = "/fs/ess/PAA0201/jianxie/database_only_for_eval"
@@ -306,17 +310,154 @@ class Search(BaseTool):
         except Exception as e:
             return f"No results found for query: '{query}'. Error: {str(e)}"
 
+    def _filter_huggingface_from_result(self, result: str) -> str:
+        """Filter out huggingface.co URLs from the formatted search result string."""
+        if not result or result.startswith("No results found") or result.startswith("Google search Timeout"):
+            return result
+
+        # Detect old format (contains "## Web Results")
+        if "## Web Results" in result:
+            return self._filter_huggingface_from_result_old_format(result)
+
+        # New format handling
+        # Split header and entries
+        parts = result.split("\n\n", 1)
+        if len(parts) < 2:
+            return result
+
+        header = parts[0]
+        entries_text = parts[1]
+
+        # Split into individual entries (each entry starts with "Title:")
+        entries = entries_text.split("\n\nTitle: ")
+        filtered_entries = []
+
+        for i, entry in enumerate(entries):
+            # Add back "Title: " prefix for entries after the first one
+            if i > 0:
+                entry = "Title: " + entry
+
+            # Check if the Link contains huggingface.co
+            lines = entry.split("\n")
+            has_huggingface = False
+            filtered_lines = []
+            in_sitelinks = False
+
+            for line in lines:
+                if line.startswith("Link: "):
+                    if "huggingface.co" in line.lower():
+                        has_huggingface = True
+                        print("[search] filter huggingface.co")
+                        break
+                if line.startswith("Sitelinks:"):
+                    in_sitelinks = True
+                    filtered_lines.append(line)
+                    continue
+                if in_sitelinks and line.startswith("- "):
+                    # Filter sitelinks containing huggingface.co
+                    if "huggingface.co" not in line.lower():
+                        filtered_lines.append(line)
+                else:
+                    in_sitelinks = False
+                    filtered_lines.append(line)
+
+            if not has_huggingface:
+                filtered_entries.append("\n".join(filtered_lines))
+
+        if not filtered_entries:
+            # Extract query from header
+            match = re.search(r"A Google search for '(.+?)' found", header)
+            query = match.group(1) if match else "unknown"
+            return f"A Google search for '{query}' found 0 results:\n\n"
+
+        # Rebuild the result with updated count
+        match = re.search(r"A Google search for '(.+?)' found", header)
+        query = match.group(1) if match else "unknown"
+        new_header = f"A Google search for '{query}' found {len(filtered_entries)} results:"
+
+        return new_header + "\n\n" + "\n\n".join(filtered_entries)
+
+    def _filter_huggingface_from_result_old_format(self, result: str) -> str:
+        """Filter out huggingface.co URLs from the old format search result string.
+
+        Old format example:
+        A Google search for 'query' found N results:
+
+        ## Web Results
+        1. [Title](Link)
+        Date published: ...
+        Source: ...
+        snippet text
+
+        2. [Title](Link)
+        ...
+        """
+        # Split by "## Web Results"
+        parts = result.split("## Web Results\n", 1)
+        if len(parts) < 2:
+            return result
+
+        header_part = parts[0].strip()
+        entries_text = parts[1]
+
+        # Split entries by the pattern of numbered items (e.g., "1. [", "2. [")
+        # Each entry starts with a number followed by ". ["
+        entry_pattern = re.compile(r'\n(?=\d+\. \[)')
+        entries = entry_pattern.split(entries_text)
+        filtered_entries = []
+        new_idx = 0
+
+        for entry in entries:
+            entry = entry.strip()
+            if not entry:
+                continue
+
+            # Extract URL from markdown link format: [Title](URL)
+            url_match = re.search(r'\]\((https?://[^\)]+)\)', entry)
+            if url_match:
+                url = url_match.group(1).lower()
+                if "huggingface.co" in url:
+                    print("[search] filter huggingface.co (old format)")
+                    continue
+
+            # Re-number the entry
+            new_idx += 1
+            # Replace the original number with new number
+            renumbered_entry = re.sub(r'^\d+\.', f'{new_idx}.', entry)
+            filtered_entries.append(renumbered_entry)
+
+        if not filtered_entries:
+            # Extract query from header
+            match = re.search(r"A Google search for '(.+?)' found", header_part)
+            query = match.group(1) if match else "unknown"
+            return f"A Google search for '{query}' found 0 results:\n\n## Web Results\n"
+
+        # Rebuild the result with updated count
+        match = re.search(r"A Google search for '(.+?)' found", header_part)
+        query = match.group(1) if match else "unknown"
+        new_header = f"A Google search for '{query}' found {len(filtered_entries)} results:\n\n## Web Results"
+
+        return new_header + "\n" + "\n\n".join(filtered_entries)
+
     def search_with_serp(self, query: str):
         if self.cache:
             cached_result = self.cache.get(query)
             if cached_result:
                 print(f"[search] Cache hit for query: {query}")
+                # Filter huggingface.co URLs from cached result if blocking is enabled
+                if BLOCK_HUGGINGFACE:
+                    return self._filter_huggingface_from_result(cached_result)
                 return cached_result
 
         result = self.google_search_with_serp(query)
 
+        # Cache the unfiltered result
         if self.cache and result and not result.startswith("No results found") and not result.startswith("Google search Timeout"):
             self.cache.set(query, result)
+
+        # Filter huggingface.co URLs from result if blocking is enabled
+        if BLOCK_HUGGINGFACE:
+            return self._filter_huggingface_from_result(result)
 
         return result
 
@@ -334,5 +475,5 @@ class Search(BaseTool):
             for q in queries:
                 responses.append(self.search_with_serp(q))
             response = "\n\n".join(responses)
-
+        # print("[DEBUG]", response)
         return response
