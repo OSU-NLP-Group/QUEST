@@ -1020,7 +1020,7 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
         
         while num_llm_calls_available > 0:
             # Check whether time is reached
-            if time.time() - start_time > 24 * 60 * 60:  # 300 minutes in seconds
+            if time.time() - start_time > 24 * 60 * 60:  # 24 hours in seconds
                 prediction = 'No answer found after 24h'
                 termination = 'No answer found after 24h'
                 
