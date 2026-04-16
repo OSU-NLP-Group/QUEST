@@ -1,0 +1,3 @@
+[submodule "training_scripts/sft/LlamaFactory"]
+	path = training_scripts/sft/LlamaFactory
+	url = https://github.com/hiyouga/LlamaFactory.git
