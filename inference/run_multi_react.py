@@ -1,7 +1,7 @@
 import argparse
 import json
 import os
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 import concurrent.futures
 from tqdm import tqdm
 import threading
@@ -24,6 +24,9 @@ if __name__ == "__main__":
     parser.add_argument("--roll_out_count", type=int, default=3)
     parser.add_argument("--total_splits", type=int, default=1)
     parser.add_argument("--worker_split", type=int, default=1)
+    parser.add_argument("--worker_start_batch_size", type=int, default=0)
+    parser.add_argument("--worker_start_batch_delay", type=float, default=0.0)
+    parser.add_argument("--worker_start_stagger", type=float, default=0.0)
     args = parser.parse_args()
 
     model = args.model
@@ -54,6 +57,13 @@ if __name__ == "__main__":
     print(f"Output directory: {dataset_dir}")
     print(f"Number of rollouts: {roll_out_count}")
     print(f"Data splitting: {worker_split}/{total_splits}")
+    print(f"Max workers: {args.max_workers}")
+    print(
+        "Worker startup control: "
+        f"batch_size={args.worker_start_batch_size}, "
+        f"batch_delay={args.worker_start_batch_delay}, "
+        f"stagger={args.worker_start_stagger}"
+    )
 
     data_filepath = f"{args.dataset}"
     try:
@@ -222,27 +232,84 @@ if __name__ == "__main__":
 
         write_locks = {i: threading.Lock() for i in range(1, roll_out_count + 1)}
 
-        with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
-            future_to_task = {
-                executor.submit(
-                    test_agent._run,
-                    task,
-                    model
-                ): task for task in tasks_to_run_all
-            }
+        batch_size = args.worker_start_batch_size if args.worker_start_batch_size > 0 else args.max_workers
 
-            for future in tqdm(as_completed(future_to_task), total=len(tasks_to_run_all), desc="Processing All Rollouts"):
-                task_info = future_to_task[future]
-                rollout_idx = task_info["rollout_idx"]
-                output_file = output_files[rollout_idx]
-                # try:
-                result = future.result()
-                # Add rollout_idx to the result for resume validation
-                result["rollout_idx"] = rollout_idx
-                result["rollout_id"] = rollout_idx  # Keep compatibility
-                with write_locks[rollout_idx]:
-                    with open(output_file, "a", encoding="utf-8") as f:
-                        f.write(json.dumps(result, ensure_ascii=False) + "\n")
+        def run_task(task):
+            return test_agent._run(task, model)
+
+        with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+            future_to_task = {}
+            next_launch_idx = 0
+            next_batch_submit_time = None
+
+            def submit_batch(start_idx):
+                end_idx = min(start_idx + batch_size, len(tasks_to_run_all))
+                batch_id = start_idx // batch_size + 1
+                print(
+                    f"[batch-submit] batch={batch_id} "
+                    f"tasks={start_idx + 1}-{end_idx}/{len(tasks_to_run_all)}"
+                )
+                for launch_idx in range(start_idx, end_idx):
+                    task = tasks_to_run_all[launch_idx]
+                    question = task["item"].get("question", "")[:80]
+                    print(
+                        f"[submit] task={launch_idx + 1}/{len(tasks_to_run_all)} "
+                        f"rollout={task['rollout_idx']} question={question}"
+                    )
+                    future = executor.submit(run_task, task)
+                    future_to_task[future] = task
+                    is_last_in_batch = launch_idx == end_idx - 1
+                    if args.worker_start_stagger > 0 and not is_last_in_batch:
+                        time.sleep(args.worker_start_stagger)
+                return end_idx
+
+            next_launch_idx = submit_batch(0)
+            if next_launch_idx < len(tasks_to_run_all):
+                next_batch_submit_time = time.time() + args.worker_start_batch_delay
+
+            with tqdm(total=len(tasks_to_run_all), desc="Processing All Rollouts") as pbar:
+                while future_to_task:
+                    now = time.time()
+                    while (
+                        next_batch_submit_time is not None
+                        and now >= next_batch_submit_time
+                        and next_launch_idx < len(tasks_to_run_all)
+                    ):
+                        next_launch_idx = submit_batch(next_launch_idx)
+                        if next_launch_idx < len(tasks_to_run_all):
+                            next_batch_submit_time = time.time() + args.worker_start_batch_delay
+                            print(
+                                f"[batch-wait] next_batch_in={args.worker_start_batch_delay:.1f}s "
+                                f"next_task={next_launch_idx + 1}/{len(tasks_to_run_all)}"
+                            )
+                        else:
+                            next_batch_submit_time = None
+                        now = time.time()
+
+                    wait_timeout = None
+                    if next_batch_submit_time is not None:
+                        wait_timeout = max(0, next_batch_submit_time - time.time())
+
+                    done, _ = wait(
+                        set(future_to_task.keys()),
+                        timeout=wait_timeout,
+                        return_when=FIRST_COMPLETED
+                    )
+
+                    if not done:
+                        continue
+
+                    for future in done:
+                        task_info = future_to_task.pop(future)
+                        rollout_idx = task_info["rollout_idx"]
+                        output_file = output_files[rollout_idx]
+                        result = future.result()
+                        result["rollout_idx"] = rollout_idx
+                        result["rollout_id"] = rollout_idx
+                        with write_locks[rollout_idx]:
+                            with open(output_file, "a", encoding="utf-8") as f:
+                                f.write(json.dumps(result, ensure_ascii=False) + "\n")
+                        pbar.update(1)
 
         print("\nAll tasks completed!")
 
