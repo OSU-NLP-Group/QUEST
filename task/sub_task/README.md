@@ -9,6 +9,10 @@ The overall workflow is:
 3. Generate evaluation criteria
 4. Polish evaluation criteria
 5. Generate reference answers
+6. Collect trajectory from a teacher model
+7. Refine final answers
+8. Extract polished answers
+
 
 ## Files
 
@@ -163,6 +167,57 @@ Typical command:
 
 ```bash
 bash ref_gen/run.sh
+```
+
+### Step 6: Collect trajectory from a teacher model
+
+Same as objective task.
+
+### Step 7: Refine final answers
+
+Entry point:
+- `polish_answer.py`
+
+What it does:
+- Reads trajectory files from Step6
+- Regenerates and polishes the final answers using a more powerful model
+- Outputs refined answers with inline URLs for nontrivial claims
+
+Required arguments:
+- `--files_to_polish`: Input directory containing trajectory files (example: `/memory_logs`)
+- `--output_dir`: Output directory for refined answers (example: `/results`)
+
+Optional arguments:
+- `--iter`: Iteration number filter (default: None, process all iterations)
+- `--max-workers`: Maximum number of worker threads (default: 100)
+
+Typical command:
+
+```bash
+python polish_answer.py --files_to_polish /memory_logs --output_dir /results
+```
+
+### Step 8: Extract polished answers
+
+Entry point:
+- `extract_polished_answer.py`
+
+What it does:
+- Reads `iter*_replace.jsonl` files from Step 7 output directory
+- Extracts polished answers (prefers `replace_answer` when `replace_status == "Success"`, otherwise falls back to original answer)
+- Outputs a JSONL file with `{"question", "answer", "iter"}` format
+
+Required arguments:
+- `--output_dir`: Directory containing `iter*_replace.jsonl` files
+
+Optional arguments:
+- `--input_file`: Single input file (overrides `--output_dir` mode)
+- `--output_file`: Custom output file path (default: `<output_dir>/extracted_answers_all_iters.jsonl`)
+
+Typical command:
+
+```bash
+python extract_polished_answer.py --output_dir /results
 ```
 
 
