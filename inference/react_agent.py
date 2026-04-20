@@ -8,7 +8,7 @@ import threading
 from typing import Dict, Iterator, List, Literal, Optional, Tuple, Union
 from qwen_agent.llm.schema import Message
 from qwen_agent.utils.utils import build_text_completion_prompt
-from openai import OpenAI, AzureOpenAI, APIError, APIConnectionError, APITimeoutError
+from openai import OpenAI, APIError, APIConnectionError, APITimeoutError
 from transformers import AutoTokenizer
 from datetime import datetime, date
 from qwen_agent.agents.fncall_agent import FnCallAgent
@@ -817,11 +817,6 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
     def call_server(self, msgs, max_tries=10):
 
         openai_api_key = "EMPTY"
-        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "")
-        azure_api_version = (
-            os.getenv("AZURE_OPENAI_API_VERSION")
-            or "2024-08-01-preview"
-        )
 
         base_sleep_time = 1
         for attempt in range(max_tries):
@@ -838,33 +833,17 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
             
             try:
                 tl = self._get_thread_state()
-                if azure_endpoint:
-                    client = AzureOpenAI(
-                        api_key=os.getenv("API_KEY") or openai_api_key,
-                        api_version=azure_api_version,
-                        azure_endpoint=azure_endpoint,
-                        timeout=600.0,
-                    )
-                    request_model = (
-                        os.getenv("AZURE_OPENAI_DEPLOYMENT")
-                        or tl.model
-                    )
-                else:
-                    client = OpenAI(
-                        api_key=openai_api_key,
-                        base_url=openai_api_base,
-                        timeout=600.0,
-                    )
-                    request_model = tl.model
-                request_temperature = self.llm_generate_cfg.get('temperature', 0.6)
-                if azure_endpoint:
-                    request_temperature = 1.0
+                client = OpenAI(
+                    api_key=openai_api_key,
+                    base_url=openai_api_base,
+                    timeout=600.0,
+                )
                 max_tokens = int(os.getenv('LLM_MAX_TOKENS', '10000'))
                 chat_response = client.chat.completions.create(
-                    model=request_model,
+                    model=tl.model,
                     messages=msgs,
                     stop=["\n<tool_response>", "<tool_response>"],
-                    temperature=request_temperature,
+                    temperature=self.llm_generate_cfg.get('temperature', 0.6),
                     top_p=self.llm_generate_cfg.get('top_p', 0.95),
                     logprobs=True,
                     max_tokens=max_tokens,
