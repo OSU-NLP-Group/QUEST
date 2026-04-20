@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, default="")
     parser.add_argument("--output", type=str, default="")
     parser.add_argument("--dataset", type=str, default="gaia")
-    parser.add_argument("--temperature", type=float, default=0.6)
+    parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--top_p", type=float, default=0.95)
     parser.add_argument("--presence_penalty", type=float, default=1.1)
     parser.add_argument("--max_workers", type=int, default=20)

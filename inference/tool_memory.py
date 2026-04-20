@@ -242,10 +242,33 @@ class Memory(BaseTool):
             "num_retries": max_retries
         }
         
-        # The memory model uses the OpenAI-compatible API path.
-        api_key = os.environ.get("MEMORY_OPENAI_API_KEY")
+        # Use the shared API/Azure configuration, with legacy memory-specific vars as fallback.
+        api_key = (
+            os.environ.get("MEMORY_API_KEY")
+            or os.environ.get("API_KEY")
+            or os.environ.get("MEMORY_OPENAI_API_KEY")
+        )
         if api_key:
             call_kwargs["api_key"] = api_key
+        api_base = (
+            os.environ.get("MEMORY_API_BASE")
+            or os.environ.get("API_BASE")
+        )
+        if api_base:
+            call_kwargs["api_base"] = api_base
+        azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
+        if azure_endpoint:
+            call_kwargs["api_base"] = azure_endpoint
+            call_kwargs["api_version"] = (
+                os.environ.get("AZURE_OPENAI_API_VERSION")
+                or "2024-08-01-preview"
+            )
+            if not model_name.startswith("azure/"):
+                azure_deployment = (
+                    os.environ.get("AZURE_OPENAI_DEPLOYMENT")
+                    or model_name
+                )
+                call_kwargs["model"] = f"azure/{azure_deployment}"
         
         # Record metadata before the call
         call_start_time = time.time()

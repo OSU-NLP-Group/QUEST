@@ -2,10 +2,15 @@
   "common": {
     "SERPER_KEY_ID": "your_serper_api_key",
     "JINA_API_KEYS": "your_jina_api_key",
-    "API_KEY": "your_openai_api_key",
+    "API_KEY": "your_azure_api_key",
+    "API_BASE": "",
     "SUMMARY_MODEL_NAME": "gpt-5-mini",
     "MEMORY_MODEL_NAME": "gpt-5-mini",
-    "MEMORY_OPENAI_API_KEY": "your_openai_api_key",
+    "MEMORY_API_KEY": "your_azure_api_key",
+    "MEMORY_API_BASE": "",
+    "AZURE_OPENAI_ENDPOINT": "https://your-resource.openai.azure.com/",
+    "AZURE_OPENAI_API_VERSION": "2024-12-01-preview",
+    "AZURE_OPENAI_DEPLOYMENT": "gpt-5-mini",
     "TORCH_COMPILE_CACHE_DIR": "./cache"
   }
 }

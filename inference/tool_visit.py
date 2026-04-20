@@ -650,17 +650,13 @@ class Visit(BaseTool):
         api_key = os.environ.get("API_KEY")
         url_llm = os.environ.get("API_BASE")
         model_name = os.environ.get("SUMMARY_MODEL_NAME", "")
-        azure_endpoint = (
-            os.getenv("AZURE_OPENAI_ENDPOINT")
-            or os.getenv("AZURE_ENDPOINT")
-        )
+        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
         azure_api_version = (
             os.getenv("AZURE_OPENAI_API_VERSION")
-            or os.getenv("AZURE_API_VERSION")
             or "2024-08-01-preview"
         )
         if azure_endpoint:
-            model_name = os.environ.get("AZURE_OPENAI_DEPLOYMENT")
+            model_name = os.environ.get("AZURE_OPENAI_DEPLOYMENT") or model_name
             client = AzureOpenAI(
                 api_key=api_key,
                 api_version=azure_api_version,
