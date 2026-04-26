@@ -63,7 +63,6 @@
             <li><a href="#infrastructure">Infrastructure</a></li>
             <li><a href="#training">Training</a></li>
             <li><a href="#attempts">Unsuccessful Attempts</a></li>
-            <li><a href="#demo">Try Quest</a></li>
             <li><a href="#closing">Closing Remarks</a></li>
             <li><a href="#contribution">Contribution Statement</a></li>
           </ol>
@@ -436,6 +435,53 @@
                     <div class="chart-wrap"><canvas id="e-ws"></canvas></div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div class="subsection" id="demo">
+              <h3>Try <span class="brand">Quest</span></h3>
+              <p>
+                Send a question to
+                <a href="https://huggingface.co/spaces/osunlp/Quest" target="_blank" rel="noopener" style="text-decoration: underline;">Quest HuggingFace Space</a>.
+                The first request may take 30–60 seconds while the Space wakes up.
+              </p>
+
+              <div class="quest-chat" aria-label="Quest demo chat">
+                <div class="quest-chat-stream" id="quest-chat-stream" aria-live="polite"></div>
+
+                <form class="quest-chat-input" id="quest-chat-form">
+                  <textarea
+                    id="qc-question"
+                    rows="2"
+                    placeholder="Ask Quest a research question…"
+                    required>Who was the first person to walk on the Moon, and which U.S. President set that goal in his famous 1962 “Moon speech”?</textarea>
+                  <button type="submit" id="qc-send">Run Research</button>
+                </form>
+
+                <details class="quest-chat-advanced">
+                  <summary>Advanced settings</summary>
+                  <div class="quest-chat-controls">
+                    <label>
+                      Max turns
+                      <input type="number" id="qc-max-turns" value="16" min="1" max="100" step="1">
+                    </label>
+                    <label>
+                      Memory strategy
+                      <select id="qc-memory">
+                        <option value="vanilla">vanilla</option>
+                        <option value="condenser" selected>condenser</option>
+                        <option value="discard-all">discard-all</option>
+                        <option value="hide-tool-results">hide-tool-results</option>
+                      </select>
+                    </label>
+                    <label>
+                      Temperature
+                      <input type="number" id="qc-temperature" value="0.4" min="0" max="1.5" step="0.1">
+                    </label>
+                  </div>
+                </details>
+
+                <p class="quest-chat-status" id="qc-status"></p>
               </div>
             </div>
 
@@ -1071,58 +1117,6 @@
             </ol>
           </section>
 
-          <section id="demo" class="section">
-            <div class="section-head">
-              <h2>Try <span class="brand">Quest</span></h2>
-            </div>
-
-            <div class="body-copy">
-              <p>
-                Send a question to
-                <a href="https://huggingface.co/spaces/osunlp/Quest" target="_blank" rel="noopener" style="text-decoration: underline;">Quest HuggingFace Space</a>.
-                The first request may take 30–60 seconds while the Space wakes up.
-              </p>
-            </div>
-
-            <div class="quest-chat" aria-label="Quest demo chat">
-              <div class="quest-chat-stream" id="quest-chat-stream" aria-live="polite"></div>
-
-              <form class="quest-chat-input" id="quest-chat-form">
-                <textarea
-                  id="qc-question"
-                  rows="2"
-                  placeholder="Ask Quest a research question…"
-                  required>Who was the first person to walk on the Moon, and which U.S. President set that goal in his famous 1962 “Moon speech”?</textarea>
-                <button type="submit" id="qc-send">Run Research</button>
-              </form>
-
-              <details class="quest-chat-advanced">
-                <summary>Advanced settings</summary>
-                <div class="quest-chat-controls">
-                  <label>
-                    Max turns
-                    <input type="number" id="qc-max-turns" value="16" min="1" max="100" step="1">
-                  </label>
-                  <label>
-                    Memory strategy
-                    <select id="qc-memory">
-                      <option value="vanilla">vanilla</option>
-                      <option value="condenser" selected>condenser</option>
-                      <option value="discard-all">discard-all</option>
-                      <option value="hide-tool-results">hide-tool-results</option>
-                    </select>
-                  </label>
-                  <label>
-                    Temperature
-                    <input type="number" id="qc-temperature" value="0.4" min="0" max="1.5" step="0.1">
-                  </label>
-                </div>
-              </details>
-
-              <p class="quest-chat-status" id="qc-status"></p>
-            </div>
-          </section>
-
           <section id="closing" class="section">
             <div class="section-head">
               <h2>Closing Remarks</h2>
@@ -1415,7 +1409,7 @@
                 borderColor: STAGE_LINE_COLOR,
                 backgroundColor: STAGE_FILL_COLOR,
                 borderWidth: 2,
-                tension: 0.25,
+                tension: 0,
                 fill: true,
                 pointBackgroundColor: STAGE_POINT_COLOR,
                 pointBorderColor: '#FFFFFF',
