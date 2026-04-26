@@ -1,0 +1,150 @@
+# DeepResearch tools configuration
+
+tools:
+  - class_name: recipe.deepresearch.tools.search_tool.DeepResearchSearchTool
+    config:
+      type: native
+      search_service_max_retries: 3   # 最多重试次数
+      search_service_timeout: 120   # 客户端超时时间（恢复 120s，服务端不主动超时）
+      # 使用独立 HTTP 搜索服务时填写，留空则本进程内 cache+FAISS+Serper
+      # Hot-reloadable conf file (re-read on every call); or set SEARCH_NODES_CONF env var.
+      search_nodes_conf: ${oc.env:SEARCH_NODES_CONF,recipe/deepresearch/config/search_nodes.conf}
+      # search_service_url: http://a0015:8000   # static fallback; or SEARCH_SERVICE_URL env var
+      # Serper API key (或 SERPER_KEY_ID；使用 search_service_url 时可不配)
+      serper_key: ${oc.env:SERPER_KEY_ID,}
+      topk: 10
+      num_workers: 120
+      # Cache configuration (SQLite)
+      cache_enabled: true  # or set SEARCH_CACHE_ENABLED env var
+      cache_resume: true   # or set SEARCH_CACHE_RESUME env var
+      cache_dir: ${oc.env:SEARCH_CACHE_DIR,recipe/deepresearch/database}
+      cache_file: ${oc.env:SEARCH_CACHE_FILE,recipe/deepresearch/database/search.db}
+      cache_shards: 16   # or set SEARCH_CACHE_SHARDS env var
+      cache_auto_shard: true  # or set SEARCH_CACHE_AUTO_SHARD env var
+      cache_auto_merge: true  # or set SEARCH_CACHE_AUTO_MERGE env var
+      cache_shard_leader: null  # or set SEARCH_CACHE_SHARD_LEADER env var
+      # Optional FAISS semantic retrieval: top-1 by similarity, fallback to Serper if below threshold
+      # Real-time write + query supported (~200k vectors). Requires: pip install faiss-cpu sentence-transformers
+      faiss_enabled: true  # or SEARCH_FAISS_ENABLED
+      faiss_similarity_threshold: 0.85   # or SEARCH_FAISS_SIMILARITY_THRESHOLD
+      faiss_embedding_model: ${oc.env:DEEPRESEARCH_EMBEDDING_MODEL,}
+    tool_schema:
+      type: function
+      function:
+        name: search
+        description: "Perform Google web searches then returns a string of the top search results."
+        parameters:
+          type: object
+          properties:
+            query:
+              type: array
+              items:
+                type: string
+              description: "The search query or an array of queries."
+          required:
+            - query
+
+  - class_name: recipe.deepresearch.tools.scholar_tool.DeepResearchScholarTool
+    config:
+      type: native
+      scholar_service_max_retries: 3
+      scholar_service_timeout: 120
+      scholar_nodes_conf: ${oc.env:SCHOLAR_NODES_CONF,recipe/deepresearch/config/scholar_nodes.conf}
+      serper_key: ${oc.env:SERPER_KEY_ID,}
+      topk: 10
+      num_workers: 120
+      cache_enabled: true
+      cache_resume: true
+      cache_dir: ${oc.env:SCHOLAR_CACHE_DIR,recipe/deepresearch/database}
+      cache_file: ${oc.env:SCHOLAR_CACHE_FILE,recipe/deepresearch/database/scholar.db}
+      cache_shards: 16
+      cache_auto_shard: true
+      cache_auto_merge: true
+      cache_shard_leader: null
+      faiss_enabled: true
+      faiss_similarity_threshold: 0.85
+      faiss_embedding_model: ${oc.env:DEEPRESEARCH_EMBEDDING_MODEL,}
+    tool_schema:
+      type: function
+      function:
+        name: google_scholar
+        description: "Leverage Google Scholar to retrieve relevant information from academic publications. Accepts multiple queries. This tool will also return results from google search"
+        parameters:
+          type: object
+          properties:
+            query:
+              type: array
+              items:
+                type: string
+                description: "The search query."
+              minItems: 1
+              description: "The list of search queries for Google Scholar."
+          required:
+            - query
+
+  - class_name: recipe.deepresearch.tools.python_tool.DeepResearchPythonTool
+    config:
+      type: native
+      # Hot-reloadable sandbox config. Supports:
+      # 1) endpoints=http://host:port/run_code,...
+      # 2) hosts=a0001,a0002 + ports=9000,9001  -> Cartesian product
+      python_nodes_conf: ${oc.env:PYTHON_NODES_CONF,recipe/deepresearch/config/python_nodes.conf}
+      # sandbox_fusion_endpoint: http://a0005:9000/run_code   # static fallback; or SANDBOX_FUSION_ENDPOINT env var
+      timeout: 50
+      max_retries: 5
+    tool_schema:
+      type: function
+      function:
+        name: PythonInterpreter
+        description: "Executes Python code in a sandboxed environment. To use this tool, you must follow this format:\n1. The 'arguments' JSON object must be empty: {}.\n2. The Python code to be executed must be placed immediately after the JSON block, enclosed within <code> and </code> tags.\n\nIMPORTANT: Any output you want to see MUST be printed to standard output using the print() function.\n\nExample of a correct call:\n<tool_call>\n{\"name\": \"PythonInterpreter\", \"arguments\": {}}\n<code>\nimport numpy as np\n# Your code here\nprint(f\"The result is: {np.mean([1,2,3])}\")\n</code>\n</tool_call>"
+        parameters:
+          type: object
+          properties: {}
+          required: []
+
+  - class_name: recipe.deepresearch.tools.visit_tool.DeepResearchVisitTool
+    config:
+      type: native
+      # Jina API key (or use JINA_API_KEY env var)
+      jina_api_key: ${oc.env:JINA_API_KEY,}
+      timeout: 50
+      max_content_length: 100000
+      # Cache configuration (SQLite)
+      cache_enabled: true  # or set VISIT_CACHE_ENABLED env var
+      cache_resume: true   # or set VISIT_CACHE_RESUME env var
+      cache_dir: ${oc.env:VISIT_CACHE_DIR,recipe/deepresearch/database}
+      cache_file: ${oc.env:VISIT_CACHE_FILE,recipe/deepresearch/database/visit.db}
+      cache_shards: 16   # or set VISIT_CACHE_SHARDS env var
+      cache_auto_shard: true  # or set VISIT_CACHE_AUTO_SHARD env var
+      cache_auto_merge: true  # or set VISIT_CACHE_AUTO_MERGE env var
+      cache_shard_leader: null  # or set VISIT_CACHE_SHARD_LEADER env var
+      # LLM configuration for summarization (or use env vars)
+      # Shared API/Azure variables:
+      # - api_key / api_base
+      # - azure_endpoint / azure_api_version / azure_deployment
+      # Leave empty here if you want to configure everything from the launcher env.
+      api_key: ""
+      api_base: ""
+      azure_endpoint: ""
+      azure_api_version: ""
+      azure_deployment: ""
+      summary_model_name: ""
+    tool_schema:
+      type: function
+      function:
+        name: visit
+        description: "Visit webpage(s) and return the summary of the content."
+        parameters:
+          type: object
+          properties:
+            url:
+              type: array
+              items:
+                type: string
+              description: "The URL(s) of the webpage(s) to visit."
+            goal:
+              type: string
+              description: "The specific information goal for visiting the webpage."
+          required:
+            - url
+            - goal

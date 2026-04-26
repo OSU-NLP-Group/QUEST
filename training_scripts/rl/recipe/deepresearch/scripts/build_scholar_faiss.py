@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+"""
+合并 scholar 的 SQLite shard，并一次性建好 FAISS 索引。
+之后线上只做追加写即可。
+
+用法:
+  # 从 config/tools.yaml 读路径（推荐）
+  python -m recipe.deepresearch.scripts.build_scholar_faiss
+
+  # 或指定参数
+  python -m recipe.deepresearch.scripts.build_scholar_faiss \\
+    --cache-dir /path/to/database \\
+    --cache-file /path/to/database/scholar.db \\
+    --shards 16 \\
+    --embedding-model /path/to/Qwen-3-8B-Embedding \\
+    --device cuda
+
+效率说明:
+  - FAISS 检索: IndexFlatIP 在 CPU 上 20w 条约 5–20ms/query，一般不需要 GPU。
+  - Embedding: 建索引时要对 20w 条 query 做向量化，是主要耗时。
+    - Qwen-3-8B 用 GPU 可到 ~几千条/分钟，用 CPU 会慢一个数量级以上，建议建索引时用 GPU。
+  - 结论: 建索引用 GPU 可大幅缩短时间；线上检索用 CPU 即可（FAISS+小模型也可全 CPU）。
+"""
+
+import argparse
+import os
+import sys
+import time
+
+# 保证可 import recipe.deepresearch（从 verl 或 repo 根运行）
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# .../verl/recipe/deepresearch/scripts -> 需要 path 包含 .../verl
+RECIPE_PARENT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
+if RECIPE_PARENT not in sys.path:
+    sys.path.insert(0, RECIPE_PARENT)
+
+from recipe.deepresearch.tools.scholar_tool import (
+    merge_shards_into_master,
+    build_faiss_from_scholar_cache,
+    incremental_update_faiss,
+)
+
+
+def load_config_paths():
+    """从 config/tools.yaml 读取 scholar 的 cache_dir, cache_file, shards, faiss_embedding_model。"""
+    import os
+    config_path = os.path.join(
+        os.path.dirname(SCRIPT_DIR), "config", "tools.yaml"
+    )
+    if not os.path.exists(config_path):
+        return None
+    try:
+        import yaml
+        with open(config_path) as f:
+            data = yaml.safe_load(f)
+        for t in (data or {}).get("tools") or []:
+            class_name = str((t or {}).get("class_name", ""))
+            if "scholar_tool" not in class_name:
+                continue
+            c = (t or {}).get("config") or {}
+            if "cache_dir" in c and "cache_file" in c:
+                return {
+                    "cache_dir": c.get("cache_dir", ""),
+                    "cache_file": c.get("cache_file", ""),
+                    "shards": int(c.get("cache_shards", 1)),
+                    "embedding_model": c.get("faiss_embedding_model") or "sentence-transformers/all-MiniLM-L6-v2",
+                }
+    except Exception:
+        pass
+    return None
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Merge scholar cache shards into master and build FAISS index."
+    )
+    parser.add_argument(
+        "--cache-dir",
+        default=None,
+        help="Cache directory (default: from config or database under recipe)",
+    )
+    parser.add_argument(
+        "--cache-file",
+        default=None,
+        help="Master cache DB path (default: from config)",
+    )
+    parser.add_argument(
+        "--shards",
+        type=int,
+        default=None,
+        help="Number of shards (default: from config or 16)",
+    )
+    parser.add_argument(
+        "--embedding-model",
+        default=None,
+        help="Embedding model path or name (default: from config or MiniLM)",
+    )
+    parser.add_argument(
+        "--device",
+        choices=("cpu", "cuda"),
+        default=None,
+        help="Device for embedding: cuda=fast for one-time build, cpu=no GPU (default: auto)",
+    )
+    parser.add_argument(
+        "--max-entries",
+        type=int,
+        default=None,
+        help="Max entries to index (default: all)",
+    )
+    parser.add_argument(
+        "--skip-merge",
+        action="store_true",
+        help="Skip merge step; build FAISS from existing master only",
+    )
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        help="增量更新: 合并 shard 后只对新增条目做 embedding 追加到已有 FAISS（不全量重建）",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=2048,
+        help="Encode batch size (default 2048; 显存充足可试 4096)",
+    )
+    parser.add_argument(
+        "--num-gpus",
+        type=int,
+        default=None,
+        help="Use N GPUs in parallel for encoding on CUDA (e.g. 4); full build and incremental are both supported",
+    )
+    args = parser.parse_args()
+
+    cfg = load_config_paths()
+    cache_dir = args.cache_dir or (cfg and cfg["cache_dir"])
+    cache_file = args.cache_file or (cfg and cfg["cache_file"])
+    shards = args.shards if args.shards is not None else (cfg and cfg["shards"] or 16)
+    embedding_model = args.embedding_model or (cfg and cfg["embedding_model"]) or "sentence-transformers/all-MiniLM-L6-v2"
+
+    if not cache_dir or not cache_file:
+        print("Error: need --cache-dir and --cache-file (or config in config/tools.yaml)", file=sys.stderr)
+        sys.exit(1)
+
+    t0 = time.perf_counter()
+
+    if not args.skip_merge and shards > 1:
+        print("Step 1: Merging shards into master ...")
+        # 合并前先看 master 现有条数
+        import sqlite3 as _sq
+        _mc = _sq.connect(cache_file, timeout=30.0)
+        _before = _mc.execute("SELECT COUNT(*) FROM scholar_cache").fetchone()[0] if os.path.exists(cache_file) else 0
+        _mc.close()
+        n = merge_shards_into_master(cache_dir, cache_file, shards)
+        print(f"  Master: {_before} -> {n} (new: {n - _before})")
+    else:
+        if args.skip_merge:
+            print("Step 1: Skip merge (--skip-merge)")
+        else:
+            print("Step 1: Single DB, no merge")
+
+    if args.incremental:
+        print("Step 2: Incremental update (only new entries) ...")
+        n = incremental_update_faiss(
+            cache_dir=cache_dir,
+            cache_file=cache_file,
+            embedding_model=embedding_model,
+            device=args.device,
+            batch_size=args.batch_size,
+            num_gpus=args.num_gpus,
+        )
+        print(f"  Added {n} new entries to FAISS")
+    else:
+        print("Step 2: Building FAISS index (full) ...")
+        n = build_faiss_from_scholar_cache(
+            cache_dir=cache_dir,
+            cache_file=cache_file,
+            embedding_model=embedding_model,
+            index_path=None,
+            meta_path=None,
+            max_entries=args.max_entries,
+            device=args.device,
+            batch_size=args.batch_size,
+            num_gpus=args.num_gpus,
+        )
+        print(f"  Indexed {n} entries")
+
+    elapsed = time.perf_counter() - t0
+    print(f"Done in {elapsed:.1f}s")
+    if n and elapsed:
+        print(f"  (~{n / elapsed:.0f} entries/s encoding)")
+
+
+if __name__ == "__main__":
+    main()

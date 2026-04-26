@@ -1,0 +1,107 @@
+# DeepResearch trainer configuration
+# Extends base PPO trainer with DeepResearch-specific settings
+
+hydra:
+  searchpath:
+    - file://verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+trainer:
+  debug: false
+  # DeepResearch-specific settings
+  deepresearch:
+    enable: true
+    # Evaluation scripts directory
+    eval_scripts_dir: null  # Will be set from recipe path
+
+# Actor rollout configuration
+actor_rollout_ref:
+  actor:
+    # Standard loss aggregation mode (no special session handling needed)
+    # Sessions are expanded into independent trajectories, each getting the same reward
+    # Options: "token-mean", "seq-mean-token-sum", "seq-mean-token-mean"
+    loss_agg_mode: token-mean
+  rollout:
+    # Enable multi-turn mode
+    mode: async  # Use async mode for DeepResearch agent loop
+    multi_turn:
+      enable: true
+      max_turns: 200
+      max_user_turns: 50
+      max_assistant_turns: 50
+      max_parallel_calls: 1
+      max_tool_response_length: 10000
+      tool_response_truncate_side: middle
+
+      # Tool configuration
+      tool_config_path: null  # Path to tool config YAML
+
+    # Agent loop configuration
+    agent:
+      default_agent_loop: deepresearch_agent
+      agent_loop_config_path: recipe/deepresearch/config/agent_loop_config.yaml
+
+# Custom reward function configuration (async)
+custom_reward_function:
+  # Path to the reward function module
+  path: recipe/deepresearch/reward.py
+  # Name of the async reward function
+  name: compute_score
+  # Reward function kwargs
+  reward_kwargs:
+    eval_scripts_dir: null  # Will be set at runtime
+    use_default_scoring: false
+
+    # LLM client configuration for eval scripts (optional)
+    # Option 1: Full addresses (comma-separated)
+    # eval_llm_address: "http://10.0.0.1:8000,http://10.0.0.2:8000"
+
+    # Option 2: IPs + Ports (auto-generate all combinations) - RECOMMENDED
+    # Example: ips="10.0.0.1,10.0.0.2" + ports="8000,8001" generates 4 addresses
+    eval_llm_ips: "a0010, a0024"      # e.g., "10.0.0.1,10.0.0.2,10.0.0.3"
+    eval_llm_ports: "6000, 6001, 6002, 6003"    # e.g., "8000,8001,8002"
+
+    eval_llm_model: default  # vLLM uses loaded model by default
+
+# Reward model configuration
+reward_model:
+  enable: false
+  enable_resource_pool: false
+  # Use importlib for reward loop workers so recipe-specific manager is always loadable.
+  # This avoids depending on global experimental registry import order.
+  reward_loop_source: importlib
+  reward_loop_module_path: pkg://recipe.deepresearch.reward_loop_manager
+  reward_loop_class_name: DeepResearchRewardLoopManager
+  overlong_buffer:
+    enable: false
+    len: 0
+    penalty_factor: 0.0
+    log: false
+  reward_kwargs:
+    eval_scripts_dir: null
+    use_default_scoring: false
+
+# Algorithm configuration
+algorithm:
+  filter_groups:
+    enable: false
+    metric: null
+    max_num_gen_batches: 0
+
+# Reward manager configuration
+# Use DeepResearch reward manager for multi-session support
+reward_manager:
+  source: importlib
+  name: DeepResearchRewardManager
+  module:
+    path: pkg://recipe.deepresearch.reward_manager
+
+# Data configuration
+data:
+  gen_batch_size: ${data.train_batch_size}
+  apply_chat_template_kwargs: {}
+  trust_remote_code: false
+  reward_fn_key: data_source

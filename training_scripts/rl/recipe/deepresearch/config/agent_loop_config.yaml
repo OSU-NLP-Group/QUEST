@@ -1,0 +1,4 @@
+- name: deepresearch_agent
+  _target_: recipe.deepresearch.agent_loop.deepresearch_agent_loop.DeepResearchAgentLoop
+- name: deepresearch_async_partial_agent
+  _target_: recipe.deepresearch.agent_loop.deepresearch_async_partial_agent_loop.DeepResearchAsyncPartialAgentLoop
