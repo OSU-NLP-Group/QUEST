@@ -97,51 +97,215 @@ Top-level Python files:
 
 ## Secrets And Environment
 
-Do not commit real API keys. The launcher and service scripts load secrets from:
+Do not commit real API keys. The launcher and service scripts load local secrets
+from:
 
 ```bash
 QUEST_ROOT/.secrets/deepresearch_api_keys.env
 ```
 
-The file should define only local secrets and should be gitignored. Typical
-variables include:
+The file should be gitignored and should contain the real values for your
+cluster or API providers. Committed scripts should keep empty defaults or
+placeholders only.
+
+### Minimum Variables For A Normal Run
+
+Fill these first:
 
 ```bash
-export SERPER_KEY_ID="..."
-export JINA_API_KEY="..."
-export API_KEY="..."
-export API_BASE="..."
-export AZURE_OPENAI_ENDPOINT="..."
-export AZURE_OPENAI_API_VERSION="..."
-export AZURE_OPENAI_DEPLOYMENT="..."
+# Search fallback used by search/scholar tools and services.
+export SERPER_KEY_ID="[PLACEHOLDER]"
+
+# Visit-page reader key. `JINA_API_KEYS` can be a comma-separated pool; if it is
+# unset, the launcher falls back to `JINA_API_KEY`.
+export JINA_API_KEY="[PLACEHOLDER]"
+export JINA_API_KEYS="${JINA_API_KEYS:-${JINA_API_KEY}}"
+
+# Shared Azure/OpenAI-compatible endpoint used by legacy code paths and optional
+# fallback chains. For an Azure-only setup, API_KEY should be the Azure key.
+export API_KEY="[PLACEHOLDER]"
+export API_BASE="[PLACEHOLDER]"  # OpenAI-compatible base URL, if used
+export AZURE_OPENAI_ENDPOINT="[PLACEHOLDER]"
+export AZURE_OPENAI_API_VERSION="[PLACEHOLDER]"
+export AZURE_OPENAI_DEPLOYMENT="[PLACEHOLDER]"
 ```
 
-DeepResearch-specific LLM chains are configured independently:
+`OPENAI_API_KEY`, `OPENAI_API_BASE`, and `OPENAI_MODEL_NAME` are compatibility
+aliases in the launcher. If you are not using official OpenAI, keep them derived
+from the Azure/shared values instead of filling a separate official OpenAI key.
+
+### Eval Node Config Files
+
+The following files provide node/service addresses, not API secrets:
+
+```text
+config/search_nodes.conf
+config/scholar_nodes.conf
+config/python_nodes.conf
+config/eval_llm_nodes.conf
+```
+
+`config/eval_llm_nodes.conf` is used by local OpenAI-compatible eval-node
+routing. It does not replace Azure/API credentials for the non-local fallback
+chains below. If a chain uses `PROVIDER=local_openai`, the model request goes to
+the configured local eval nodes first. If that local path is unavailable or the
+provider is `azure` / `openai` / `api`, the corresponding API key/base/model
+variables are used.
+
+### LLM Chains To Fill Independently
+
+These chains are intentionally separate. Do not rely on one chain silently
+borrowing another unless you explicitly want that behavior.
+
+Objective reward/eval LLM:
 
 ```bash
-export EVAL_LLM_PROVIDER="..."
-export EVAL_LLM_API_KEY="..."
-export EVAL_LLM_API_BASE="..."
-export EVAL_LLM_MODEL_NAME="..."
+export EVAL_LLM_PROVIDER="local_openai"  # local_openai | azure | openai | api | auto
+export EVAL_LLM_API_KEY="[PLACEHOLDER]"
+export EVAL_LLM_API_BASE="[PLACEHOLDER]"
+export EVAL_LLM_MODEL_NAME="[PLACEHOLDER]"
+export EVAL_LLM_AZURE_ENDPOINT="[PLACEHOLDER]"
+export EVAL_LLM_AZURE_API_VERSION="[PLACEHOLDER]"
+export EVAL_LLM_AZURE_DEPLOYMENT="[PLACEHOLDER]"
 
-export CITATION_EVAL_LLM_PROVIDER="..."
-export CITATION_EVAL_LLM_API_KEY="..."
-export CITATION_EVAL_LLM_MODEL_NAME="..."
-
-export OPENENDED_EVAL_LLM_PROVIDER="..."
-export OPENENDED_EVAL_LLM_API_KEY="..."
-export OPENENDED_EVAL_LLM_MODEL_NAME="..."
-
-export VISIT_SUMMARY_MODEL_NAME="..."
-export VISIT_SUMMARY_API_KEY="..."
-export VISIT_SUMMARY_API_BASE="..."
-
-export MEMORY_MODEL_NAME="..."
-export MEMORY_API_KEY="..."
-export MEMORY_API_BASE="..."
+export EVAL_LLM_FALLBACK_PROVIDER="azure"
+export EVAL_LLM_FALLBACK_API_KEY="[PLACEHOLDER]"
+export EVAL_LLM_FALLBACK_API_BASE="[PLACEHOLDER]"
+export EVAL_LLM_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+export EVAL_LLM_FALLBACK_AZURE_ENDPOINT="[PLACEHOLDER]"
+export EVAL_LLM_FALLBACK_AZURE_API_VERSION="[PLACEHOLDER]"
+export EVAL_LLM_FALLBACK_AZURE_DEPLOYMENT="[PLACEHOLDER]"
+export EVAL_LLM_LOCAL_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
 ```
 
-The launcher forwards these variables into Ray runtime environments.
+Inline citation evaluator:
+
+```bash
+export CITATION_EVAL_LLM_PROVIDER="azure"
+export CITATION_EVAL_LLM_API_KEY="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_API_BASE="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_MODEL_NAME="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_AZURE_ENDPOINT="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_AZURE_API_VERSION="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_AZURE_DEPLOYMENT="[PLACEHOLDER]"
+
+export CITATION_EVAL_LLM_FALLBACK_PROVIDER="api"
+export CITATION_EVAL_LLM_FALLBACK_API_KEY="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_FALLBACK_API_BASE="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_FALLBACK_AZURE_ENDPOINT="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_FALLBACK_AZURE_API_VERSION="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_FALLBACK_AZURE_DEPLOYMENT="[PLACEHOLDER]"
+export CITATION_EVAL_LLM_LOCAL_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+```
+
+Open-ended rubric evaluator:
+
+```bash
+export OPENENDED_EVAL_LLM_PROVIDER="local_openai"
+export OPENENDED_EVAL_LLM_API_KEY="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_API_BASE="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_MODEL_NAME="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_AZURE_ENDPOINT="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_AZURE_API_VERSION="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_AZURE_DEPLOYMENT="[PLACEHOLDER]"
+
+export OPENENDED_EVAL_LLM_FALLBACK_PROVIDER="azure"
+export OPENENDED_EVAL_LLM_FALLBACK_API_KEY="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_FALLBACK_API_BASE="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_FALLBACK_AZURE_ENDPOINT="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_FALLBACK_AZURE_API_VERSION="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_FALLBACK_AZURE_DEPLOYMENT="[PLACEHOLDER]"
+export OPENENDED_EVAL_LLM_LOCAL_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+```
+
+Visit-page summarizer:
+
+```bash
+export VISIT_SUMMARY_MODEL_NAME="[PLACEHOLDER]"
+export VISIT_SUMMARY_API_KEY="[PLACEHOLDER]"
+export VISIT_SUMMARY_API_BASE="[PLACEHOLDER]"
+export VISIT_SUMMARY_AZURE_ENDPOINT="[PLACEHOLDER]"
+export VISIT_SUMMARY_AZURE_API_VERSION="[PLACEHOLDER]"
+
+export VISIT_SUMMARY_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+export VISIT_SUMMARY_FALLBACK_API_KEY="[PLACEHOLDER]"
+export VISIT_SUMMARY_FALLBACK_API_BASE="[PLACEHOLDER]"
+export VISIT_SUMMARY_FALLBACK_AZURE_ENDPOINT="[PLACEHOLDER]"
+export VISIT_SUMMARY_FALLBACK_AZURE_API_VERSION="[PLACEHOLDER]"
+```
+
+Memory condenser:
+
+```bash
+export MEMORY_MODEL_NAME="[PLACEHOLDER]"
+export MEMORY_API_KEY="[PLACEHOLDER]"
+export MEMORY_API_BASE="[PLACEHOLDER]"
+export MEMORY_AZURE_ENDPOINT="[PLACEHOLDER]"
+export MEMORY_AZURE_API_VERSION="[PLACEHOLDER]"
+export MEMORY_AZURE_DEPLOYMENT="[PLACEHOLDER]"
+
+export MEMORY_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+export MEMORY_FALLBACK_API_KEY="[PLACEHOLDER]"
+export MEMORY_FALLBACK_API_BASE="[PLACEHOLDER]"
+export MEMORY_FALLBACK_AZURE_ENDPOINT="[PLACEHOLDER]"
+export MEMORY_FALLBACK_AZURE_API_VERSION="[PLACEHOLDER]"
+export MEMORY_FALLBACK_AZURE_DEPLOYMENT="[PLACEHOLDER]"
+
+export MEMORY_LOCAL_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+export MEMORY_LOCAL_FALLBACK_API_KEY="[PLACEHOLDER]"
+```
+
+Local eval-node fallback:
+
+```bash
+export LOCAL_OPENAI_BASE_URLS="[PLACEHOLDER]"  # optional comma-separated URLs
+export LOCAL_OPENAI_FALLBACK_API_KEY="[PLACEHOLDER]"
+export LOCAL_OPENAI_FALLBACK_API_BASE="[PLACEHOLDER]"
+export LOCAL_OPENAI_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+export LOCAL_OPENAI_FALLBACK_AZURE_ENDPOINT="[PLACEHOLDER]"
+export LOCAL_OPENAI_FALLBACK_AZURE_API_VERSION="[PLACEHOLDER]"
+export LOCAL_OPENAI_FALLBACK_AZURE_DEPLOYMENT="[PLACEHOLDER]"
+
+export LOCAL_OPENAI_SECONDARY_FALLBACK_API_KEY="[PLACEHOLDER]"
+export LOCAL_OPENAI_SECONDARY_FALLBACK_API_BASE="[PLACEHOLDER]"
+export LOCAL_OPENAI_SECONDARY_FALLBACK_MODEL_NAME="[PLACEHOLDER]"
+export LOCAL_OPENAI_SECONDARY_FALLBACK_AZURE_ENDPOINT="[PLACEHOLDER]"
+export LOCAL_OPENAI_SECONDARY_FALLBACK_AZURE_API_VERSION="[PLACEHOLDER]"
+export LOCAL_OPENAI_SECONDARY_FALLBACK_AZURE_DEPLOYMENT="[PLACEHOLDER]"
+```
+
+### Optional Service And Tool Variables
+
+These are not always required because the config files normally provide the
+addresses:
+
+```bash
+export SANDBOX_FUSION_ENDPOINT="[PLACEHOLDER]"   # optional single Python sandbox endpoint
+export SANDBOX_FUSION_ENDPOINTS="[PLACEHOLDER]"  # optional comma-separated endpoints
+export PYTHON_SERVICE_URL="[PLACEHOLDER]"
+export PYTHON_SERVICE_URLS="[PLACEHOLDER]"
+
+export SEARCH_SERVICE_URL="[PLACEHOLDER]"
+export SEARCH_NODES_CONF="recipe/deepresearch/config/search_nodes.conf"
+export SCHOLAR_SERVICE_URL="[PLACEHOLDER]"
+export SCHOLAR_NODES_CONF="recipe/deepresearch/config/scholar_nodes.conf"
+export PYTHON_NODES_CONF="recipe/deepresearch/config/python_nodes.conf"
+export EVAL_LLM_NODES_CONF="recipe/deepresearch/config/eval_llm_nodes.conf"
+```
+
+Optional keys for specific tools or benchmarks:
+
+```bash
+export GOOGLE_MAPS_API_KEY="[PLACEHOLDER]"
+export HLE_JUDGE_MODEL_NAME="[PLACEHOLDER]"
+export AWS_ACCESS_KEY="[PLACEHOLDER]"
+export AWS_SECRET_KEY="[PLACEHOLDER]"
+export AWS_REGION="[PLACEHOLDER]"
+```
+
+The launcher forwards the relevant variables into Ray runtime environments.
 
 ## Data
 
