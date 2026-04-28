@@ -557,7 +557,7 @@ a { color: inherit; text-decoration: none; }
 
 .benchmark-bar-row {
   display: grid;
-  grid-template-columns: minmax(88px, 42%) minmax(0, 1fr) 34px;
+  grid-template-columns: minmax(96px, 44%) minmax(0, 1fr) 34px;
   gap: 6px;
   align-items: center;
   min-height: 24px;

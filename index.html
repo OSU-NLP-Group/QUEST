@@ -1493,7 +1493,7 @@
             chart.data.datasets.forEach((ds, datasetIndex) => {
               chart.getDatasetMeta(datasetIndex).data.forEach((bar, i) => {
                 const v   = ds.data[i];
-                const txt = Number.isInteger(v) ? String(v) : v.toFixed(1);
+                const txt = v.toFixed(1);
                 ctx.save();
                 ctx.font = '700 9.5px "Manrope", sans-serif';
                 ctx.fillStyle = '#475569';
@@ -1537,7 +1537,7 @@
           'Dr.Tulu':         'figures/tulu.png',
           'Mirothinker':     'figures/mirothinker.png',
           'Redsearcher':     'figures/redsearcher.png',
-          'Openresearcher':  'figures/openresearcher.png',
+          'Openresearcher':  'figures/openresearcher.webp',
         };
 
         const benchmarkCharts = [
@@ -1668,7 +1668,7 @@
 
               const value = document.createElement('span');
               value.className = 'benchmark-bar-value';
-              value.textContent = Number.isInteger(bar.v) ? String(bar.v) : bar.v.toFixed(1);
+              value.textContent = bar.v.toFixed(1);
               row.appendChild(value);
 
               chartWrap.appendChild(row);
@@ -1759,7 +1759,7 @@
               chart.getDatasetMeta(datasetIndex).data.forEach((pt, i) => {
                 const v = ds.data[i];
                 if (v == null) return;
-                const txt = Number.isInteger(v) ? String(v) : v.toFixed(1);
+                const txt = v.toFixed(1);
                 ctx.save();
                 ctx.font = '700 9.5px "Manrope", sans-serif';
                 ctx.fillStyle = '#475569';
