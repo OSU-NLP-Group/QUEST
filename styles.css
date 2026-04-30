@@ -465,9 +465,9 @@ a { color: inherit; text-decoration: none; }
 .legend-2b { background: #BFDBFE; }
 .legend-4b { background: #93C5FD; }
 .legend-9b { background: #60A5FA; }
-.legend-tongyi { background: #CBD5E1; border: 1px solid #94A3B8; }
-.legend-openresearcher { background: #C4B5FD; border: 1px solid #A78BFA; }
-.legend-quest-model { background: #2563EB; border: 1px solid #1D4ED8; }
+.legend-quest-model { background: #4360E8; border: 1px solid #344BC7; }
+.legend-tongyi { background: #C63F00; border: 1px solid #A63400; }
+.legend-openresearcher { background: #008B5F; border: 1px solid #00754F; }
 .legend-sft { background: #3B82F6; border: 1px solid #2563EB; }
 .legend-mt { background: #1D4ED8; border: 1px solid #1E40AF; }
 .legend-stage-line {

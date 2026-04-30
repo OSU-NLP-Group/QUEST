@@ -298,7 +298,7 @@
                         </tr>
                         <tr>
                           <td class="comparison-model-cell">
-                            <span class="comparison-model-label">Dr.TULU</span>
+                            <span class="comparison-model-label">DR Tulu</span>
                           </td>
                           <td>
                             <div class="scenario-stack">
@@ -516,49 +516,49 @@
 
               <div class="small-model-panel">
                 <div class="small-model-legend" aria-label="30B research agent legend">
-                  <span><i class="legend-tongyi"></i>Tongyi-DeepResearch</span>
-                  <span><i class="legend-openresearcher"></i>OpenResearcher</span>
                   <span><i class="legend-quest-model"></i>Quest-30B</span>
+                  <span><i class="legend-tongyi"></i>Tongyi-DR</span>
+                  <span><i class="legend-openresearcher"></i>OpenResearcher</span>
                 </div>
                 <div class="small-model-grid" aria-label="30B-scale research agent benchmark results">
                   <div class="small-model-card">
                     <h4>BrowseComp</h4>
-                    <p class="chart-metric">Accuracy</p>
+                    <p class="chart-metric">avg@3</p>
                     <div class="chart-wrap"><canvas id="p-browsecomp"></canvas></div>
                   </div>
                   <div class="small-model-card">
                     <h4>HLE</h4>
-                    <p class="chart-metric">Accuracy</p>
+                    <p class="chart-metric">avg@3</p>
                     <div class="chart-wrap"><canvas id="p-hle"></canvas></div>
                   </div>
                   <div class="small-model-card">
                     <h4>GAIA</h4>
-                    <p class="chart-metric">Accuracy</p>
+                    <p class="chart-metric">avg@3</p>
                     <div class="chart-wrap"><canvas id="p-gaia"></canvas></div>
                   </div>
                   <div class="small-model-card">
                     <h4>Mind2Web 2</h4>
-                    <p class="chart-metric">Success Rate</p>
+                    <p class="chart-metric">avg@3</p>
                     <div class="chart-wrap"><canvas id="p-m2w2"></canvas></div>
                   </div>
                   <div class="small-model-card">
                     <h4>LiveResearchBench</h4>
-                    <p class="chart-metric">Avg Quality</p>
+                    <p class="chart-metric">avg@3</p>
                     <div class="chart-wrap"><canvas id="p-liveresearch"></canvas></div>
                   </div>
                   <div class="small-model-card">
                     <h4>DeepResearch Bench</h4>
-                    <p class="chart-metric">RACE Overall</p>
+                    <p class="chart-metric">avg@3</p>
                     <div class="chart-wrap"><canvas id="p-deepresearch"></canvas></div>
                   </div>
                   <div class="small-model-card">
                     <h4>WideSearch</h4>
-                    <p class="chart-metric">Item F1</p>
+                    <p class="chart-metric">Item F1 avg@4</p>
                     <div class="chart-wrap"><canvas id="p-widesearch"></canvas></div>
                   </div>
                   <div class="small-model-card">
                     <h4>BrowseComp Plus</h4>
-                    <p class="chart-metric">Accuracy</p>
+                    <p class="chart-metric">avg@3</p>
                     <div class="chart-wrap"><canvas id="p-bcp"></canvas></div>
                   </div>
                 </div>
@@ -1534,14 +1534,14 @@
         const SIZES = ['2B', '4B', '9B'];
 
         const defs = [
-          { id: 'c-browsecomp', vals: [28,    40,    45.4],  min: 20, max: 50, step: 10 },
+          { id: 'c-browsecomp', vals: [28,    40,    45.4],  min: 0, max: 50, step: 10 },
           { id: 'c-m2w2',       vals: [8.81,  24.3,  24.4],  min: 0,  max: 30, step: 10 },
-          { id: 'c-hle',        vals: [30.26, 36.15, 36.92], min: 25, max: 40, step: 5  },
-          { id: 'c-drb',        vals: [22.27, 41.99, 41.13], min: 20, max: 50, step: 10 },
-          { id: 'c-lrb',        vals: [33.75, 55.74, 52.91], min: 30, max: 60, step: 10 },
-          { id: 'c-gaia',       vals: [72.82, 77.67, 78.64], min: 70, max: 82, step: 4  },
-          { id: 'c-bcp',        vals: [52.57, 52.05, 55.64], min: 50, max: 58, step: 2  },
-          { id: 'c-ws',         vals: [40.9,  55,    58.5],  min: 35, max: 60, step: 5  },
+          { id: 'c-hle',        vals: [30.26, 36.15, 36.92], min: 0, max: 40, step: 10 },
+          { id: 'c-drb',        vals: [22.27, 41.99, 41.13], min: 0, max: 50, step: 10 },
+          { id: 'c-lrb',        vals: [33.75, 55.74, 52.91], min: 0, max: 60, step: 15 },
+          { id: 'c-gaia',       vals: [72.82, 77.67, 78.64], min: 0, max: 82, step: 20 },
+          { id: 'c-bcp',        vals: [52.57, 52.05, 55.64], min: 0, max: 58, step: 15 },
+          { id: 'c-ws',         vals: [40.9,  55,    58.5],  min: 0, max: 60, step: 15 },
         ];
 
         const valueLabelPlugin = {
@@ -1565,18 +1565,18 @@
           },
         };
 
-        const PERF_FILL = ['#CBD5E1', '#C4B5FD', '#2563EB'];
-        const PERF_EDGE = ['#94A3B8', '#A78BFA', '#1D4ED8'];
-        const PERF_LABELS = ['Tongyi', 'OpenR.', 'Quest-30B'];
+        const PERF_FILL = ['#4360E8', '#C63F00', '#008B5F'];
+        const PERF_EDGE = ['#344BC7', '#A63400', '#00754F'];
+        const PERF_LABELS = ['Quest-30B', 'Tongyi-DR', 'OpenResearcher'];
         const perfDefs = [
-          { id: 'p-browsecomp',   vals: [43.4, 26.3, 37.0], min: 20, max: 50 },
-          { id: 'p-hle',          vals: [32.9, 20.4, 26.0], min: 15, max: 36 },
-          { id: 'p-gaia',         vals: [70.9, 64.1, 69.0], min: 60, max: 74 },
-          { id: 'p-m2w2',         vals: [16.7, 14.8, 28.6], min: 10, max: 32 },
-          { id: 'p-liveresearch', vals: [56.3, 61.3, 66.7], min: 50, max: 70 },
-          { id: 'p-deepresearch', vals: [40.5, 39.8, 44.3], min: 38, max: 46 },
-          { id: 'p-widesearch',   vals: [37.3, 19.2, 57.2], min: 15, max: 60 },
-          { id: 'p-bcp',          vals: [44.5, 54.8, 48.2], min: 40, max: 58 },
+          { id: 'p-browsecomp',   vals: [37.0, 43.4, 26.3], min: 0,  max: 50 },
+          { id: 'p-hle',          vals: [26.0, 32.9, 20.4], min: 0,  max: 36 },
+          { id: 'p-gaia',         vals: [69.0, 70.9, 64.1], min: 0,  max: 74 },
+          { id: 'p-m2w2',         vals: [28.6, 16.7, 14.8], min: 0,  max: 32 },
+          { id: 'p-liveresearch', vals: [66.7, 56.3, 61.3], min: 0,  max: 70 },
+          { id: 'p-deepresearch', vals: [44.3, 40.5, 39.8], min: 0,  max: 46 },
+          { id: 'p-widesearch',   vals: [57.2, 37.3, 19.2], min: 0,  max: 60 },
+          { id: 'p-bcp',          vals: [48.2, 44.5, 54.8], min: 0,  max: 58 },
         ];
 
         perfDefs.forEach(({ id, vals, min, max }) => {
@@ -1644,9 +1644,9 @@
 
         const MODEL_ICONS = {
           'Quest-35B':       'figures/osu_nlp.png',
-          'Gemini-3.1-pro':  'figures/gemini.png',
+          'Gemini-3.1-Pro':  'figures/gemini.png',
           'Gemini-DR':       'figures/gemini.png',
-          'Gemini-2.5-pro':  'figures/gemini.png',
+          'Gemini-2.5-Pro':  'figures/gemini.png',
           'Opus-4.6':        'figures/claude.svg',
           'Opus-4.5':        'figures/claude.svg',
           'GPT-5.4':         'figures/openai.png',
@@ -1658,17 +1658,17 @@
           'Qwen3.5-122B':    'figures/tongyi.png',
           'Grok':            'figures/grok.png',
           'Tencent Youtu':   'figures/hunyuan.png',
-          'Kimi-k2.5':       'figures/kimi.webp',
+          'Kimi-K2.5':       'figures/kimi.webp',
           'GLM-4.6':         'figures/glm.svg',
-          'Dr.Tulu':         'figures/tulu.png',
+          'DR Tulu':         'figures/tulu.png',
           'Mirothinker':     'figures/mirothinker.png',
           'Redsearcher':     'figures/redsearcher.png',
-          'Openresearcher':  'figures/openresearcher.webp',
+          'OpenResearcher':  'figures/openresearcher.webp',
         };
 
         const benchmarkCharts = [
           { title:'BrowseComp', bars:[
-            {role:'sota',  l:'Gemini-3.1-pro', v:85.9},
+            {role:'sota',  l:'Gemini-3.1-Pro', v:85.9},
             {role:'s2',    l:'Opus-4.6',       v:84.0},
             {role:'match', l:'GPT-5.4',        v:82.7},
             {role:'open',  l:'Mirothinker',    v:67.9},
@@ -1678,7 +1678,7 @@
           { title:'HLE', bars:[
             {role:'sota',  l:'Opus-4.6',       v:53.1},
             {role:'s2',    l:'GPT-5.4',        v:52.1},
-            {role:'match', l:'Gemini-3.1-pro', v:51.4},
+            {role:'match', l:'Gemini-3.1-Pro', v:51.4},
             {role:'open',  l:'Mirothinker',    v:36.4},
             {role:'open2', l:'Redsearcher',    v:34.9},
             {role:'quest', l:BENCHMARK_LABEL,  v:42.0},
@@ -1696,30 +1696,30 @@
             {role:'s2',    l:'Grok',           v:27.0},
             {role:'match', l:'Tencent Youtu',  v:27.0},
             {role:'open',  l:'Tongyi-DR',      v:16.7},
-            {role:'open2', l:'Openresearcher', v:14.8},
+            {role:'open2', l:'OpenResearcher', v:14.8},
             {role:'quest', l:BENCHMARK_LABEL,  v:31.2},
           ]},
           { title:'LiveResearchBench', bars:[
             {role:'sota',  l:'GPT-5',          v:73.1},
             {role:'s2',    l:'Grok',           v:65.6},
             {role:'match', l:'Gemini-DR',      v:63.3},
-            {role:'open',  l:'Openresearcher', v:61.3},
+            {role:'open',  l:'OpenResearcher', v:61.3},
             {role:'open2', l:'Tongyi-DR',      v:56.3},
             {role:'quest', l:BENCHMARK_LABEL,  v:69.1},
           ]},
           { title:'DeepResearch Bench', bars:[
             {role:'sota',  l:'Gemini-DR',      v:49.7},
             {role:'s2',    l:'OpenAI-DR',      v:46.5},
-            {role:'match', l:'Dr.Tulu',        v:45.5},
+            {role:'match', l:'DR Tulu',        v:45.5},
             {role:'open',  l:'Tongyi-DR',      v:40.5},
-            {role:'open2', l:'Openresearcher', v:35.4},
+            {role:'open2', l:'OpenResearcher', v:35.4},
             {role:'quest', l:BENCHMARK_LABEL,  v:48.2},
           ]},
           { title:'WideSearch', bars:[
-            {role:'sota',  l:'Kimi-k2.5',      v:72.7},
+            {role:'sota',  l:'Kimi-K2.5',      v:72.7},
             {role:'s2',    l:'Qwen3.5-122B',   v:60.5},
             {role:'match', l:'OpenAI-o3',      v:52.6},
-            {role:'open',  l:'Gemini-2.5-pro', v:51.0},
+            {role:'open',  l:'Gemini-2.5-Pro', v:51.0},
             {role:'open2', l:'GPT-OSS-120B',   v:40.4},
             {role:'quest', l:BENCHMARK_LABEL,  v:63.5},
           ]},
