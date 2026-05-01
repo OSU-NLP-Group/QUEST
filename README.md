@@ -55,16 +55,18 @@ workflows. Training uses separate backend stacks: install SFT dependencies under
 `training_scripts/sft/` according to LlamaFactory requirements, and install RL
 dependencies under `training_scripts/rl/` according to VERL requirements.
 
-Prepare the local databases used by search, visit, and scholar tools under the
-repository-level `database/` directory:
+Optional local databases and caches used by search, visit, and scholar tools
+live under the repository-level `database/` directory:
 
 ```text
 database/
 ```
 
-These files are not included in the repository. Download or generate the
-required databases for the workflow you plan to run before launching inference,
-data generation, or evaluation.
+These files are not included in the repository. If you do not download existing
+databases, the search and visit caches are created automatically during runs.
+Providing prebuilt databases is useful when you want to reuse cached results,
+reduce external requests, or run workflows that require prepared search/scholar
+indexes.
 
 ## Runtime Configuration
 
