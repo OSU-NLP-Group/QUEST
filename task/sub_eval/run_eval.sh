@@ -10,14 +10,14 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Configuration
 # =============================================================================
 
-# Evaluation model (model name exposed by vLLM service)
-export MODEL_NAME="eval_model"
+# Evaluation model (model name exposed by the judge service)
+export MODEL_NAME="${MODEL_NAME:-eval_model}"
 
-# vLLM server endpoint (hot-swap: takes effect at runtime by modifying endpoints.conf, no restart needed)
-export SERVER_ENDPOINTS_FILE="${SCRIPT_DIR}/endpoints.conf"
+# Judge server endpoints (hot-swap: modifying endpoints.conf takes effect at runtime)
+export SERVER_ENDPOINTS_FILE="${SERVER_ENDPOINTS_FILE:-${SCRIPT_DIR}/endpoints.conf}"
 
 if [ ! -f "$SERVER_ENDPOINTS_FILE" ]; then
-    echo "ERROR: endpoints.conf not found: ${SERVER_ENDPOINTS_FILE}"
+    echo "ERROR: endpoint config not found: ${SERVER_ENDPOINTS_FILE}"
     exit 1
 fi
 
@@ -25,21 +25,19 @@ export HOSTNAME_LIST=$(grep '^HOSTNAME_LIST=' "$SERVER_ENDPOINTS_FILE" | cut -d'
 export PORTS=$(grep '^PORTS=' "$SERVER_ENDPOINTS_FILE" | cut -d'=' -f2-)
 
 # Data file paths
-PROMPT_TO_EVAL="Path to evaluation criteria jsonl file"
-
-ANSWER_TO_EVAL="Path to extracted_answers_all_iters.jsonl"
-
-REF_TO_EVAL="Path to reference answer jsonl file"
+PROMPT_TO_EVAL="${PROMPT_TO_EVAL:-/path/to/polished_criteria.jsonl}"
+ANSWER_TO_EVAL="${ANSWER_TO_EVAL:-/path/to/final_answers.jsonl}"
+REF_TO_EVAL="${REF_TO_EVAL:-/path/to/reference_answers.jsonl}"
 
 # Document-level concurrency (how many documents to evaluate simultaneously)
-MAX_WORKERS=300
+MAX_WORKERS="${MAX_WORKERS:-300}"
 
 # Extract iter info from answer filename (e.g., iter1) and write to output path
 _answer_basename="$(basename "$ANSWER_TO_EVAL" .jsonl)"
 _iter_tag="$(echo "$_answer_basename" | grep -oE 'iter[0-9]+')"
 _iter_tag="${_iter_tag:-iter_unknown}"
 
-OUTPUT_FILE="${SCRIPT_DIR}/results/all_iters_eval.jsonl"
+OUTPUT_FILE="${OUTPUT_FILE:-${SCRIPT_DIR}/results/all_iters_eval.jsonl}"
 mkdir -p "$(dirname "$OUTPUT_FILE")"
 
 # =============================================================================
@@ -141,7 +139,7 @@ echo "All servers ready!"
 
 echo ""
 echo "=============================================="
-echo "Starting DRB evaluation"
+echo "Starting open-ended evaluation"
 echo "  iter tag    : ${_iter_tag}"
 echo "  model       : ${MODEL_NAME}"
 echo "  answer file : ${ANSWER_TO_EVAL}"

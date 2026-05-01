@@ -1,58 +1,82 @@
-# Open-ended Evaluation Workflow
+# Open-Ended Evaluation
 
-This directory contains a document quality evaluation pipeline that compares answers against reference answers using a rubric-based scoring system.
+This directory runs rubric-based evaluation for QUEST open-ended tasks. It
+compares generated answers against reference answers using task-specific
+criteria and writes document-level scores plus detailed criterion judgments.
 
 ## Overview
 
-The evaluation system uses a model-based scorer that evaluates documents across multiple dimensions (comprehensiveness, insight, instruction following, readability) based on predefined criteria. It compares Document A (to evaluate) against Document B (reference) and produces relative scores.
+High-level flow:
 
-## Files
+```text
+load criteria -> load answers -> load reference answers
+-> score each criterion -> aggregate weighted scores -> write results
+```
 
-- `eva_drb.py` - Contains the system prompt and user prompt templates for the evaluation model
-- `evaluate_criteria_args_parallel_drb.py` - Main evaluation script with parallel processing support
-- `run_eval.sh` - Bash script to run the evaluation with server health checks
+Main entrypoints:
 
-## How It Works
+| File | Purpose |
+| --- | --- |
+| `run_eval.sh` | Evaluation launcher with endpoint checks |
+| `evaluate_criteria_args_parallel_drb.py` | Parallel rubric-evaluation script |
+| `eva_drb.py` | Evaluation prompt templates |
 
-1. Loads evaluation criteria (rubrics) from a JSONL file
-2. Loads answers to evaluate from a JSONL file
-3. Loads reference answers from a JSONL file
-4. For each criterion, sends a request to the evaluation model to score both documents
-5. Calculates weighted scores across all criteria and dimensions
-6. Outputs final scores and detailed evaluation results
+## Run Evaluation
 
-## Usage
-
-### Configuration
-
-Before running, configure your vLLM server endpoints in `endpoints.conf`:
+Start one or more OpenAI-compatible judge endpoints, then configure
+`endpoints.conf` in this directory:
 
 ```bash
 HOSTNAME_LIST=localhost
-PORTS=8000,8001,8002
+PORTS=8000,8001
 ```
 
-### Running Evaluation
+From the repository root:
 
 ```bash
+cd task/sub_eval
+PROMPT_TO_EVAL=/path/to/polished_criteria.jsonl \
+ANSWER_TO_EVAL=/path/to/final_answers.jsonl \
+REF_TO_EVAL=/path/to/reference_answers.jsonl \
+OUTPUT_FILE=/path/to/eval_results.jsonl \
+MODEL_NAME=eval_model \
 bash run_eval.sh
 ```
 
-Or run the Python script directly:
+You can also run the Python script directly:
 
 ```bash
-python -u evaluate_criteria_args_parallel_drb.py \
-    --model "eval_model" \
-    --prompt_to_eval "path/to/criteria.jsonl" \
-    --answer_to_eval "path/to/answers.jsonl" \
-    --ref_to_eval "path/to/reference.jsonl" \
-    --output_file "path/to/output.jsonl" \
-    --hostname_list "localhost" \
-    --ports "8000,8001" \
-    --max_workers 300
+python evaluate_criteria_args_parallel_drb.py \
+  --model eval_model \
+  --prompt_to_eval /path/to/polished_criteria.jsonl \
+  --answer_to_eval /path/to/final_answers.jsonl \
+  --ref_to_eval /path/to/reference_answers.jsonl \
+  --output_file /path/to/eval_results.jsonl \
+  --hostname_list localhost \
+  --ports 8000,8001 \
+  --max_workers 300
 ```
 
+## Configuration
 
-## Hot-Swap Support
+Common variables for `run_eval.sh`:
 
-The script supports hot-swapping of vLLM endpoints. You can modify `endpoints.conf` at runtime without restarting the script. The changes take effect on the next evaluation batch.
+| Variable | Purpose |
+| --- | --- |
+| `PROMPT_TO_EVAL` | Criteria JSONL from open-ended task generation |
+| `ANSWER_TO_EVAL` | Candidate answers to evaluate |
+| `REF_TO_EVAL` | Reference answer JSONL, or comma-separated reference files |
+| `OUTPUT_FILE` | Evaluation result JSONL |
+| `MODEL_NAME` | Judge model name exposed by the endpoint |
+| `MAX_WORKERS` | Document-level evaluation concurrency |
+| `SERVER_ENDPOINTS_FILE` | Endpoint config file, default `endpoints.conf` |
+
+`run_eval.sh` checks endpoint health before launching evaluation. Endpoint
+routing can be updated through `endpoints.conf`; changes are picked up during
+runtime by the Python evaluator.
+
+## Outputs
+
+Each output row includes the evaluated query, final score, document and
+reference scores, dimension-level ratios, dimension weights, and detailed
+criterion judgments.
