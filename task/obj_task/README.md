@@ -143,16 +143,3 @@ filename
 | `run_verify_rubric_trees.sh` | Rubric verification launcher |
 | `verify_rubric_trees.py` | Rubric-tree verifier |
 | `extract_proposed_questions.py` | Extract accepted questions into JSONL |
-
-## Dependencies
-
-This directory expects the QUEST runtime environment to provide packages such as:
-
-```text
-qwen_agent
-litellm
-openai
-transformers
-requests
-json5
-```
