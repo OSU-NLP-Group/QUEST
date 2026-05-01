@@ -18,8 +18,8 @@ Main entrypoints:
 | File | Purpose |
 | --- | --- |
 | `run_eval.sh` | Evaluation launcher with endpoint checks |
-| `evaluate_criteria_args_parallel_drb.py` | Parallel rubric-evaluation script |
-| `eva_drb.py` | Evaluation prompt templates |
+| `evaluate_criteria_args_parallel_open_ended.py` | Parallel rubric-evaluation script |
+| `eva_open_ended.py` | Evaluation prompt templates |
 
 ## Run Evaluation
 
@@ -46,7 +46,7 @@ bash run_eval.sh
 You can also run the Python script directly:
 
 ```bash
-python evaluate_criteria_args_parallel_drb.py \
+python evaluate_criteria_args_parallel_open_ended.py \
   --model eval_model \
   --prompt_to_eval /path/to/polished_criteria.jsonl \
   --answer_to_eval /path/to/final_answers.jsonl \

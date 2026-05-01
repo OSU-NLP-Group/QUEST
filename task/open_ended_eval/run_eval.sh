@@ -150,7 +150,7 @@ echo ""
 
 cd "$SCRIPT_DIR"
 
-python -u evaluate_criteria_args_parallel_drb.py \
+python -u evaluate_criteria_args_parallel_open_ended.py \
     --model         "$MODEL_NAME" \
     --prompt_to_eval "$PROMPT_TO_EVAL" \
     --answer_to_eval "$ANSWER_TO_EVAL" \

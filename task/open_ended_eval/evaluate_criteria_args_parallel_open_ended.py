@@ -9,7 +9,7 @@ import concurrent.futures
 import threading
 from pathlib import Path
 from openai import OpenAI, APIError, APIConnectionError, APITimeoutError
-from eva_drb import SYSTEM_PROMPT, USER_PROMPT
+from eva_open_ended import SYSTEM_PROMPT, USER_PROMPT
 
 
 # Initialize AI client
