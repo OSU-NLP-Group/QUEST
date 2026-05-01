@@ -65,6 +65,16 @@ TASK_LOG_DIR=/path/to/objective_task_logs \
 bash run_generate_tasks.sh
 ```
 
+Search and visit caches are enabled by default and use local files under
+`./database/`. Override these only when you want to reuse or relocate caches:
+
+| Variable | Default |
+| --- | --- |
+| `VISIT_CACHE_FILE` | `./database/visit_cache.db` |
+| `SEARCH_CACHE_FILE` | `./database/search_cache.db` |
+| `VISIT_CACHE_ENABLED`, `SEARCH_CACHE_ENABLED` | `true` |
+| `VISIT_CACHE_RESUME`, `SEARCH_CACHE_RESUME` | `true` |
+
 Rubric verification uses its own model configuration:
 
 | Variable | Purpose |
