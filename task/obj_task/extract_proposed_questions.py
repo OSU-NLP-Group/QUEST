@@ -72,10 +72,18 @@ def extract_questions_from_directory(input_dir, output_file):
     print(f"Output file: {output_file}")
 
 def main():
+    default_base = Path("./outputs/objective_trajectories/formatted")
+    refined_accepted_dir = default_base / "refined" / "verifier" / "accepted_trajectories"
+    default_input_dir = (
+        refined_accepted_dir
+        if refined_accepted_dir.exists()
+        else default_base / "verifier" / "accepted_trajectories"
+    )
+
     parser = argparse.ArgumentParser(description="Extract proposed questions from accepted objective trajectories.")
     parser.add_argument(
         "--input-dir",
-        default="./outputs/objective_trajectories/formatted/verifier/accepted_trajectories",
+        default=str(default_input_dir),
         help="Directory containing accepted trajectory JSON files.",
     )
     parser.add_argument(

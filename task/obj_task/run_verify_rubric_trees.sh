@@ -9,7 +9,14 @@ export RUBRIC_VERIFIER_MODEL_NAME="${RUBRIC_VERIFIER_MODEL_NAME:-bedrock/us.anth
 
 # Execution paths
 MODEL_ID="${RUBRIC_VERIFIER_MODEL_NAME}"
-FORMATTED_TRAJ_DIR="${FORMATTED_TRAJ_DIR:-${TRAJ_DIR:-./outputs/objective_trajectories}/formatted}"
+if [ -z "${FORMATTED_TRAJ_DIR:-}" ]; then
+  BASE_FORMATTED_TRAJ_DIR="${TRAJ_DIR:-./outputs/objective_trajectories}/formatted"
+  if [ -d "${BASE_FORMATTED_TRAJ_DIR}/refined" ]; then
+    FORMATTED_TRAJ_DIR="${BASE_FORMATTED_TRAJ_DIR}/refined"
+  else
+    FORMATTED_TRAJ_DIR="${BASE_FORMATTED_TRAJ_DIR}"
+  fi
+fi
 LOG_DIR="${LOG_DIR:-${FORMATTED_TRAJ_DIR}/verifier/rubric-tree-verifier-logs}"
 OUTPUT_FILE="${OUTPUT_FILE:-${FORMATTED_TRAJ_DIR}/verifier/rubrc-tree-verification-results.json}"
 
