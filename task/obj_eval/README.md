@@ -1,60 +1,70 @@
-# Generate Obj Eval Scripts from Formatted Obj Tasks
+# Objective Verifier Generation
 
-This directory is used to generate one Python script per formatted obj task JSON file.
+This directory generates executable Python verifier scripts from formatted
+objective tasks. It is the bridge between accepted objective tasks and
+task-specific verification code.
 
-Core flow:
-1. Prepare formatted obj task files (`*.json`).
-2. Run `task/obj_eval/obj_eval_generation.py`.
-3. Get one generated `tree2py_*.py` script for each task.
+## Overview
 
-## Step 1: Prepare Environment
+Input files should be formatted objective-task JSON files containing:
 
-```bash
-python -m pip install litellm tqdm
+```text
+proposed_question
+rubric_tree_analysis_refined.formatted_tree
 ```
 
-Configure the model provider credentials required by LiteLLM before running the
-generator.
+Typical input comes from the objective task pipeline:
 
-## Step 2: Prepare Input (Formatted Obj Tasks)
+```text
+task/obj_task/outputs/objective_trajectories/formatted/refined/
+```
 
-Input should be:
-- a single formatted task JSON file, or
-- a directory containing many formatted task JSON files.
+If the refined directory does not exist, use the original `formatted/` directory.
 
-Each JSON should include at least:
-- `proposed_question`
-- `rubric_tree_analysis_refined.formatted_tree`
+## Run Generation
 
-## Step 3: Run Generation
-
-### Option A: Run on a directory
+From the repository root:
 
 ```bash
 python task/obj_eval/obj_eval_generation.py \
-  --input /path/to/objective_trajectories/formatted \
+  --input /path/to/formatted_tasks \
   --template task/obj_eval/generation_prompt.md \
   --output /path/to/objective_verifiers \
+  --model openai/gpt-5 \
   --concurrency 20
 ```
 
-### Option B: Run on one JSON file
+`--input` can be either a single formatted JSON file or a directory containing
+many formatted JSON files.
 
-```bash
-python task/obj_eval/obj_eval_generation.py \
-  --input /path/to/formatted_task.json \
-  --template task/obj_eval/generation_prompt.md \
-  --output /path/to/objective_verifiers \
-  --concurrency 1
+The generation model can also be configured with:
+
+```text
+OBJ_EVAL_MODEL_NAME
 ```
 
-## Step 4: Check Outputs
+## Outputs
 
-In `--output` directory:
-- success file format: `tree2py_<input_json_stem>.py`
-- if model returns empty code block, raw response is saved as:
-  `tree2script_formatted_<input_json_stem>_raw.md`
+The output directory contains one verifier script per input task:
 
-The script also prints:
-- total/success/failed counts
-- prompt/completion/reasoning/total token usage
+```text
+tree2py_<input_json_stem>.py
+```
+
+If the model response does not contain usable Python code, the raw response is
+saved as:
+
+```text
+tree2script_formatted_<input_json_stem>_raw.md
+```
+
+The generator prints total, success, failed, and token-usage counts at the end
+of the run.
+
+## Main Files
+
+| File | Purpose |
+| --- | --- |
+| `obj_eval_generation.py` | Batch generator for objective verifier scripts |
+| `generation_prompt.md` | Prompt template for verifier generation |
+| `utils/` | Shared verifier runtime and examples used in the prompt |

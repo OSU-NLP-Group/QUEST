@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from litellm import completion
 
-model = "openai/gpt-5"
+DEFAULT_MODEL = os.environ.get("OBJ_EVAL_MODEL_NAME", "openai/gpt-5")
 
 # Global token statistics and lock
 token_stats = {
@@ -97,10 +97,10 @@ def extract_file_number(filename: str) -> int:
 
 
 @retry_with_backoff(max_retries=5, backoff_factor=2)
-def call_azure_api(content):
+def call_model_api(content, model_name):
     """Call the model API."""
     response = completion(
-        model=model,
+        model=model_name,
         messages=[{ "content": content,"role": "user"}],
         reasoning_effort="high",
         max_tokens=32384
@@ -126,7 +126,7 @@ def call_azure_api(content):
     return response
 
 
-def process_single_json(json_file: Path, template: str, static_replacements: dict, output_dir: Path):
+def process_single_json(json_file: Path, template: str, static_replacements: dict, output_dir: Path, model_name: str):
     """
     Process a single JSON file and generate Python code directly.
     
@@ -174,7 +174,7 @@ def process_single_json(json_file: Path, template: str, static_replacements: dic
             return False
         
         # Call API
-        response = call_azure_api(formatted_content)
+        response = call_model_api(formatted_content, model_name)
         
         # Extract response content
         response_content = response.choices[0].message.content
@@ -215,6 +215,8 @@ def main():
                         help='Template file path')
     parser.add_argument('--concurrency', '-c', type=int, default=50,
                         help='Number of worker threads for concurrent processing (default: 50)')
+    parser.add_argument('--model', '-m', type=str, default=DEFAULT_MODEL,
+                        help='LiteLLM model name for script generation')
     args = parser.parse_args()
     
     # Define default paths
@@ -231,7 +233,9 @@ def main():
     if args.input:
         input_path = Path(args.input)
     else:
-        input_path = base_dir / "formatted"
+        obj_task_output = base_dir.parent / "obj_task" / "outputs" / "objective_trajectories" / "formatted"
+        refined_input = obj_task_output / "refined"
+        input_path = refined_input if refined_input.exists() else obj_task_output
 
     # Output directory
     if args.output:
@@ -247,6 +251,7 @@ def main():
     print(f"   Input path: {input_path}")
     print(f"   Output directory: {output_dir}")
     print(f"   Concurrency: {args.concurrency}")
+    print(f"   Model: {args.model}")
     
     # Read template
     template = read_file(template_path)
@@ -300,7 +305,17 @@ def main():
     # Process concurrently
     with ThreadPoolExecutor(max_workers=args.concurrency) as executor:
         # Submit tasks
-        futures = {executor.submit(process_single_json, json_file, template, static_replacements, output_dir): json_file for json_file in json_files_sorted}
+        futures = {
+            executor.submit(
+                process_single_json,
+                json_file,
+                template,
+                static_replacements,
+                output_dir,
+                args.model,
+            ): json_file
+            for json_file in json_files_sorted
+        }
         
         # Handle task results
         for future in tqdm(as_completed(futures), total=len(futures), desc="Processing files", unit="file"):
