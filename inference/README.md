@@ -3,7 +3,26 @@
 This directory runs QUEST inference against benchmark datasets using an existing
 model endpoint.
 
+## Overview
+
+The inference pipeline provides a ReAct-style research agent with search,
+scholar, visit, memory, and Python tools. Benchmark launch scripts live in this
+directory, while benchmark-specific judging code lives under
+[`../evaluation/`](../evaluation/).
+
+Supported benchmark launchers:
+
+| Benchmark | Script | Default Dataset |
+| --- | --- | --- |
+| BrowseComp | `run_react_infer_bc.sh` | `../evaluation/browsecomp/browsecomp.jsonl` |
+| GAIA | `run_react_infer_gaia.sh` | `../evaluation/gaia/gaia-text-only-103.jsonl` |
+| HLE | `run_react_infer_hle.sh` | `../evaluation/hle/hle_text_only_130.jsonl` |
+| DeepResearch Bench | `run_react_infer_drb.sh` | `../evaluation/drbench/deepresearch_bench_questions.jsonl` |
+| Mind2Web2 | `run_react_infer_m2w2.sh` | Set `DATASET` to your Mind2Web2 test file |
+
 ## Setup
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -19,30 +38,17 @@ Configure external services and model endpoints before launching:
 `react_agent.py` reloads `server_endpoints.conf` during execution, so endpoint
 routing can be updated without restarting a run.
 
-## Launch Scripts
+## Run Inference
 
-Common entrypoints:
-
-```bash
-bash run_react_infer_bc.sh
-bash run_react_infer_gaia.sh
-bash run_react_infer_hle.sh
-bash run_react_infer_drb.sh
-bash run_react_infer_m2w2.sh
-```
-
-The staggered variants are useful when launching high-concurrency runs in
-batches:
+From this directory, run the benchmark-specific script after configuration:
 
 ```bash
-bash run_react_infer_bc_staggered.sh
-bash run_react_infer_hle_staggered.sh
+cd inference
+bash run_react_infer_<benchmark>.sh
 ```
 
-## Before A Run
-
-Set or edit the following fields in the corresponding `run_react_infer_*.sh`
-script:
+For a new run, update the corresponding script or override the variables from
+the shell:
 
 | Variable | Purpose |
 | --- | --- |
@@ -51,7 +57,6 @@ script:
 | `TASK_LOG_DIR` | Directory for task logs and memory traces |
 | `MODEL_PATH` | Model checkpoint or served model name |
 | `MAX_TURN` | Maximum interaction turns per sample |
-| `MAX_LLM_CALL_PER_RUN` | Maximum model calls per sample |
 | `MAX_WORKERS` | Inference concurrency |
 | `MEMORY_THRESHOLD` | Context or memory threshold before truncation/filtering |
 | `LLM_MAX_TOKENS` | Generation token budget |
@@ -59,15 +64,24 @@ script:
 | `SERVER_ENDPOINTS_FILE` | Endpoint configuration file path |
 | `HOSTNAME_LIST`, `PORTS` | Endpoint hosts and ports when not using `server_endpoints.conf` |
 
-## Script Defaults
+Example:
 
-| Script | Benchmark | Notable Defaults |
-| --- | --- | --- |
-| `run_react_infer_bc.sh` | BrowseComp | `MAX_TURN=400`, `MEMORY_THRESHOLD=80000`, `LLM_MAX_TOKENS=20000` |
-| `run_react_infer_gaia.sh` | GAIA | `MAX_TURN=400`, `MEMORY_THRESHOLD=40000`, `LLM_MAX_TOKENS=16000` |
-| `run_react_infer_hle.sh` | HLE | `MAX_TURN=200`, `MEMORY_THRESHOLD=80000`, `LLM_MAX_TOKENS=16000` |
-| `run_react_infer_drb.sh` | DeepResearch Bench | `MAX_TURN=200`, `MEMORY_THRESHOLD=40000`, `LLM_MAX_TOKENS=10000` |
-| `run_react_infer_m2w2.sh` | Mind2Web2 | `MAX_TURN=200`, `MEMORY_THRESHOLD=80000`, `LLM_MAX_TOKENS=16000` |
+```bash
+DATASET=/path/to/benchmark.jsonl \
+OUTPUT_PATH=/path/to/outputs/results \
+TASK_LOG_DIR=/path/to/outputs/logs \
+bash run_react_infer_bc.sh
+```
+
+## Defaults
+
+| Benchmark | `MAX_TURN` | `MEMORY_THRESHOLD` | `LLM_MAX_TOKENS` |
+| --- | --- | --- | --- |
+| BrowseComp | `400` | `80000` | `20000` |
+| GAIA | `400` | `40000` | `16000` |
+| HLE | `200` | `96000` | `32000` |
+| DeepResearch Bench | `200` | `16000` | `10000` |
+| Mind2Web2 | `200` | `80000` | `16000` |
 
 ## Resume
 
@@ -77,5 +91,5 @@ the same script with the same output and log paths.
 ## Adding A Benchmark
 
 Add a dataset file that matches the input format expected by `run_multi_react.py`,
-then create or adapt a `run_react_infer_*.sh` launch script. Evaluation logic is
-kept under [`../evaluation/`](../evaluation/).
+then create or adapt a `run_react_infer_*.sh` launch script. Keep scoring and
+judge logic under [`../evaluation/`](../evaluation/).
