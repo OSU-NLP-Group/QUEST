@@ -242,7 +242,7 @@ command and expected formatted-task input structure.
 
 ### Open-Ended Tasks
 
-Open-ended longform generation lives under `task/sub_task/`.
+Open-ended longform generation lives under `task/open_ended_task/`.
 
 High-level flow:
 
@@ -252,15 +252,15 @@ generate longform tasks -> extract proposed QAs -> generate criteria
 -> extract final answers
 ```
 
-See [`task/sub_task/README.md`](task/sub_task/README.md) for the runnable
+See [`task/open_ended_task/README.md`](task/open_ended_task/README.md) for the runnable
 commands and expected input/output paths.
 
 ### Open-Ended Evaluation
 
-Rubric-based document quality evaluation lives under `task/sub_eval/`:
+Rubric-based document quality evaluation lives under `task/open_ended_eval/`:
 
 ```bash
-cd task/sub_eval
+cd task/open_ended_eval
 bash run_eval.sh
 ```
 
@@ -278,6 +278,6 @@ We provide details of each component in the READMEs below.
 | SFT backend | [`training_scripts/sft/`](training_scripts/sft/) | [`training_scripts/sft/README.md`](training_scripts/sft/README.md) | LlamaFactory-based SFT backend |
 | Objective task generation | [`task/obj_task/`](task/obj_task/) | [`task/obj_task/README.md`](task/obj_task/README.md) | Objective task generation pipeline |
 | Objective verifier scripts | [`task/obj_eval/`](task/obj_eval/) | [`task/obj_eval/README.md`](task/obj_eval/README.md) | Objective-task verifier generation |
-| Open-ended task generation | [`task/sub_task/`](task/sub_task/) | [`task/sub_task/README.md`](task/sub_task/README.md) | Open-ended task generation pipeline |
-| Open-ended evaluation | [`task/sub_eval/`](task/sub_eval/) | [`task/sub_eval/README.md`](task/sub_eval/README.md) | Open-ended task evaluation pipeline |
+| Open-ended task generation | [`task/open_ended_task/`](task/open_ended_task/) | [`task/open_ended_task/README.md`](task/open_ended_task/README.md) | Open-ended task generation pipeline |
+| Open-ended evaluation | [`task/open_ended_eval/`](task/open_ended_eval/) | [`task/open_ended_eval/README.md`](task/open_ended_eval/README.md) | Open-ended task evaluation pipeline |
 | Evaluation | [`evaluation/`](evaluation/) | [`evaluation/README.md`](evaluation/README.md) | Benchmark evaluation scripts |

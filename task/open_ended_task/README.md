@@ -31,7 +31,7 @@ Main entrypoints:
 From the repository root:
 
 ```bash
-cd task/sub_task
+cd task/open_ended_task
 bash run_generate_tasks_longform.sh
 python extract_proposed_qa.py \
   --input_dir /path/to/openended_trajectories \

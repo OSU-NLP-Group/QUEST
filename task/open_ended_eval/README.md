@@ -34,7 +34,7 @@ PORTS=8000,8001
 From the repository root:
 
 ```bash
-cd task/sub_eval
+cd task/open_ended_eval
 PROMPT_TO_EVAL=/path/to/polished_criteria.jsonl \
 ANSWER_TO_EVAL=/path/to/final_answers.jsonl \
 REF_TO_EVAL=/path/to/reference_answers.jsonl \
