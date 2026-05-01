@@ -22,11 +22,16 @@ Supported benchmark launchers:
 
 ## Setup
 
-Install dependencies:
+Install the shared QUEST runtime dependencies from the repository root:
 
 ```bash
+cd ..
 pip install -r requirements.txt
 ```
+
+The root environment is shared by inference, data generation, and evaluation.
+Training dependencies are managed separately under `training_scripts/sft/` and
+`training_scripts/rl/`.
 
 Configure external services and model endpoints before launching:
 

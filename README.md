@@ -44,12 +44,16 @@ report synthesis.
 
 ## Environment Setup
 
-Create an environment and install the inference dependencies:
+Create an environment and install the shared runtime dependencies:
 
 ```bash
-cd inference
 pip install -r requirements.txt
 ```
+
+This environment is intended for inference, data generation, and evaluation
+workflows. Training uses separate backend stacks: install SFT dependencies under
+`training_scripts/sft/` according to LlamaFactory requirements, and install RL
+dependencies under `training_scripts/rl/` according to VERL requirements.
 
 ## Runtime Configuration
 
