@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 # Model and Inference Hyperparameters
 export DATASET="${DATASET:-extracted_questions.jsonl}"
@@ -34,10 +35,11 @@ export AWS_REGION_NAME="${AWS_REGION_NAME:-us-east-2}"
 
 # Cache configuration
 export VISIT_CACHE_ENABLED="${VISIT_CACHE_ENABLED:-true}"
-export VISIT_CACHE_FILE="${VISIT_CACHE_FILE:-${SCRIPT_DIR}/../database/visit_cache.db}"
+export VISIT_CACHE_FILE="${VISIT_CACHE_FILE:-${REPO_ROOT}/database/visit_cache.db}"
 export VISIT_CACHE_RESUME="${VISIT_CACHE_RESUME:-true}"
 export SEARCH_CACHE_ENABLED="${SEARCH_CACHE_ENABLED:-true}"
-export SEARCH_CACHE_FILE="${SEARCH_CACHE_FILE:-${SCRIPT_DIR}/../database/search_cache.db}"
+export SEARCH_CACHE_FILE="${SEARCH_CACHE_FILE:-${REPO_ROOT}/database/search_cache.db}"
 export SEARCH_CACHE_RESUME="${SEARCH_CACHE_RESUME:-true}"
 
+mkdir -p "${REPO_ROOT}/database"
 python -u "$SCRIPT_DIR/run_multi_react_ref_gen.py" --dataset "$DATASET" --output "$OUTPUT_PATH" --max_workers "$MAX_WORKERS" --model "$MODEL_NAME" --temperature "$TEMPERATURE" --presence_penalty "$PRESENCE_PENALTY" --total_splits "${WORLD_SIZE:-1}" --worker_split "$((${RANK:-0} + 1))" --roll_out_count "$ROLLOUT_COUNT"
