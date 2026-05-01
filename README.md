@@ -55,6 +55,17 @@ workflows. Training uses separate backend stacks: install SFT dependencies under
 `training_scripts/sft/` according to LlamaFactory requirements, and install RL
 dependencies under `training_scripts/rl/` according to VERL requirements.
 
+Prepare the local databases used by search, visit, and scholar tools under the
+repository-level `database/` directory:
+
+```text
+database/
+```
+
+These files are not included in the repository. Download or generate the
+required databases for the workflow you plan to run before launching inference,
+data generation, or evaluation.
+
 ## Runtime Configuration
 
 The exact environment variables depend on the workflow. Common groups include:
