@@ -4,6 +4,7 @@
 import json
 import re
 import os
+import argparse
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -154,7 +155,15 @@ def process_file(file_path: Path) -> bool:
 
 def main():
     """Documentation omitted."""
-    target_dir = Path('/fs/scratch/PAS1576/jianxie/DeepResearch/proposer_v1/inference/server/claude-sonnet-4.5/traj_v6_8k_RL')
+    parser = argparse.ArgumentParser(description="Merge refined rubric predictions back into trajectory JSON files.")
+    parser.add_argument(
+        "--input-dir",
+        default="./outputs/objective_trajectories",
+        help="Directory containing raw trajectory JSON files.",
+    )
+    args = parser.parse_args()
+
+    target_dir = Path(args.input_dir)
     if not target_dir.exists():
         print(f"Error: directory does not exist: {target_dir}")
         return

@@ -1,6 +1,7 @@
 import json
 import os
 import glob
+import argparse
 from typing import Dict, Any, Tuple, Optional
 
 def calculate_rubric_tree_depth(node: Dict[str, Any], current_depth: int = 1) -> int:
@@ -395,8 +396,15 @@ def process_trajectory_file(input_file: str, output_file: Optional[str] = None, 
 
 def main():
     """Documentation omitted."""
-    # current_dir = os.path.dirname(os.path.abspath(__file__))
-    current_dir = "/fs/scratch/PAS1576/jianxie/DeepResearch/proposer_v1/inference/server/claude-sonnet-4.5/traj_v6_8k_RL/valid/formatted/verifier/accepted_trajectories"
+    parser = argparse.ArgumentParser(description="Convert trajectory JSON files into formatted verifier inputs.")
+    parser.add_argument(
+        "--input-dir",
+        default="./outputs/objective_trajectories",
+        help="Directory containing trajectory JSON files.",
+    )
+    args = parser.parse_args()
+
+    current_dir = args.input_dir
     pattern = os.path.join(current_dir, "*.json")
     files = glob.glob(pattern)
     files = [f for f in files if not f.endswith("_formatted.json")]
@@ -414,4 +422,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -63,25 +63,24 @@ export CACHE_DIR="${CACHE_DIR:-${SCRIPT_DIR}/cache/${USER:-default}}"
 # Model and Inference Hyperparameters
 export MODEL_NAME="${MODEL_NAME:-deepresearch}"
 export MODEL_PATH="${MODEL_PATH:-Alibaba-NLP/Tongyi-DeepResearch-30B-A3B}"
-export DATASET="${DATASET:-${SCRIPT_DIR}/../evaluation/hle/hle_text_only_130.jsonl}"
-export OUTPUT_PATH="${OUTPUT_PATH:-${SCRIPT_DIR}/outputs/hle/results}"
-export TASK_LOG_DIR="${TASK_LOG_DIR:-${SCRIPT_DIR}/outputs/hle/memory_logs}"
+export MEMORY_TOKENIZER_PATH="${MEMORY_TOKENIZER_PATH:-$MODEL_PATH}"
+export DATASET="${DATASET:-${SCRIPT_DIR}/../evaluation/gaia/gaia-text-only-103.jsonl}"
+export OUTPUT_PATH="${OUTPUT_PATH:-${SCRIPT_DIR}/outputs/gaia/results}"
+export TASK_LOG_DIR="${TASK_LOG_DIR:-${SCRIPT_DIR}/outputs/gaia/memory_logs}"
 export ROLLOUT_COUNT=3
 export TEMPERATURE=1
 export PRESENCE_PENALTY=1.1
-export MAX_WORKERS="${MAX_WORKERS:-2000}"
-export WORKER_START_BATCH_SIZE="${WORKER_START_BATCH_SIZE:-200}"
-export WORKER_START_BATCH_DELAY="${WORKER_START_BATCH_DELAY:-300}"
-export WORKER_START_STAGGER="${WORKER_START_STAGGER:-0.3}"
-export MAX_TURN="${MAX_TURN:-200}"
+export MAX_WORKERS="${MAX_WORKERS:-100}"
+export MAX_TURN="${MAX_TURN:-400}"
+export MAX_LLM_CALL_PER_RUN=$MAX_TURN
 
 # API and external service configuration
 export API_CONFIG_FILE="${API_CONFIG_FILE:-${SCRIPT_DIR}/api_config.yaml}"
 load_api_config "$API_CONFIG_FILE"
 echo "Loaded API config from ${API_CONFIG_FILE}"
 
-export MEMORY_THRESHOLD="${MEMORY_THRESHOLD:-96000}"
-export LLM_MAX_TOKENS="${LLM_MAX_TOKENS:-32000}"
+export MEMORY_THRESHOLD="${MEMORY_THRESHOLD:-40000}"
+export LLM_MAX_TOKENS="${LLM_MAX_TOKENS:-16000}"
 export SANDBOX_FUSION_ENDPOINT="${SANDBOX_FUSION_ENDPOINT:-your_sandbox_endpoint}"
 
 # Multi-Worker Configuration (Optional)
@@ -136,7 +135,7 @@ load_server_endpoints_from_file() {
 # Hostname List Configuration (multi-node access settings)
 # Default values; can be overridden by server_endpoints.conf or external environment variables
 # Example: export HOSTNAME_LIST="node1,node2,node3"
-export HOSTNAME_LIST="${HOSTNAME_LIST:-a0012,a0013, a0002,a0010,a0005,a0017}"
+export HOSTNAME_LIST="${HOSTNAME_LIST:-localhost}"
 
 # Main model port list, comma-separated
 export PORTS="${PORTS:-6000,6001,6002,6003}"
@@ -288,9 +287,9 @@ echo "==== start infer... ===="
 
 # ========== Cache Configuration (Cache configuration) ==========
 # Visit Cache and Search Cache use SQLite databases to reduce duplicate requests
-# 
+#
 # Cache environment variables(can be configured via a .env file or set here):
-# 
+#
 # Visit Cache (webpage access cache):
 #   VISIT_CACHE_ENABLED: whether to enable caching(default: "true")
 #   VISIT_CACHE_FILE: cache database file path(default: "visit_cache.db")
@@ -306,10 +305,4 @@ echo "==== start infer... ===="
 
 cd "$( dirname -- "${BASH_SOURCE[0]}" )"
 
-export MAX_LLM_CALL_PER_RUN=$MAX_TURN
-echo "MAX_WORKERS=${MAX_WORKERS}"
-echo "WORKER_START_BATCH_SIZE=${WORKER_START_BATCH_SIZE}"
-echo "WORKER_START_BATCH_DELAY=${WORKER_START_BATCH_DELAY}"
-echo "WORKER_START_STAGGER=${WORKER_START_STAGGER}"
-
-python -u run_multi_react.py --dataset "$DATASET" --output "$OUTPUT_PATH" --max_workers $MAX_WORKERS --model $MODEL_NAME --model_path $MODEL_PATH --temperature $TEMPERATURE --presence_penalty $PRESENCE_PENALTY --total_splits ${WORLD_SIZE:-1} --worker_split $((${RANK:-0} + 1)) --roll_out_count $ROLLOUT_COUNT --worker_start_batch_size $WORKER_START_BATCH_SIZE --worker_start_batch_delay $WORKER_START_BATCH_DELAY --worker_start_stagger $WORKER_START_STAGGER
+python -u run_multi_react.py --dataset "$DATASET" --output "$OUTPUT_PATH" --max_workers $MAX_WORKERS --model $MODEL_NAME --model_path $MODEL_PATH --temperature $TEMPERATURE --presence_penalty $PRESENCE_PENALTY --total_splits ${WORLD_SIZE:-1} --worker_split $((${RANK:-0} + 1)) --roll_out_count $ROLLOUT_COUNT

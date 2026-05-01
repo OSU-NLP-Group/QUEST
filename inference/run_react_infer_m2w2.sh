@@ -58,18 +58,18 @@ export NLP_WEB_SEARCH_ENABLE_SFILTER=false
 export QWEN_SEARCH_ENABLE_CSI=false
 export SPECIAL_CODE_MODE=false
 export PYTHONDONTWRITEBYTECODE=1
-export CACHE_DIR=/fs/ess/PAA0201/jianxie/database_only_for_eval/$USER
+export CACHE_DIR="${CACHE_DIR:-${SCRIPT_DIR}/cache/${USER:-default}}"
 
 # Model and Inference Hyperparameters
-export MODEL_NAME=deepresearch
-export MODEL_PATH=Alibaba-NLP/Tongyi-DeepResearch-30B-A3B
-export DATASET=/fs/ess/PAA0201/zilu/DeepResearch_v2/inference/eval_data/mind2web2_test.jsonl
-export OUTPUT_PATH=/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/m2w2/a3b-results/qwen3-moe-rl-45steps-16k-output-80k-memory-200turns/results
-export TASK_LOG_DIR=/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/m2w2/a3b-results/qwen3-moe-rl-45steps-16k-output-80k-memory-200turns/memory_logs
+export MODEL_NAME="${MODEL_NAME:-deepresearch}"
+export MODEL_PATH="${MODEL_PATH:-Alibaba-NLP/Tongyi-DeepResearch-30B-A3B}"
+export DATASET="${DATASET:-path/to/mind2web2_test.jsonl}"
+export OUTPUT_PATH="${OUTPUT_PATH:-${SCRIPT_DIR}/outputs/mind2web2/results}"
+export TASK_LOG_DIR="${TASK_LOG_DIR:-${SCRIPT_DIR}/outputs/mind2web2/memory_logs}"
 export ROLLOUT_COUNT=3
 export TEMPERATURE=1
 export PRESENCE_PENALTY=1.1
-export MAX_WORKERS=100
+export MAX_WORKERS="${MAX_WORKERS:-100}"
 export MAX_TURN="${MAX_TURN:-200}"
 export MAX_LLM_CALL_PER_RUN=$MAX_TURN
 

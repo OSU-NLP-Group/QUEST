@@ -218,8 +218,10 @@ DOMAIN_TO_CSV = {
     "Ticketed Activities": "entertainment.csv",
 }
 
-# TRENDING_KEYWORDS_DIR = "../trending_keywords/20251128_223135"
-TRENDING_KEYWORDS_DIR = "/fs/scratch/PAS1576/jianxie/DeepResearch/proposer_v1/inference/keywords/trending_keywords_0317/merge_keywords"
+TRENDING_KEYWORDS_DIR = os.getenv(
+    "TRENDING_KEYWORDS_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "keywords"),
+)
 
 def sample_keywords_from_csv(domain, num_keywords=10):
     """Documentation omitted."""

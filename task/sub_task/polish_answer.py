@@ -1,4 +1,3 @@
-from polish_prompt import POLISH_TEMPLATE
 from tqdm import tqdm
 import concurrent.futures
 import threading
@@ -9,9 +8,12 @@ import json
 from tqdm import trange
 import copy
 import argparse
+import sys
 
-# set environment variables
-os.environ["OPENAI_API_KEY"] = os.environ["OPENAI_API_KEY"]
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(CURRENT_DIR, "longform_rubric", "prompt"))
+
+from polish_prompt import POLISH_TEMPLATE
 
 # model configuration
 model="openai/gpt-5.2"

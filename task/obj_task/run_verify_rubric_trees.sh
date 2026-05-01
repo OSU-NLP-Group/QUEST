@@ -9,14 +9,14 @@ export RUBRIC_VERIFIER_MODEL_NAME="${RUBRIC_VERIFIER_MODEL_NAME:-bedrock/us.anth
 
 # Execution paths
 MODEL_ID="${RUBRIC_VERIFIER_MODEL_NAME}"
-TRAJ_DIR="${TRAJ_DIR:-/fs/scratch/PAS1576/jianxie/DeepResearch/proposer_v1/inference/server/claude-sonnet-4.5/traj_v6_8k_RL/valid/formatted}"
-LOG_DIR="${LOG_DIR:-${TRAJ_DIR}/verifier/rubric-tree-verifier-logs}"
-OUTPUT_FILE="${OUTPUT_FILE:-${TRAJ_DIR}/verifier/rubrc-tree-verification-results.json}"
+FORMATTED_TRAJ_DIR="${FORMATTED_TRAJ_DIR:-${TRAJ_DIR:-./outputs/objective_trajectories}/formatted}"
+LOG_DIR="${LOG_DIR:-${FORMATTED_TRAJ_DIR}/verifier/rubric-tree-verifier-logs}"
+OUTPUT_FILE="${OUTPUT_FILE:-${FORMATTED_TRAJ_DIR}/verifier/rubrc-tree-verification-results.json}"
 
 mkdir -p "$LOG_DIR"
 
 python verify_rubric_trees.py \
-  --folder "$TRAJ_DIR" \
+  --folder "$FORMATTED_TRAJ_DIR" \
   --output "$OUTPUT_FILE" \
   --model "$MODEL_ID" \
   --region "${RUBRIC_VERIFIER_AWS_REGION_NAME}" \

@@ -1,4 +1,4 @@
-# `sub_eval` - Document Quality Evaluation
+# Open-ended Evaluation Workflow
 
 This directory contains a document quality evaluation pipeline that compares answers against reference answers using a rubric-based scoring system.
 

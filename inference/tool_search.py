@@ -24,7 +24,10 @@ if BLOCK_HUGGINGFACE:
     print("[Warining] BLOCK_HUGGINGFACE is enabled.")
 
 # Cache configuration
-_shared_cache_dir = "/fs/ess/PAA0201/jianxie/database_only_for_eval"
+_shared_cache_dir = os.getenv(
+    "SHARED_CACHE_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache"),
+)
 _default_cache_dir = os.getenv("CACHE_DIR", _shared_cache_dir)
 os.makedirs(_default_cache_dir, exist_ok=True)
 _default_search_cache_file = os.path.join(_default_cache_dir, "search_cache_merged.db")

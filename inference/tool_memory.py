@@ -7,6 +7,13 @@ from litellm import completion
 from transformers import AutoTokenizer
 import time
 from datetime import datetime
+from prompt import (
+    MEMORY_LOCAL_SYSTEM_PROMPT,
+    choose_local_openai_base_url,
+    get_local_served_model_name,
+    use_memory_local_prompt,
+)
+from openai import OpenAI
 
 
 # System prompt for memory tool
@@ -219,20 +226,59 @@ class Memory(BaseTool):
         Returns:
             content string returned by the API
         """
+        if use_memory_local_prompt():
+            model_name = get_local_served_model_name()
+            full_messages = messages.copy()
+            has_system = any(msg.get("role") == "system" for msg in full_messages)
+            if not has_system:
+                full_messages = [
+                    {"role": "system", "content": MEMORY_SYSTEM_PROMPT},
+                    {"role": "system", "content": MEMORY_LOCAL_SYSTEM_PROMPT},
+                ] + full_messages
+
+            last_error = None
+            for attempt in range(max_retries):
+                try:
+                    client = OpenAI(
+                        api_key="EMPTY",
+                        base_url=choose_local_openai_base_url(),
+                        timeout=600.0,
+                    )
+                    chat_response = client.chat.completions.create(
+                        model=model_name,
+                        messages=full_messages,
+                        temperature=1
+                    )
+                    content = chat_response.choices[0].message.content
+                    if content:
+                        return content
+                except Exception as e:
+                    last_error = e
+                    print(f"[Memory] local server call error (attempt {attempt + 1}/{max_retries}): {e}")
+                    continue
+            raise RuntimeError(f"Memory local server call failed after retries: {last_error}")
+
         # Use MEMORY_* prefixed environment variables, independent from other model settings
         model_name = os.environ.get("MEMORY_MODEL_NAME", "")
         
         if not model_name:
             raise ValueError("MEMORY_MODEL_NAME environment variable must be set")
         
-        # Add the system prompt(if messages does not contain a system message)
+        # Preserve the original memory prompt and optionally append the local
+        # training-style prompt as an extra system message for A/B alignment.
         full_messages = messages.copy()
         has_system = any(msg.get("role") == "system" for msg in full_messages)
         if not has_system:
-            full_messages.insert(0, {
+            system_messages = [{
                 "role": "system",
                 "content": MEMORY_SYSTEM_PROMPT
-            })
+            }]
+            if use_memory_local_prompt():
+                system_messages.append({
+                    "role": "system",
+                    "content": MEMORY_LOCAL_SYSTEM_PROMPT
+                })
+            full_messages = system_messages + full_messages
         
         # Prepare litellm call arguments
         call_kwargs = {

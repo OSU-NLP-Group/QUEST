@@ -1,4 +1,4 @@
-# `sub_task` Workflow
+# Open-ended Task Generation Workflow
 
 This directory contains a stripped-down task-generation pipeline for longform question generation.
 
@@ -80,6 +80,7 @@ Important parameters in `generate_longform_tasks.py`:
 Typical command:
 
 ```bash
+export TRAJ_DIR=/path/to/openended_trajectories
 bash run_generate_tasks_longform.sh
 ```
 
@@ -100,7 +101,9 @@ Required arguments:
 Typical command:
 
 ```bash
-python extract_proposed_qa.py --input_dir /path/to/json/files --output_file extracted_questions.jsonl
+python extract_proposed_qa.py \
+  --input_dir /path/to/openended_trajectories \
+  --output_file /path/to/openended_outputs/proposed_qa.jsonl
 ```
 
 ### Step 3: Generate evaluation criteria
@@ -120,7 +123,9 @@ Required arguments:
 Typical command:
 
 ```bash
-python longform_rubric/generate_criteria.py --input_file extracted_questions.jsonl --output_file criteria.jsonl
+python longform_rubric/generate_criteria.py \
+  --input_file /path/to/openended_outputs/proposed_qa.jsonl \
+  --output_file /path/to/openended_outputs/criteria.jsonl
 ```
 
 ### Step 4: Polish evaluation criteria
@@ -143,7 +148,9 @@ Optional arguments:
 Typical command:
 
 ```bash
-python longform_rubric/polish_criteria.py --input_file criteria.jsonl --output_file polished_criteria.jsonl
+python longform_rubric/polish_criteria.py \
+  --input_file /path/to/openended_outputs/criteria.jsonl \
+  --output_file /path/to/openended_outputs/polished_criteria.jsonl
 ```
 
 ### Step 5: Generate reference answers
@@ -166,6 +173,8 @@ Important environment variables in `ref_gen/run.sh`:
 Typical command:
 
 ```bash
+export DATASET=/path/to/openended_outputs/proposed_qa.jsonl
+export OUTPUT_PATH=/path/to/openended_outputs/reference_answers
 bash ref_gen/run.sh
 ```
 
@@ -194,7 +203,9 @@ Optional arguments:
 Typical command:
 
 ```bash
-python polish_answer.py --files_to_polish /memory_logs --output_dir /results
+python polish_answer.py \
+  --files_to_polish /path/to/teacher_model_logs \
+  --output_dir /path/to/openended_outputs/refined_answers
 ```
 
 ### Step 8: Extract polished answers
@@ -217,7 +228,9 @@ Optional arguments:
 Typical command:
 
 ```bash
-python extract_polished_answer.py --output_dir /results
+python extract_polished_answer.py \
+  --output_dir /path/to/openended_outputs/refined_answers \
+  --output_file /path/to/openended_outputs/final_answers.jsonl
 ```
 
 

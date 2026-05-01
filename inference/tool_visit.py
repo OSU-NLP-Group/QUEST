@@ -6,7 +6,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Union, Tuple, Optional, Dict
 import requests
 from qwen_agent.tools.base import BaseTool, register_tool
-from prompt import EXTRACTOR_PROMPT 
+from prompt import (
+    build_visit_extractor_messages,
+    choose_local_openai_base_url,
+    get_local_served_model_name,
+    use_visit_local_prompt,
+)
 from openai import OpenAI, AzureOpenAI
 import random
 from urllib.parse import urlparse, unquote
@@ -26,7 +31,10 @@ BLOCK_HUGGINGFACE = os.getenv("BLOCK_HUGGINGFACE", "false").lower() == "true"
 JINA_API_KEYS = os.getenv("JINA_API_KEYS", "")
 
 # Cache configuration
-_shared_cache_dir = "/fs/ess/PAA0201/jianxie/database_only_for_eval"
+_shared_cache_dir = os.getenv(
+    "SHARED_CACHE_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache"),
+)
 _default_cache_dir = os.getenv("CACHE_DIR", _shared_cache_dir)
 os.makedirs(_default_cache_dir, exist_ok=True)
 _default_visit_cache_file = os.path.join(_default_cache_dir, "visit_cache_merged.db")
@@ -474,6 +482,47 @@ class Visit(BaseTool):
             print("[Visit] Access to huggingface.co is forbidden.")
             return False, "[Visit] Access to huggingface.co is forbidden."
         return True, ""
+
+    def _normalize_summary_output(self, raw) -> Tuple[str, str]:
+        """
+        Normalize summary model output so missing keys do not fail the visit tool.
+
+        Returns:
+            (evidence_text, summary_text)
+        """
+        if isinstance(raw, dict):
+            evidence = (
+                raw.get("evidence")
+                or raw.get("excerpt")
+                or raw.get("excerpts")
+                or raw.get("content")
+                or raw.get("rational")
+                or raw.get("rationale")
+                or ""
+            )
+            summary = (
+                raw.get("summary")
+                or raw.get("answer")
+                or raw.get("conclusion")
+                or raw.get("final")
+                or ""
+            )
+
+            if not evidence and not summary:
+                fallback = json.dumps(raw, ensure_ascii=False)
+                print(f"[visit] Warning: summary JSON missing expected fields, using raw JSON fallback. Keys: {list(raw.keys())}")
+                return fallback, fallback
+            if not evidence:
+                print(f"[visit] Warning: summary JSON missing 'evidence', falling back to summary/other fields. Keys: {list(raw.keys())}")
+                evidence = summary or json.dumps(raw, ensure_ascii=False)
+            if not summary:
+                print(f"[visit] Warning: summary JSON missing 'summary', falling back to evidence/other fields. Keys: {list(raw.keys())}")
+                summary = evidence or json.dumps(raw, ensure_ascii=False)
+            return str(evidence), str(summary)
+
+        fallback = raw if isinstance(raw, str) else json.dumps(raw, ensure_ascii=False)
+        print(f"[visit] Warning: summary output is not a dict, using text fallback. Type: {type(raw).__name__}")
+        return str(fallback), str(fallback)
     
     def _process_content_to_summary(self, url: str, goal: str, content: str) -> str:
         """
@@ -536,9 +585,10 @@ class Visit(BaseTool):
                 useful_information += "Evidence in page: \n" + "The provided webpage content could not be accessed. Please check the URL or file format." + "\n\n"
                 useful_information += "Summary: \n" + "The webpage content could not be processed, and therefore, no information is available." + "\n\n"
             else:
+                evidence_text, summary_text = self._normalize_summary_output(raw)
                 useful_information = "The useful information in {url} for user goal {goal} as follows: \n\n".format(url=url, goal=goal)
-                useful_information += "Evidence in page: \n" + str(raw["evidence"]) + "\n\n"
-                useful_information += "Summary: \n" + str(raw["summary"]) + "\n\n"
+                useful_information += "Evidence in page: \n" + evidence_text + "\n\n"
+                useful_information += "Summary: \n" + summary_text + "\n\n"
 
             if len(useful_information) < 10 and summary_retries < 0:
                 print("[visit] Could not generate valid summary after maximum retries")
@@ -647,6 +697,40 @@ class Visit(BaseTool):
         return response.strip()
         
     def call_server(self, msgs, max_retries=2):
+        if use_visit_local_prompt():
+            model_name = get_local_served_model_name()
+            last_error = None
+            for attempt in range(max_retries):
+                try:
+                    client = OpenAI(
+                        api_key="EMPTY",
+                        base_url=choose_local_openai_base_url(),
+                        timeout=600.0,
+                    )
+                    chat_response = client.chat.completions.create(
+                        model=model_name,
+                        messages=msgs,
+                        temperature=1
+                    )
+                    content = chat_response.choices[0].message.content
+                    if content:
+                        try:
+                            json.loads(content)
+                        except Exception:
+                            left = content.find('{')
+                            right = content.rfind('}')
+                            if left != -1 and right != -1 and left <= right:
+                                content = content[left:right + 1]
+                        print("[visit] local server call success")
+                        return content
+                except Exception as e:
+                    last_error = e
+                    print(f"[visit] local server call error: {e}")
+                    continue
+            if last_error:
+                print(f"[visit] local server exhausted retries: {last_error}")
+            return ""
+
         api_key = os.environ.get("API_KEY")
         url_llm = os.environ.get("API_BASE")
         model_name = os.environ.get("SUMMARY_MODEL_NAME", "")
@@ -706,7 +790,7 @@ class Visit(BaseTool):
             str: The webpage content or error message
         """
         if not JINA_API_KEYS:
-            return "[visit] Error: JINA_API_KEY environment variable not set."
+            return "[visit] Error: JINA_API_KEYS environment variable not set."
 
         max_retries = 3
         timeout = 50
@@ -794,7 +878,7 @@ class Visit(BaseTool):
 
         if content and not content.startswith("[visit] Failed") and content != "[visit] Empty content." and not content.startswith("[document_parser]"):
             content = truncate_to_tokens(content, max_tokens=95000)
-            messages = [{"role":"user","content": EXTRACTOR_PROMPT.format(webpage_content=content, goal=goal)}]
+            messages = build_visit_extractor_messages(content, goal)
             parse_retry_times = 0
             raw = summary_page_func(messages, max_retries=max_retries)
             summary_retries = 3
@@ -811,11 +895,7 @@ class Visit(BaseTool):
                 )
                 print(status_msg)
                 content = content[:truncate_length]
-                extraction_prompt = EXTRACTOR_PROMPT.format(
-                    webpage_content=content,
-                    goal=goal
-                )
-                messages = [{"role": "user", "content": extraction_prompt}]
+                messages = build_visit_extractor_messages(content, goal)
                 raw = summary_page_func(messages, max_retries=max_retries)
                 summary_retries -= 1
 
@@ -835,9 +915,10 @@ class Visit(BaseTool):
                 useful_information += "Evidence in page: \n" + "The provided webpage content could not be accessed. Please check the URL or file format." + "\n\n"
                 useful_information += "Summary: \n" + "The webpage content could not be processed, and therefore, no information is available." + "\n\n"
             else:
+                evidence_text, summary_text = self._normalize_summary_output(raw)
                 useful_information = "The useful information in {url} for user goal {goal} as follows: \n\n".format(url=url, goal=goal)
-                useful_information += "Evidence in page: \n" + str(raw["evidence"]) + "\n\n"
-                useful_information += "Summary: \n" + str(raw["summary"]) + "\n\n"
+                useful_information += "Evidence in page: \n" + evidence_text + "\n\n"
+                useful_information += "Summary: \n" + summary_text + "\n\n"
 
             if len(useful_information) < 10 and summary_retries < 0:
                 print("[visit] Could not generate valid summary after maximum retries")

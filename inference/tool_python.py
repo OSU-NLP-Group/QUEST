@@ -11,7 +11,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 CHINESE_CHAR_RE = re.compile(r'[\u4e00-\u9fff]')
-DEFAULT_PYTHON_NODES_CONF = "/fs/ess/PAA0201/jianxie/config/python_nodes.conf"
+DEFAULT_PYTHON_NODES_CONF = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "python_nodes.conf",
+)
 
 
 def has_chinese_chars(data: Any) -> bool:

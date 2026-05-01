@@ -9,10 +9,8 @@ from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import os
 from litellm import completion
 
-os.environ["OPENAI_API_KEY"] = "your_api_key"
 model = "openai/gpt-5"
 
 # Global token statistics and lock
@@ -233,14 +231,13 @@ def main():
     if args.input:
         input_path = Path(args.input)
     else:
-        # input_path = base_dir / "formatted"
-        input_path = Path("/fs/ess/PAA0201/jianxie/traj/traj_v6_8k/formatted")
+        input_path = base_dir / "formatted"
 
     # Output directory
     if args.output:
         output_dir = Path(args.output)
     else:
-        output_dir = base_dir / "obj_script" 
+        output_dir = base_dir / "obj_eval"
     
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)

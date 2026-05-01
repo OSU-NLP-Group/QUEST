@@ -1,64 +1,88 @@
 # QUEST
 
-QUEST is a long-horizon research-agent codebase for inference, reinforcement
-learning, task generation, and benchmark evaluation.
+<p align="center">
+  <strong>QUEST</strong>
+</p>
 
-## Overview
+<div align="center" style="line-height: 1; margin-top: 16px;">
+  <a href="#"><img src="https://img.shields.io/badge/arXiv-B31B1B?style=for-the-badge&logo=arXiv&logoColor=white" alt="arXiv"></a>
+  <a href="#"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Dataset-FFB7B2?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Dataset"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Model-FFD966?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Model"></a>
+  <a href="#documentation-map"><img src="https://img.shields.io/badge/Docs-2563EB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
+</div>
 
-| Area | Directory | What It Contains | Main README |
-| --- | --- | --- | --- |
-| Inference | [`inference/`](inference/) | ReAct-style research agent, model endpoint routing, search/scholar/visit/memory/python tools, benchmark launch scripts | [`inference/README.md`](inference/README.md) |
-| DeepResearch RL | [`training_scripts/rl/recipe/deepresearch/`](training_scripts/rl/recipe/deepresearch/) | DeepResearch agent loop, reward logic, tools, FAISS services, data, fully async Megatron launcher | [`training_scripts/rl/recipe/deepresearch/README.md`](training_scripts/rl/recipe/deepresearch/README.md) |
-| RL backend | [`training_scripts/rl/`](training_scripts/rl/) | Vendored VERL-based RL stack used by the DeepResearch recipe | [`training_scripts/rl/README.md`](training_scripts/rl/README.md) |
-| SFT backend | [`training_scripts/sft/`](training_scripts/sft/) | Vendored LlamaFactory for SFT workflows | [`training_scripts/sft/README.md`](training_scripts/sft/README.md) |
-| Objective task generation | [`task/obj_task/`](task/obj_task/) | Objective research-task generation, trajectory formatting, rubric-tree verification | [`task/obj_task/README.md`](task/obj_task/README.md) |
-| Objective verifier scripts | [`task/obj_script/`](task/obj_script/) | Converts formatted objective tasks into executable verifier scripts | [`task/obj_script/README.md`](task/obj_script/README.md) |
-| Open-ended task generation | [`task/sub_task/`](task/sub_task/) | Longform/open-ended task generation, criteria generation, reference-answer generation | [`task/sub_task/README.md`](task/sub_task/README.md) |
-| Open-ended evaluation | [`task/sub_eval/`](task/sub_eval/) | Rubric-based document-quality evaluation against reference answers | [`task/sub_eval/README.md`](task/sub_eval/README.md) |
-| Evaluation | [`evaluation/`](evaluation/) | BrowseComp, HLE, DeepResearch Bench, and Mind2Web2 evaluation scripts | [`evaluation/README.md`](evaluation/README.md) |
+<br>
 
-Note: Some historical task directories use the name `sub`. In the RL recipe and
-newer documentation, the same task family is called `open-ended`.
+<p align="center">
+  <a href="#">Hugging Face</a> | <a href="#documentation-map">Documentation</a>
+</p>
 
-## Secrets
+## Introduction
 
-Never commit real API keys. Local secrets should live under:
+Quest is a general-purpose Deep Search Agent designed to handle a wide range of
+search tasks, with strong capabilities in fact seeking, citation grounding, and
+report synthesis.
 
-```text
-.secrets/
-```
+## Table of Contents
 
-This directory is gitignored. A typical local file is:
+- [Introduction](#introduction)
+- [Environment Setup](#environment-setup)
+- [Runtime Configuration](#runtime-configuration)
+- [Benchmark Replication](#benchmark-replication)
+  - [Inference](#inference)
+  - [Evaluation](#evaluation)
+- [Mid-training / SFT Training](#mid-training--sft-training)
+- [Run Training](#run-training)
+  - [RL Backend](#rl-backend)
+- [Data Generation](#data-generation)
+  - [Objective Tasks](#objective-tasks)
+  - [Objective Verifier Scripts](#objective-verifier-scripts)
+  - [Open-Ended Tasks](#open-ended-tasks)
+  - [Open-Ended Evaluation](#open-ended-evaluation)
+- [Documentation Map](#documentation-map)
 
-```text
-.secrets/deepresearch_api_keys.env
-```
+## Environment Setup
 
-The exact variables depend on the workflow. Common groups include:
-
-| Group | Examples | Used By |
-| --- | --- | --- |
-| Search | `SERPER_KEY_ID` | Search and scholar fallback |
-| Visit | `JINA_API_KEY`, `JINA_API_KEYS` | Page reading and page summarization |
-| Azure/OpenAI-compatible | `API_KEY`, `API_BASE`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT` | Shared legacy and fallback LLM paths |
-| Reward/eval LLMs | `EVAL_LLM_*`, `CITATION_EVAL_LLM_*`, `OPENENDED_EVAL_LLM_*` | Objective, citation, and open-ended reward evaluation |
-| Memory and visit summary | `MEMORY_*`, `VISIT_SUMMARY_*` | Memory condensation and page-summary generation |
-| Services | `SEARCH_NODES_CONF`, `SCHOLAR_NODES_CONF`, `PYTHON_NODES_CONF`, `EVAL_LLM_NODES_CONF` | Tool and local eval-node routing |
-
-For the full DeepResearch RL environment list, see the
-[DeepResearch recipe README](training_scripts/rl/recipe/deepresearch/README.md#secrets-and-environment).
-
-## Inference
-
-Use `inference/` when you already have a model endpoint and want benchmark
-predictions.
+Create an environment and install the inference dependencies:
 
 ```bash
 cd inference
 pip install -r requirements.txt
 ```
 
-Before launching, check the benchmark script and update:
+## Runtime Configuration
+
+The exact environment variables depend on the workflow. Common groups include:
+
+| Group | Examples | Used By |
+| --- | --- | --- |
+| Search | `SERPER_KEY_ID` | Search and scholar fallback |
+| Visit | `JINA_API_KEYS` | Page reading and page summarization |
+| Azure/OpenAI-compatible | `API_KEY`, `API_BASE`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_VERSION`, `AZURE_OPENAI_DEPLOYMENT` | Shared legacy and fallback LLM paths |
+| Inference summary and memory | `SUMMARY_MODEL_NAME`, `MEMORY_MODEL_NAME`, `MEMORY_API_KEY`, `MEMORY_API_BASE` | Visit summarization and memory condensation |
+| Reward/eval LLMs | `EVAL_LLM_*`, `CITATION_EVAL_LLM_*`, `OPENENDED_EVAL_LLM_*` | Objective, citation, and open-ended reward evaluation |
+| Services | `SEARCH_NODES_CONF`, `SCHOLAR_NODES_CONF`, `PYTHON_NODES_CONF`, `EVAL_LLM_NODES_CONF` | Tool and local eval-node routing |
+
+For inference, see [`inference/api_config.yaml`](inference/api_config.yaml) for
+the default configuration template. For the full RL backend environment list,
+see the [DeepResearch recipe README](training_scripts/rl/recipe/deepresearch/README.md#secrets-and-environment).
+
+## Benchmark Replication
+
+### Inference
+
+Use `inference/` when you have a model endpoint and want to run benchmark
+predictions with the QUEST agent.
+
+Before launching, configure:
+
+```text
+api_config.yaml
+server_endpoints.conf
+```
+
+Then check the benchmark script and update:
 
 ```text
 DATASET
@@ -68,27 +92,52 @@ MODEL_PATH
 MAX_WORKERS
 MEMORY_THRESHOLD
 LLM_MAX_TOKENS
+API_CONFIG_FILE
 SERVER_ENDPOINTS_FILE
 ```
 
-Common entrypoints:
+Run the benchmark-specific launch script from `inference/` after configuration.
+Endpoint routing is controlled by `server_endpoints.conf`, which the agent can
+reload during a run. See [`inference/README.md`](inference/README.md) for the
+available launch scripts and benchmark-specific defaults.
 
-```bash
-bash run_react_infer_bc.sh
-bash run_react_infer_hle.sh
-bash run_react_infer_drb.sh
-bash run_react_infer_m2w2.sh
-```
+### Evaluation
 
-Endpoint routing is controlled by:
+Evaluation scripts consume prediction directories produced by `inference/`.
+
+| Benchmark | Directory |
+| --- | --- |
+| BrowseComp | [`evaluation/browsecomp/`](evaluation/browsecomp/) |
+| GAIA | [`evaluation/gaia/`](evaluation/gaia/) |
+| HLE | [`evaluation/hle/`](evaluation/hle/) |
+| DeepResearch Bench | [`evaluation/drbench/`](evaluation/drbench/) |
+| Mind2Web2 | [`evaluation/Mind2Web2/`](evaluation/Mind2Web2/) |
+
+For a new run, update the target result directory, dataset path, model or run
+name, judge model, worker count, and judge credentials.
+
+See [`evaluation/README.md`](evaluation/README.md) for benchmark-specific
+commands and notes.
+
+## Mid-training / SFT Training
+
+Use `training_scripts/sft` for mid-training and supervised fine-tuning workflows.
+Before training, prepare the mid-training/SFT datasets and convert them to the
+format expected by LlamaFactory.
+
+Dataset release:
 
 ```text
-inference/server_endpoints.conf
+https://huggingface.co/datasets/<org>/<quest-midtraining-sft-data>
 ```
 
-The agent can reload endpoint configuration during a run.
+The SFT backend is based on LlamaFactory. Use its data configuration and training
+entrypoints under `training_scripts/sft/LlamaFactory/` after the datasets are
+prepared.
 
-## DeepResearch RL
+## Run Training
+
+### RL Backend
 
 Use `training_scripts/rl` as the working directory:
 
@@ -114,7 +163,25 @@ Core files:
 | `recipe/deepresearch/config/` | Tool, service-node, eval-node, and trainer configs |
 | `recipe/deepresearch/data/` | Default train/validation parquet files |
 
-Start tool services when workers should use shared HTTP services:
+Before building FAISS, confirm that the required databases are available:
+
+```text
+visit database
+search database
+scholar database
+```
+
+Also make sure the Python interpreter service is running if the training workers
+will use the Python tool.
+
+Then build the FAISS indexes:
+
+```bash
+bash recipe/deepresearch/scripts/init_faiss_search.sh --skip-merge
+bash recipe/deepresearch/scripts/init_faiss_scholar.sh --skip-merge
+```
+
+Then start the services:
 
 ```bash
 bash recipe/deepresearch/scripts/run_search_service.sh
@@ -127,31 +194,17 @@ Launch training:
 bash recipe/deepresearch/run_deepresearch_fully_async_megatron.sh
 ```
 
-Common data filters:
-
-```bash
-DATA_KIND=both bash recipe/deepresearch/run_deepresearch_fully_async_megatron.sh
-DATA_KIND=obj bash recipe/deepresearch/run_deepresearch_fully_async_megatron.sh
-DATA_KIND=openended bash recipe/deepresearch/run_deepresearch_fully_async_megatron.sh
-```
-
 The full runbook, including environment variables and FAISS setup, is in:
 
 ```text
 training_scripts/rl/recipe/deepresearch/README.md
 ```
 
-## Task Generation
+## Data Generation
 
 ### Objective Tasks
 
 Objective tasks use a verifiable rubric-tree pipeline:
-
-```bash
-cd task/obj_task
-bash run_generate_tasks.sh
-bash run_verify_rubric_trees.sh
-```
 
 High-level flow:
 
@@ -160,32 +213,30 @@ generate trajectories -> merge rubric predictions -> format verifier inputs
 -> verify rubric trees -> extract accepted questions
 ```
 
+See [`task/obj_task/README.md`](task/obj_task/README.md) for the runnable
+commands and expected input/output paths.
+
 ### Objective Verifier Scripts
 
-Generate one Python verifier script per formatted objective task:
+Generate one Python verifier script per formatted objective task.
 
-```bash
-python task/obj_script/obj_script_generation.py \
-  --input /path/to/formatted_tasks \
-  --template task/obj_script/generation_prompt.md \
-  --output /path/to/output_obj_scripts
-```
+See [`task/obj_eval/README.md`](task/obj_eval/README.md) for the generation
+command and expected formatted-task input structure.
 
 ### Open-Ended Tasks
 
-Open-ended longform generation lives under `task/sub_task/`:
-
-```bash
-cd task/sub_task
-bash run_generate_tasks_longform.sh
-```
+Open-ended longform generation lives under `task/sub_task/`.
 
 High-level flow:
 
 ```text
 generate longform tasks -> extract proposed QAs -> generate criteria
 -> polish criteria -> generate reference answers -> refine final answers
+-> extract final answers
 ```
+
+See [`task/sub_task/README.md`](task/sub_task/README.md) for the runnable
+commands and expected input/output paths.
 
 ### Open-Ended Evaluation
 
@@ -199,45 +250,17 @@ bash run_eval.sh
 It compares an answer against a reference answer across criteria such as
 comprehensiveness, insight, instruction following, and readability.
 
-## Evaluation
-
-Evaluation scripts consume prediction directories produced by `inference/`.
-
-BrowseComp:
-
-```bash
-cd evaluation/browsecomp
-bash run_judge.sh
-```
-
-HLE:
-
-```bash
-cd evaluation/hle
-bash run_judge.sh
-```
-
-DeepResearch Bench:
-
-```bash
-cd evaluation/drbench/eval/deep_research_bench
-python convert_to_eval_format.py
-bash run_benchmark.sh
-```
-
-For a new run, update the target result directory, dataset path, model or run
-name, judge model, worker count, and judge credentials.
-
 ## Documentation Map
 
-| README | Scope |
-| --- | --- |
-| [`inference/README.md`](inference/README.md) | Inference parameters, benchmark scripts, endpoint hot reload, resume behavior |
-| [`training_scripts/rl/recipe/deepresearch/README.md`](training_scripts/rl/recipe/deepresearch/README.md) | DeepResearch RL recipe, services, data, secrets, launch commands |
-| [`training_scripts/rl/README.md`](training_scripts/rl/README.md) | Vendored VERL documentation |
-| [`training_scripts/sft/README.md`](training_scripts/sft/README.md) | Vendored LlamaFactory notes |
-| [`task/obj_task/README.md`](task/obj_task/README.md) | Objective task generation and rubric verification |
-| [`task/obj_script/README.md`](task/obj_script/README.md) | Verifier-script generation from formatted objective tasks |
-| [`task/sub_task/README.md`](task/sub_task/README.md) | Open-ended longform task generation workflow |
-| [`task/sub_eval/README.md`](task/sub_eval/README.md) | Open-ended rubric-based evaluation workflow |
-| [`evaluation/README.md`](evaluation/README.md) | Benchmark-specific scoring workflows |
+We provide details of each component in the READMEs below.
+
+| Area | Directory | Main README | What It Contains |
+| --- | --- | --- | --- |
+| Inference | [`inference/`](inference/) | [`inference/README.md`](inference/README.md) | QUEST inference pipeline |
+| RL backend | [`training_scripts/rl/recipe/deepresearch/`](training_scripts/rl/recipe/deepresearch/) | [`training_scripts/rl/recipe/deepresearch/README.md`](training_scripts/rl/recipe/deepresearch/README.md) | QUEST RL training recipe |
+| SFT backend | [`training_scripts/sft/`](training_scripts/sft/) | [`training_scripts/sft/README.md`](training_scripts/sft/README.md) | LlamaFactory-based SFT backend |
+| Objective task generation | [`task/obj_task/`](task/obj_task/) | [`task/obj_task/README.md`](task/obj_task/README.md) | Objective task generation pipeline |
+| Objective verifier scripts | [`task/obj_eval/`](task/obj_eval/) | [`task/obj_eval/README.md`](task/obj_eval/README.md) | Objective-task verifier generation |
+| Open-ended task generation | [`task/sub_task/`](task/sub_task/) | [`task/sub_task/README.md`](task/sub_task/README.md) | Open-ended task generation pipeline |
+| Open-ended evaluation | [`task/sub_eval/`](task/sub_eval/) | [`task/sub_eval/README.md`](task/sub_eval/README.md) | Open-ended task evaluation pipeline |
+| Evaluation | [`evaluation/`](evaluation/) | [`evaluation/README.md`](evaluation/README.md) | Benchmark evaluation scripts |

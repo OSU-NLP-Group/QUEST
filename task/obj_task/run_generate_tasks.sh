@@ -26,14 +26,14 @@ export DEEPRESEARCH_MODEL_NAME="${DEEPRESEARCH_MODEL_NAME:-bedrock/us.anthropic.
 export DEEPRESEARCH_OPENAI_API_KEY="${DEEPRESEARCH_OPENAI_API_KEY:-}"
 
 export SAVE_TRAJ="${SAVE_TRAJ:-true}"
-export TRAJ_DIR="${TRAJ_DIR:-./server/claude-sonnet-4.5/traj_v6_8k_RL}"
+export TRAJ_DIR="${TRAJ_DIR:-./outputs/objective_trajectories}"
 
 # Memory configuration
 export MEMORY_ENABLED="${MEMORY_ENABLED:-false}"
 export MEMORY_CONTEXT_THRESHOLD="${MEMORY_CONTEXT_THRESHOLD:-32000}"
-export TASK_LOG_DIR="${TASK_LOG_DIR:-./server/claude-sonnet-4.5/traj_v5_1k_RL/task_logs}"
+export TASK_LOG_DIR="${TASK_LOG_DIR:-./outputs/objective_task_logs}"
 
-export MEMORY_TOKENIZER_PATH="${MEMORY_TOKENIZER_PATH:-/fs/scratch/PAS1576/jianxie/huggingface_models/Tongyi-DeepResearch-30B-A3B}"
+export MEMORY_TOKENIZER_PATH="${MEMORY_TOKENIZER_PATH:-Alibaba-NLP/Tongyi-DeepResearch-30B-A3B}"
 
 # Visit service configuration
 export VISIT_SERVICE="${VISIT_SERVICE:-jina}"
@@ -41,10 +41,10 @@ export JINA_API_KEYS="${JINA_API_KEYS:-your_jina_api_key}"
 
 # Cache configuration
 export VISIT_CACHE_ENABLED="${VISIT_CACHE_ENABLED:-true}"
-export VISIT_CACHE_FILE="${VISIT_CACHE_FILE:-/fs/scratch/PAS1576/jianxie/DeepResearch/verl/recipe/deepresearch/database/visit_cache.db}"
+export VISIT_CACHE_FILE="${VISIT_CACHE_FILE:-./database/visit_cache.db}"
 export VISIT_CACHE_RESUME="${VISIT_CACHE_RESUME:-true}"
 export SEARCH_CACHE_ENABLED="${SEARCH_CACHE_ENABLED:-true}"
-export SEARCH_CACHE_FILE="${SEARCH_CACHE_FILE:-/fs/scratch/PAS1576/jianxie/DeepResearch/verl/recipe/deepresearch/database/search_cache.db}"
+export SEARCH_CACHE_FILE="${SEARCH_CACHE_FILE:-./database/search_cache.db}"
 export SEARCH_CACHE_RESUME="${SEARCH_CACHE_RESUME:-true}"
 
 mkdir -p database

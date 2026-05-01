@@ -3,6 +3,7 @@
 
 import json
 import os
+import argparse
 from pathlib import Path
 
 def extract_questions_from_directory(input_dir, output_file):
@@ -71,8 +72,21 @@ def extract_questions_from_directory(input_dir, output_file):
     print(f"Output file: {output_file}")
 
 def main():
-    input_dir = "/fs/scratch/PAS1576/jianxie/DeepResearch/proposer_v1/inference/server/claude-sonnet-4.5/traj_v6_8k_RL/valid/formatted/verifier/accepted_trajectories"
-    output_file = "/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/inference_2/eval_data/extracted_questions_v5_8k_RL_20260321.jsonl"
+    parser = argparse.ArgumentParser(description="Extract proposed questions from accepted objective trajectories.")
+    parser.add_argument(
+        "--input-dir",
+        default="./outputs/objective_trajectories/formatted/verifier/accepted_trajectories",
+        help="Directory containing accepted trajectory JSON files.",
+    )
+    parser.add_argument(
+        "--output-file",
+        default="./outputs/objective_trajectories/extracted_questions.jsonl",
+        help="Output JSONL path.",
+    )
+    args = parser.parse_args()
+
+    input_dir = args.input_dir
+    output_file = args.output_file
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     extract_questions_from_directory(input_dir, output_file)

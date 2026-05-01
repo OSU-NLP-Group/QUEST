@@ -29,8 +29,6 @@ def _load_examples(filename: str):
 
 _MIND2WEB_EXAMPLES = _load_examples("examples_mind2web2.json")
 _TULU_EXAMPLES = _load_examples("examples_tulu.json")
-_HLE_EXAMPLES = _load_examples("examples_hle.json")
-_BROWSECOMP_EXAMPLES = _load_examples("examples_browsecom.json")
 
 def build_examples_section() -> tuple[str, str]:
     """Documentation omitted."""
@@ -43,12 +41,6 @@ def build_examples_section() -> tuple[str, str]:
     # if _TULU_EXAMPLES:
     #     sources.append(_TULU_EXAMPLES)
     #     source_names.append("tulu")
-    if _HLE_EXAMPLES:
-        sources.append(_HLE_EXAMPLES)
-        source_names.append("hle")
-    if _BROWSECOMP_EXAMPLES:
-        sources.append(_BROWSECOMP_EXAMPLES)
-        source_names.append("browsecomp")
 
     if not sources:
         return ("\n\n", "none")

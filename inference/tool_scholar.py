@@ -14,7 +14,10 @@ import fcntl
 
 SERPER_KEY = os.environ.get('SERPER_KEY_ID')
 
-_shared_cache_dir = "/fs/ess/PAA0201/jianxie/database_only_for_eval"
+_shared_cache_dir = os.getenv(
+    "SHARED_CACHE_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache"),
+)
 _default_cache_dir = os.getenv("CACHE_DIR", _shared_cache_dir)
 os.makedirs(_default_cache_dir, exist_ok=True)
 _default_scholar_cache_file = os.path.join(_default_cache_dir, "scholar_cache_merged.db")
