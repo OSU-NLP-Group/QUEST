@@ -227,7 +227,7 @@ High-level flow:
 
 ```text
 generate trajectories -> merge rubric predictions -> format verifier inputs
--> verify rubric trees -> extract accepted questions
+-> refine rubric trees -> verify rubric trees -> extract accepted questions
 ```
 
 See [`task/obj_task/README.md`](task/obj_task/README.md) for the runnable
