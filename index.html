@@ -1675,22 +1675,6 @@
             {role:'open2', l:'Redsearcher',    v:57.4},
             {role:'quest', l:BENCHMARK_LABEL,  v:68.5},
           ]},
-          { title:'HLE', bars:[
-            {role:'sota',  l:'Opus-4.6',       v:53.1},
-            {role:'s2',    l:'GPT-5.4',        v:52.1},
-            {role:'match', l:'Gemini-3.1-Pro', v:51.4},
-            {role:'open',  l:'Mirothinker',    v:36.4},
-            {role:'open2', l:'Redsearcher',    v:34.9},
-            {role:'quest', l:BENCHMARK_LABEL,  v:42.0},
-          ]},
-          { title:'GAIA', bars:[
-            {role:'quest', l:BENCHMARK_LABEL,  v:83.8},
-            {role:'open',  l:'Mirothinker',    v:80.3},
-            {role:'open2', l:'Redsearcher',    v:80.1},
-            {role:'sota',  l:'GPT-5',          v:76.4},
-            {role:'s2',    l:'Tongyi-DR',      v:70.9},
-            {role:'match', l:'OpenAI-DR',      v:67.4},
-          ]},
           { title:'Mind2Web 2', bars:[
             {role:'sota',  l:'OpenAI-DR',      v:28.0},
             {role:'s2',    l:'Grok',           v:27.0},
@@ -1699,13 +1683,13 @@
             {role:'open2', l:'OpenResearcher', v:14.8},
             {role:'quest', l:BENCHMARK_LABEL,  v:31.2},
           ]},
-          { title:'LiveResearchBench', bars:[
-            {role:'sota',  l:'GPT-5',          v:73.1},
-            {role:'s2',    l:'Grok',           v:65.6},
-            {role:'match', l:'Gemini-DR',      v:63.3},
-            {role:'open',  l:'OpenResearcher', v:61.3},
-            {role:'open2', l:'Tongyi-DR',      v:56.3},
-            {role:'quest', l:BENCHMARK_LABEL,  v:69.1},
+          { title:'HLE', bars:[
+            {role:'sota',  l:'Opus-4.6',       v:53.1},
+            {role:'s2',    l:'GPT-5.4',        v:52.1},
+            {role:'match', l:'Gemini-3.1-Pro', v:51.4},
+            {role:'open',  l:'Mirothinker',    v:36.4},
+            {role:'open2', l:'Redsearcher',    v:34.9},
+            {role:'quest', l:BENCHMARK_LABEL,  v:39.2},
           ]},
           { title:'DeepResearch Bench', bars:[
             {role:'sota',  l:'Gemini-DR',      v:49.7},
@@ -1715,6 +1699,14 @@
             {role:'open2', l:'OpenResearcher', v:35.4},
             {role:'quest', l:BENCHMARK_LABEL,  v:48.2},
           ]},
+          { title:'BrowseComp Plus', bars:[
+            {role:'sota',  l:'Opus-4.6',       v:83.0},
+            {role:'s2',    l:'Opus-4.5',       v:67.6},
+            {role:'match', l:'GLM-4.6',        v:48.2},
+            {role:'open',  l:'GPT-OSS-120B',   v:44.1},
+            {role:'open2', l:'Tongyi-DR',      v:44.5},
+            {role:'quest', l:BENCHMARK_LABEL,  v:67.0},
+          ]},
           { title:'WideSearch', bars:[
             {role:'sota',  l:'Kimi-K2.5',      v:72.7},
             {role:'s2',    l:'Qwen3.5-122B',   v:60.5},
@@ -1723,13 +1715,21 @@
             {role:'open2', l:'GPT-OSS-120B',   v:40.4},
             {role:'quest', l:BENCHMARK_LABEL,  v:63.5},
           ]},
-          { title:'BrowseComp Plus', bars:[
-            {role:'sota',  l:'Opus-4.6',       v:83.0},
-            {role:'s2',    l:'Opus-4.5',       v:67.6},
-            {role:'match', l:'GLM-4.6',        v:48.2},
-            {role:'open',  l:'GPT-OSS-120B',   v:44.1},
-            {role:'open2', l:'Tongyi-DR',      v:44.5},
-            {role:'quest', l:BENCHMARK_LABEL,  v:67.0},
+          { title:'GAIA', bars:[
+            {role:'quest', l:BENCHMARK_LABEL,  v:80.8},
+            {role:'open',  l:'Mirothinker',    v:80.3},
+            {role:'open2', l:'Redsearcher',    v:80.1},
+            {role:'sota',  l:'GPT-5',          v:76.4},
+            {role:'s2',    l:'Tongyi-DR',      v:70.9},
+            {role:'match', l:'OpenAI-DR',      v:67.4},
+          ]},
+          { title:'LiveResearchBench', bars:[
+            {role:'sota',  l:'GPT-5',          v:73.1},
+            {role:'s2',    l:'Grok',           v:65.6},
+            {role:'match', l:'Gemini-DR',      v:63.3},
+            {role:'open',  l:'OpenResearcher', v:61.3},
+            {role:'open2', l:'Tongyi-DR',      v:56.3},
+            {role:'quest', l:BENCHMARK_LABEL,  v:69.6},
           ]},
         ];
 
@@ -1865,16 +1865,15 @@
         const STAGE_POINT_COLOR = '#1E40AF';
         const STAGE_FILL_COLOR  = 'rgba(59, 130, 246, 0.12)';
 
-        // RL values are placeholders — fill in real numbers when known.
         const effectDefs = [
-          { id: 'e-browsecomp', vals: [38.4, 45.1,  45.9,  null], min: 36, max: 48, step: 3 },
-          { id: 'e-m2w2',       vals: [22.3, 26.5,  29.9,  null], min: 20, max: 32, step: 4 },
-          { id: 'e-hle',        vals: [32.3, 39.49, 39.74, null], min: 28, max: 42, step: 4 },
-          { id: 'e-drb',        vals: [42.8, 36.35, 37.9,  null], min: 32, max: 44, step: 3 },
-          { id: 'e-lrb',        vals: [57.15, 49.53, 49.99, null], min: 46, max: 60, step: 4 },
-          { id: 'e-gaia',       vals: [72.8, 83.5,  83.17, null], min: 70, max: 86, step: 4 },
-          { id: 'e-bcp',        vals: [60.51, 54.87, 55.64, null], min: 52, max: 62, step: 2 },
-          { id: 'e-ws',         vals: [43.8, 61.1,  62.5,  null], min: 40, max: 66, step: 6 },
+          { id: 'e-browsecomp', vals: [38.4, 45.1,  45.9,  46.5], min: 36, max: 48, step: 3 },
+          { id: 'e-m2w2',       vals: [22.3, 26.5,  29.9,  31.2], min: 20, max: 32, step: 4 },
+          { id: 'e-hle',        vals: [32.3, 39.49, 39.74, 42.0], min: 28, max: 44, step: 4 },
+          { id: 'e-drb',        vals: [42.8, 36.35, 37.9,  48.2], min: 32, max: 50, step: 6 },
+          { id: 'e-lrb',        vals: [57.15, 49.53, 49.99, 69.1], min: 46, max: 72, step: 6 },
+          { id: 'e-gaia',       vals: [72.8, 83.5,  83.17, 83.8], min: 70, max: 86, step: 4 },
+          { id: 'e-bcp',        vals: [60.51, 54.87, 55.64, 63.0], min: 52, max: 64, step: 3 },
+          { id: 'e-ws',         vals: [43.8, 61.1,  62.5,  63.5], min: 40, max: 66, step: 6 },
         ];
 
         const pointValueLabelPlugin = {
