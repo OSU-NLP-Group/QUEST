@@ -16,6 +16,7 @@ from threading import Lock
 import argparse
 
 _ANSWER_TAG_RE = re.compile(r"<answer>(.*?)</answer>", re.DOTALL)
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 # Global lock for thread-safe printing.
 _print_lock = Lock()
@@ -335,13 +336,13 @@ def main():
     parser.add_argument(
         "--target-dir",
         type=str,
-        default="/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/hle/vanilla/results/deepresearch/hle_text_only_130",
+        default=str(SCRIPT_DIR / "results"),
         help="Directory containing the result files"
     )
     parser.add_argument(
         "--dataset",
         type=str,
-        default="/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/hle/hle_text_only_130.jsonl",
+        default=str(SCRIPT_DIR / "hle_text_only_130.jsonl"),
         help="Dataset file path"
     )
     parser.add_argument(

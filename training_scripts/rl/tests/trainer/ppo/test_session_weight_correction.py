@@ -16,9 +16,10 @@ We verify:
 """
 
 import torch
+from pathlib import Path
 
 import sys
-sys.path.insert(0, "/fs/scratch/PAS1576/jianxie/DeepResearch/verl")
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from verl.trainer.ppo.core_algos import agg_loss
 

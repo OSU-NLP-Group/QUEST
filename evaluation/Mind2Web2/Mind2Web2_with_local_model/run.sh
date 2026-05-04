@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Default multi-node hosts (fallback when NODE_ENDPOINTS_FILE is absent).
 export HOSTNAME_LIST="a0012, a0013, a0016, a0020, a0007, a0008"
 export VLLM_PORTS="${VLLM_PORTS:-6000,6001,6002,6003}"
 # Hot-reload endpoint file (recommended one node per line, e.g. "a0012";
 # host-only entries auto-expand with VLLM_PORTS).
-export NODE_ENDPOINTS_FILE="${NODE_ENDPOINTS_FILE:-./config/vllm_nodes.txt}"
+export NODE_ENDPOINTS_FILE="${NODE_ENDPOINTS_FILE:-${SCRIPT_DIR}/config/vllm_nodes.txt}"
 export LOCAL_OPENAI_ENDPOINTS_FILE="${LOCAL_OPENAI_ENDPOINTS_FILE:-${NODE_ENDPOINTS_FILE}}"
 export LOCAL_OPENAI_ENDPOINTS_RELOAD_SECONDS="${LOCAL_OPENAI_ENDPOINTS_RELOAD_SECONDS:-15}"
 
-export GOOGLE_MAPS_API_KEY="your_google_maps_api_key"
-export JINA_API_KEYS=<your_jina_api_key>
+export GOOGLE_MAPS_API_KEY="${GOOGLE_MAPS_API_KEY:-your_google_maps_api_key}"
+export JINA_API_KEYS="${JINA_API_KEYS:-your_jina_api_key}"
 
 
 
-MODEL_DIR="/fs/ess/PAA0201/zilu/Mind2Web-2/model/Qwen3-4B-Instruct-2507"
-SERVED_MODEL_NAME="eval_model"
+export MODEL_DIR="${MODEL_DIR:-${SCRIPT_DIR}/model/Qwen3-4B-Instruct-2507}"
+export SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-eval_model}"
 # vLLM bind vs advertise:
 # - VLLM_BIND_HOST: what vLLM listens on (use 0.0.0.0 to expose to other nodes)
 # - VLLM_ADVERTISE_HOST: what clients should use to reach this node (e.g. node IP/hostname)

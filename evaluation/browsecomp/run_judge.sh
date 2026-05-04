@@ -16,15 +16,14 @@ export JUDGE_OPENAI_API_KEY="${JUDGE_OPENAI_API_KEY:-your_openai_api_key}"
 
 # Paths and workers
 # Define multiple target_dir entries. Add more directories as needed.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIRS=(
-  "/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/browsecomp/a3b-results/qwen3-moe-base-vanilla-post-training-20260227-2k-20k-traj-plut-drb-5k-5ep-20k-output-80k-memory-400turns/results/deepresearch/browsecomp"
+  "${TARGET_DIR:-${SCRIPT_DIR}/results}"
 )
 
 # BrowseComp dataset (defaults to the official remote CSV, but a local path can also be used).
 export DATASET_PATH="https://openaipublic.blob.core.windows.net/simple-evals/browse_comp_test_set.csv"
 export WORKERS=50
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Process each target_dir in order.
 for TARGET_DIR in "${TARGET_DIRS[@]}"; do

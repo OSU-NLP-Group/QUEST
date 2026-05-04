@@ -242,7 +242,7 @@ fi
 # Paths
 # -----------------------------
 RAY_DATA_HOME=${RAY_DATA_HOME:-"${WORKING_DIR}/saves"}
-MODEL_PATH=${MODEL_PATH:-"/fs/scratch/PAS1576/jianxie/quest_upload/1_zilu/qwen3_5-moe-mid-training-plus-sft_8500"}
+MODEL_PATH=${MODEL_PATH:-"${RAY_DATA_HOME}/models/qwen3_5-moe-mid-training-plus-sft_8500"}
 CKPTS_DIR=${CKPTS_DIR:-"${RAY_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
 ROLLOUT_DATA_DIR=${ROLLOUT_DATA_DIR:-"${RAY_DATA_HOME}/rollouts/${project_name}/${exp_name}"}
 TRAIN_FILE=${TRAIN_FILE:-"${WORKING_DIR}/recipe/deepresearch/data/train_v4.parquet"}

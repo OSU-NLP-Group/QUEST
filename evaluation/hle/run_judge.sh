@@ -16,11 +16,12 @@ export JUDGE_OPENAI_API_KEY="${JUDGE_OPENAI_API_KEY:-your_openai_api_key}"
 
 # Paths and workers
 # Define multiple target_dir entries. Add more directories as needed.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIRS=(
-  "/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/hle/a3b-results/qwen3-moe-rl-45steps-32k-output-96k-memory-200turns/results/deepresearch/hle_text_only_130"
+  "${TARGET_DIR:-${SCRIPT_DIR}/results}"
 )
 
-export DATASET_PATH="/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/hle/hle_text_only_130.jsonl"
+export DATASET_PATH="${DATASET_PATH:-${SCRIPT_DIR}/hle_text_only_130.jsonl}"
 export WORKERS=150
 
 # Process each target_dir in order.
@@ -34,7 +35,7 @@ for TARGET_DIR in "${TARGET_DIRS[@]}"; do
     continue
   fi
   
-  python judge.py \
+  python "$SCRIPT_DIR/judge.py" \
     --target-dir "$TARGET_DIR" \
     --dataset "$DATASET_PATH" \
     --workers "$WORKERS"

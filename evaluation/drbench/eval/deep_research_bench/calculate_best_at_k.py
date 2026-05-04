@@ -9,6 +9,8 @@ from pathlib import Path
 from collections import defaultdict
 from typing import Dict, List, Optional
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+
 
 def load_results(file_path: Path) -> Dict[int, float]:
     """
@@ -114,7 +116,7 @@ def calculate_best_at_k(base_dir: Path, config: str, k: int = 3) -> Dict:
 
 def main():
     # Result directory.
-    base_dir = Path("/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/drbench/eval/deep_research_bench/results/race")
+    base_dir = SCRIPT_DIR / "results/race"
     
     # Configuration list (adjust as needed).
     configs = [

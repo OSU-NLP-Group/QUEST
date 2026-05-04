@@ -1,4 +1,8 @@
 #!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MODEL_DIR="${MODEL_DIR:-${SCRIPT_DIR}/model/Qwen3-4B-Instruct-2507}"
+SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-eval_model}"
  
 # load Intel
 module load intel/2021.10.0
@@ -19,8 +23,8 @@ for i in 0 1 2 3; do
   echo "Starting service on GPU $gpu, port $port (single GPU)"
   CUDA_VISIBLE_DEVICES=$gpu python -m vllm.entrypoints.openai.api_server \
     --host 0.0.0.0 --port $port \
-    --served-model-name eval_model \
-    --model /fs/ess/PAA0201/zilu/Mind2Web-2/model/Qwen3-4B-Instruct-2507 \
+    --served-model-name "$SERVED_MODEL_NAME" \
+    --model "$MODEL_DIR" \
     --gpu-memory-utilization 0.9   \
     -tp 1  &
   sleep 2  

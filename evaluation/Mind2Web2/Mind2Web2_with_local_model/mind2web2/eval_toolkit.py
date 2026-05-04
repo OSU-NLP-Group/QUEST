@@ -4,11 +4,13 @@ import asyncio
 import base64
 import io
 import logging
+import os
 import random
 import re
 import textwrap
 import uuid
 from functools import lru_cache
+from pathlib import Path
 from typing import List, Type, Callable, Awaitable, Optional, Tuple, Union
 import tiktoken
 from PIL import Image
@@ -34,9 +36,10 @@ visit = VisitTool()
 
 @lru_cache(maxsize=1)
 def _qwen_tokenizer():
-    # Hard-coded tokenizer for the local vLLM model (Qwen3-4B-Instruct-2507).
+    # Tokenizer should match the local vLLM model.
+    default_model_dir = Path(__file__).resolve().parents[1] / "model/Qwen3-4B-Instruct-2507"
     return AutoTokenizer.from_pretrained(
-        "/fs/ess/PAA0201/zilu/Mind2Web-2/model/Qwen3-4B-Instruct-2507",
+        os.getenv("MODEL_DIR", str(default_model_dir)),
         trust_remote_code=True,
     )
 

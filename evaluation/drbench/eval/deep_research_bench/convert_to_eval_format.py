@@ -8,6 +8,9 @@ import json
 import os
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+DRBENCH_DIR = SCRIPT_DIR.parents[1]
+
 
 def load_questions(questions_file):
     """Load the question file and build a question-to-id mapping."""
@@ -69,10 +72,10 @@ def main():
     # File path configuration.
     # Define multiple base_dir entries. Add more directories as needed.
     base_dirs = [
-        Path("/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/drbench/a3b-results/qwen3-moe-rl-45steps-16k-output-80k-memory-200turns/results/deepresearch/deepresearch_bench_questions"),
+        DRBENCH_DIR / "results/deepresearch/deepresearch_bench_questions",
     ]
-    questions_file = "/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/drbench/deepresearch_bench_questions.jsonl"
-    output_dir = Path("/fs/scratch/PAS1576/jianxie/DeepResearch/evaluation/datasets/drbench/eval/deep_research_bench/data/test_data/raw_data")
+    questions_file = DRBENCH_DIR / "deepresearch_bench_questions.jsonl"
+    output_dir = SCRIPT_DIR / "data/test_data/raw_data"
 
     # Ensure the output directory exists.
     output_dir.mkdir(parents=True, exist_ok=True)

@@ -16,15 +16,17 @@ import hashlib
 import sqlite3
 from contextlib import contextmanager
 import atexit
+from pathlib import Path
 
 VISIT_SERVER_TIMEOUT = int(os.getenv("VISIT_SERVER_TIMEOUT", 200))
 WEBCONTENT_MAXLENGTH = int(os.getenv("WEBCONTENT_MAXLENGTH", 150000))
 
 JINA_API_KEYS = os.getenv("JINA_API_KEYS", "")
 
-_default_cache_dir = "/fs/ess/PAA0201/jianxie/database_only_for_eval"
-os.makedirs(_default_cache_dir, exist_ok=True)
-_default_visit_cache_file = os.path.join(_default_cache_dir, "visit_cache_merged.db")
+_repo_root = Path(__file__).resolve().parents[5]
+_default_cache_dir = _repo_root / "database"
+_default_cache_dir.mkdir(parents=True, exist_ok=True)
+_default_visit_cache_file = str(_default_cache_dir / "visit_cache_merged.db")
 VISIT_CACHE_FILE = os.getenv("VISIT_CACHE_FILE", _default_visit_cache_file)
 VISIT_CACHE_ENABLED = os.getenv("VISIT_CACHE_ENABLED", "true").lower() == "true"
 VISIT_CACHE_RESUME = os.getenv("VISIT_CACHE_RESUME", "true").lower() == "true"
