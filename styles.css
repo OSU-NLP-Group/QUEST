@@ -565,10 +565,6 @@ a { color: inherit; text-decoration: none; }
   min-height: 26px;
 }
 
-.benchmark-bar-row.has-base {
-  grid-template-columns: 130px minmax(0, 1fr) 54px;
-}
-
 .benchmark-bar-label {
   display: inline-flex;
   align-items: center;
@@ -645,26 +641,6 @@ a { color: inherit; text-decoration: none; }
   min-width: 2px;
   border-radius: inherit;
   background: var(--bar-color);
-}
-
-.benchmark-bar-row.has-base .benchmark-bar-fill:not(.benchmark-bar-fill--base) {
-  background: var(--bar-color);
-}
-
-.benchmark-bar-fill--base {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 4px;
-  box-sizing: border-box;
-  background: #93C5FD;
-}
-
-.benchmark-bar-base-value {
-  color: #FFFFFF;
-  font-size: 0.58rem;
-  font-weight: 800;
-  line-height: 1;
 }
 
 .benchmark-bar-value {

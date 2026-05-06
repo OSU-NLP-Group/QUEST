@@ -1673,7 +1673,7 @@
             {role:'match', l:'GPT-5.4',        v:82.7},
             {role:'open',  l:'MiroThinker-1.7-mini', v:67.9},
             {role:'open2', l:'Redsearcher',    v:57.4},
-            {role:'quest', l:BENCHMARK_LABEL,  v:64.6, base:45.5},
+            {role:'quest', l:BENCHMARK_LABEL,  v:64.6},
           ]},
           { title:'Mind2Web 2', bars:[
             {role:'sota',  l:'OpenAI-DR',      v:28.0},
@@ -1705,7 +1705,7 @@
             {role:'match', l:'GLM-4.6',        v:48.2},
             {role:'open',  l:'GPT-OSS-120B',   v:44.1},
             {role:'open2', l:'Tongyi-DR',      v:44.5},
-            {role:'quest', l:BENCHMARK_LABEL,  v:67.0, base:61.0},
+            {role:'quest', l:BENCHMARK_LABEL,  v:67.0},
           ]},
           { title:'WideSearch', bars:[
             {role:'sota',  l:'Kimi K2.5',      v:72.7},
@@ -1764,8 +1764,7 @@
             sorted.forEach((bar) => {
               const row = document.createElement('div');
               row.className = 'benchmark-bar-row'
-                + (bar.l === BENCHMARK_LABEL ? ' is-quest' : '')
-                + (bar.base != null ? ' has-base' : '');
+                + (bar.l === BENCHMARK_LABEL ? ' is-quest' : '');
 
               const label = document.createElement('span');
               label.className = 'benchmark-bar-label';
@@ -1806,17 +1805,6 @@
               fill.style.setProperty('--bar-width', `${(bar.v / maxValue) * 100}%`);
               fill.style.setProperty('--bar-color', roleColor(bar.role));
               track.appendChild(fill);
-              if (bar.base != null) {
-                const baseFill = document.createElement('span');
-                baseFill.className = 'benchmark-bar-fill benchmark-bar-fill--base';
-                baseFill.style.setProperty('--bar-width', `${(bar.base / maxValue) * 100}%`);
-                baseFill.style.setProperty('--bar-color', roleColor(bar.role));
-                const baseText = document.createElement('span');
-                baseText.className = 'benchmark-bar-base-value';
-                baseText.textContent = bar.base.toFixed(1);
-                baseFill.appendChild(baseText);
-                track.appendChild(baseFill);
-              }
               row.appendChild(track);
 
               const value = document.createElement('span');
