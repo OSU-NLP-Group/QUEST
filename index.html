@@ -1643,7 +1643,6 @@
         };
 
         const MODEL_ICONS = {
-          'Quest-35B':       'figures/osu_nlp.png',
           'Gemini 3 Pro':    'figures/gemini.png',
           'Gemini 3.1 Pro':  'figures/gemini.png',
           'Gemini-DR':       'figures/gemini.png',
@@ -1768,14 +1767,22 @@
 
               const label = document.createElement('span');
               label.className = 'benchmark-bar-label';
-              const iconSrc = MODEL_ICONS[bar.l];
-              if (iconSrc) {
-                const icon = document.createElement('img');
-                icon.className = 'benchmark-bar-icon';
-                icon.src = iconSrc;
-                icon.alt = '';
-                icon.loading = 'lazy';
-                label.appendChild(icon);
+              if (bar.l === BENCHMARK_LABEL) {
+                const badge = document.createElement('span');
+                badge.className = 'benchmark-bar-icon benchmark-bar-icon--letter';
+                badge.setAttribute('aria-hidden', 'true');
+                badge.textContent = 'Q';
+                label.appendChild(badge);
+              } else {
+                const iconSrc = MODEL_ICONS[bar.l];
+                if (iconSrc) {
+                  const icon = document.createElement('img');
+                  icon.className = 'benchmark-bar-icon';
+                  icon.src = iconSrc;
+                  icon.alt = '';
+                  icon.loading = 'lazy';
+                  label.appendChild(icon);
+                }
               }
               const name = document.createElement('span');
               name.className = 'benchmark-bar-name';

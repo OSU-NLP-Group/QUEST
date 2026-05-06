@@ -542,7 +542,7 @@ a { color: inherit; text-decoration: none; }
 .benchmark-comparison-card h4 {
   margin: 0 0 2px;
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.84rem;
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: 0;
@@ -554,12 +554,12 @@ a { color: inherit; text-decoration: none; }
   flex-direction: column;
   justify-content: center;
   gap: 7px;
-  height: 210px;
+  height: 230px;
 }
 
 .benchmark-bar-row {
   display: grid;
-  grid-template-columns: 116px minmax(0, 1fr) 36px;
+  grid-template-columns: 130px minmax(0, 1fr) 36px;
   gap: 6px;
   align-items: center;
   min-height: 26px;
@@ -572,7 +572,7 @@ a { color: inherit; text-decoration: none; }
   min-width: 0;
   overflow: hidden;
   color: #64748B;
-  font-size: 0.64rem;
+  font-size: 0.72rem;
   font-weight: 650;
   line-height: 1.15;
   text-overflow: ellipsis;
@@ -580,10 +580,26 @@ a { color: inherit; text-decoration: none; }
 }
 
 .benchmark-bar-icon {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
   flex: 0 0 auto;
+}
+
+.benchmark-bar-icon--letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #2563EB;
+  color: #FFFFFF;
+  font-family: "Source Serif 4", serif;
+  font-style: italic;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  box-sizing: border-box;
+  padding-bottom: 2px;
 }
 
 .benchmark-bar-name {
@@ -592,6 +608,18 @@ a { color: inherit; text-decoration: none; }
   text-overflow: ellipsis;
 }
 
+.benchmark-bar-row.is-quest {
+  position: relative;
+  isolation: isolate;
+}
+.benchmark-bar-row.is-quest::before {
+  content: '';
+  position: absolute;
+  inset: -2px -8px;
+  background: #DBEAFE;
+  border-radius: 6px;
+  z-index: -1;
+}
 .benchmark-bar-row.is-quest .benchmark-bar-label,
 .benchmark-bar-row.is-quest .benchmark-bar-value {
   color: #2563EB;
@@ -600,10 +628,10 @@ a { color: inherit; text-decoration: none; }
 
 .benchmark-bar-track {
   position: relative;
-  height: 13px;
+  height: 14px;
   overflow: hidden;
   border-radius: 4px;
-  background: #EEF2F7;
+  background: transparent;
 }
 
 .benchmark-bar-fill {
@@ -617,7 +645,7 @@ a { color: inherit; text-decoration: none; }
 
 .benchmark-bar-value {
   color: #94A3B8;
-  font-size: 0.64rem;
+  font-size: 0.72rem;
   font-weight: 650;
   line-height: 1;
   text-align: right;
