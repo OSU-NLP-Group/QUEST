@@ -3,10 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quest: A Fully Open Recipe for Training Search Agents</title>
+    <!-- Previous title: Quest: A Fully Open Recipe for Training Search Agents -->
+    <title>Quest: Training Frontier Deep Research Agents with Fully Synthetic Tasks</title>
     <meta
       name="description"
-      content="Quest is a fully open recipe for training search agents, covering data synthesis, memory management, infrastructure, and a three-stage training pipeline."
+      content="Quest is an open family of 2B to 35B deep research agents trained with fully synthetic rubric-tree tasks, structured context management, and a mid-training, SFT, and RL pipeline."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -77,7 +78,8 @@
             <div class="cover-visual" aria-hidden="true">
               <div class="cover-panel cover-panel-wide">
                 <span>Fully open recipe</span>
-                <strong>Training search agents from scratch</strong>
+                <!-- Previous cover text: Training search agents from scratch -->
+                <strong>Training deep research agents with synthetic tasks</strong>
               </div>
               <div class="cover-panel">
                 <span>Data synthesis</span>
@@ -94,13 +96,16 @@
             </div>
 
             <div class="article-head">
-              <h1><span class="brand">Quest</span>: A Fully Open Recipe for Training Search Agents</h1>
+              <!-- Previous headline: <span class="brand">Quest</span>: A Fully Open Recipe for Training Search Agents -->
+              <h1><span class="brand">Quest</span>: Training Frontier Deep Research Agents with Fully Synthetic Tasks</h1>
               <p class="subtitle"><a href="https://x.com/osunlp" target="_blank" rel="noopener" class="subtitle-link">OSU NLP Group</a></p>
             </div>
           </section>
 
           <section class="lede">
             <p>
+              <!--
+              Previous lede:
               Quest is a general-purpose agent designed to handle a wide range
               of search tasks, with strong capabilities in fact-seeking, claim
               grounding, and report synthesis. It covers the full recipe:
@@ -108,9 +113,21 @@
               memory management for long-horizon reasoning, infrastructure for
               efficient and stable training, and a multi-stage pipeline spanning
               mid-training, SFT, and RL.
+              -->
+              Quest is a family of open deep research agents, ranging from 2B
+              to 35B parameters, designed to search, verify, remember, and
+              synthesize information over long horizons. Using only 8K
+              fully synthesized training tasks, Quest learns three core
+              capabilities required by general-purpose deep research:
+              fact seeking, citation grounding, and report synthesis.
             </p>
             <p>
-              We release everything: model, data, and training scripts.
+              <!-- Previous release note: We release everything: model, data, and training scripts. -->
+              The recipe combines a rubric-tree-based data synthesis pipeline,
+              structured context management, and a three-stage training process
+              spanning mid-training, supervised fine-tuning, and reinforcement
+              learning. We plan to release the models, data, synthesis pipeline,
+              and training code to support further research.
             </p>
           </section>
 
@@ -245,7 +262,8 @@
 
               <div class="comparison-col">
                 <div class="comparison-inline">
-                  <div class="table-label">Deep Search Agent Training Recipe Comparison</div>
+                  <!-- Previous label: Deep Search Agent Training Recipe Comparison -->
+                  <div class="table-label">Deep Research Agent Training Recipe Comparison</div>
                   <div class="table-scroll">
                     <table class="content-table comparison-table">
                       <colgroup>
@@ -397,7 +415,8 @@
                 </div>
               </div>
             </div>
-            <p class="figure-caption comparison-caption">Deep Search Agent Training Recipe Comparison.</p>
+            <!-- Previous caption: Deep Search Agent Training Recipe Comparison. -->
+            <p class="figure-caption comparison-caption">Deep Research Agent Training Recipe Comparison.</p>
 
             <div class="body-copy task-copy">
               <div class="subsection">
@@ -438,7 +457,8 @@
                   well-structured reports.
                 </p>
                 <p>
-                  <strong>Quest is designed to handle all three.</strong>
+                  <!-- Previous closing sentence: <strong>Quest is designed to handle all three.</strong> -->
+                  <strong>Quest is trained to handle all three under one synthetic-data recipe.</strong>
                 </p>
               </div>
             </div>
@@ -451,10 +471,18 @@
 
             <div class="body-copy">
               <p>
+                <!--
+                Previous Quest description:
                 Quest is equipped with a practical tool-use system that allows
                 it to gather external information, browse webpages, perform
                 precise computation, and access academic evidence during
                 inference.
+                -->
+                Quest starts from open Qwen models and equips them with a
+                practical tool-use system for deep research. During training and
+                inference, the agent can search the web, visit pages, run
+                computation, and query scholarly evidence, while a structured
+                context state keeps long-horizon research coherent.
               </p>
             </div>
 
@@ -491,10 +519,20 @@
             <div class="subsection system-comparison">
               <h3>Comparison with Existing Research Agents</h3>
               <p>
+                <!--
+                Previous benchmark description:
                 We compare Quest-35B against leading closed and open research
                 agents across objective, citation-grounded, and open-ended
                 search benchmarks. Each panel is sorted by the reported score
                 under the primary metric used by that benchmark.
+                -->
+                We evaluate Quest-35B on eight deep research benchmarks spanning
+                fact seeking, citation grounding, and report synthesis. Quest
+                establishes the best overall performance among open-weight
+                agents and is competitive with frontier proprietary systems:
+                it reaches 64.6 on BrowseComp under discard-all evaluation,
+                30.7 on Mind2Web 2, 80.8 on GAIA, and 48.2 on DeepResearch
+                Bench.
               </p>
 
               <div class="benchmark-comparison-panel">
@@ -509,9 +547,18 @@
             <div class="subsection system-comparison">
               <h3>30B-Scale Research Agent Comparison</h3>
               <p>
+                <!--
+                Previous 30B comparison description:
                 We further compare 30B-scale research agents across the same
                 benchmark suite. The reported metric follows the primary metric
                 used by each benchmark.
+                -->
+                To control for scale, we also train Quest-30B from
+                Qwen3-30B-A3B and compare it with Tongyi-DR and OpenResearcher.
+                Quest-30B performs best on four of the eight benchmarks,
+                including Mind2Web 2 and DeepResearch Bench, suggesting that
+                broad benchmark coverage comes from the training recipe rather
+                than parameter count alone.
               </p>
 
               <div class="small-model-panel">
@@ -568,19 +615,35 @@
             <div class="subsection smaller-versions">
               <h3>Smaller Versions</h3>
               <p>
+                <!--
+                Previous smaller-model description:
                 We also train smaller SFT-only variants to provide lightweight
                 search agents for compute-constrained deployment scenarios. The
                 2B, 4B, and 9B models use the same agent interface and training
                 format, allowing us to study how search capability scales under
                 a fixed recipe.
+                -->
+                We also train smaller SFT-only variants at 2B, 4B, and 9B
+                scales. These models use the same data and inference
+                configuration, letting us isolate how much deep research
+                capability can be transferred into deployable, lower-cost
+                agents.
               </p>
               <p>
+                <!--
+                Previous smaller-model result summary:
                 Across objective, citation-grounded, and open-ended benchmarks,
                 the smaller variants preserve the core behavior of Quest while
                 exposing the expected tradeoff between model size and task
                 performance. The results below report the average score for
                 each benchmark, using a per-benchmark y-axis range to make close
                 differences visible.
+                -->
+                The result is unexpectedly strong on fact-seeking benchmarks:
+                even Quest-2B-SFT reaches 30.3 on HLE and 72.8 on GAIA.
+                Open-ended report synthesis remains harder for small models,
+                which points to a useful next target for lightweight private or
+                local deep research agents.
               </p>
 
               <div class="small-model-panel">
@@ -637,18 +700,34 @@
             <div class="subsection effect-study">
               <h3>The Effect of Mid-training and Reinforcement Learning</h3>
               <p>
+                <!--
+                Previous training-stage setup:
                 To trace how each training stage contributes, we evaluate the
                 same 35B agent from the vanilla checkpoint through three
                 training stages: SFT only, after adding mid-training (SFT+MT),
                 and after the final reinforcement learning stage (SFT+MT+RL).
                 Each panel below plots the score progression on one benchmark.
+                -->
+                To trace how each training stage contributes, we evaluate the
+                same 35B base checkpoint across four variants: the vanilla
+                Qwen3.5-35B-A3B agent, SFT, MT+SFT, and the full MT+SFT+RL
+                recipe.
               </p>
               <p>
+                <!--
+                Previous training-stage interpretation:
                 Mid-training yields consistent gains on several search-heavy
                 and citation-grounded benchmarks, while keeping performance
                 largely stable on tasks where the SFT-only model is already
                 strong. Reinforcement learning further compounds these gains
                 on tasks that reward iterative search and reasoning.
+                -->
+                The effect is not uniform: SFT helps most objective tasks but
+                can hurt open-ended report quality; MT improves the SFT model
+                overall; RL produces the largest gains on open-ended benchmarks
+                while slightly trading off reasoning-heavy HLE and GAIA scores.
+                Overall, the full MT+SFT+RL recipe performs best across the
+                compared variants.
               </p>
 
               <div class="small-model-panel">
@@ -765,6 +844,8 @@
 
             <div class="body-copy">
               <p>
+                <!--
+                Previous data-synthesis opening:
                 Training a Search Agent requires data that goes far beyond
                 standard QA pairs. A question-answer pair alone does not tell
                 the model what makes an answer correct, what evidence should
@@ -772,8 +853,18 @@
                 quality. Quest builds such data from scratch through a
                 structured synthesis pipeline tailored to both objective and
                 open-ended tasks.
+                -->
+                Training a general-purpose deep research agent requires data
+                beyond single-answer QA pairs. A short answer can teach
+                fact-seeking, but it does not cover multi-source synthesis,
+                source attribution, multiple valid solutions, or partial credit
+                for complex task completion. Quest therefore synthesizes each
+                training instance as a query paired with a task-specific rubric
+                tree and an evaluation protocol.
               </p>
               <p>
+                <!--
+                Previous rubric-tree description:
                 Central to our synthesis pipeline is the <em>rubric tree</em>:
                 a hierarchical decomposition of the constraints an answer must
                 satisfy. The rubric tree serves three roles simultaneously
@@ -781,12 +872,21 @@
                 unified evaluation framework, enables scalable data synthesis
                 through composable constraints, and provides fine-grained
                 reward signals for RL training.
+                -->
+                A <em>rubric tree</em> decomposes a task into verifiable
+                criteria. Leaf nodes check facts, constraints, or citation
+                support; internal nodes aggregate those checks into higher-level
+                scores. This lets the same data format cover unique-answer
+                tasks, multi-constraint tasks, and open-ended research prompts
+                while providing dense rewards for RL.
               </p>
             </div>
 
             <div class="subsection">
               <h3>Objective Tasks</h3>
               <p>
+                <!--
+                Previous objective-task synthesis:
                 For objective tasks, we construct training data through a
                 scalable synthesis pipeline grounded in external web evidence.
                 We first sample trending keywords from a pool crawled from
@@ -796,6 +896,13 @@
                 relevant information, and derives verifiable constraints from
                 the retrieved content, which are then organized into a rubric
                 tree following Mind2Web2.
+                -->
+                For objective tasks, we sample trending keywords from Google
+                Trends, ask a capable generator to browse the web, collect
+                evidence, and derive verifiable constraints from retrieved
+                content. Those constraints are organized into a rubric tree and
+                later translated into both a natural-language query and an
+                executable evaluation script.
               </p>
               <p>
                 All rubric trees undergo iterative refinement to ensure a
@@ -810,6 +917,8 @@
             <div class="subsection">
               <h3>Open-ended Tasks</h3>
               <p>
+                <!--
+                Previous open-ended-task synthesis:
                 For open-ended tasks, we sample keywords directly from Google
                 Trends to produce open-ended research prompts. Each task is
                 again paired with a rubric tree, though the structure here is
@@ -818,6 +927,13 @@
                 instruction following, comprehensiveness, readability, and
                 insight - while the third layer contains adaptive nodes
                 tailored to the specific prompt.
+                -->
+                Open-ended tasks follow the same keyword sampling and web
+                exploration process, but use a partially shared rubric
+                structure. The top-level criteria follow DeepResearch Bench:
+                instruction following, comprehensiveness, readability, and
+                insight. Under each criterion, Quest synthesizes task-specific
+                child nodes conditioned on the generated research question.
               </p>
               <p>
                 To produce stable rubric weights, we run the weight generation
@@ -869,6 +985,8 @@
 
             <div class="body-copy">
               <p>
+                <!--
+                Previous memory opening:
                 A Search Agent does not complete a task in a single
                 pass. It searches, reads, revisits, and revises - accumulating
                 information across dozens of tool calls before arriving at a
@@ -876,8 +994,16 @@
                 context window fills with raw search results, visited pages, and
                 intermediate reasoning traces, the agent's ability to attend to
                 what matters most begins to degrade.
+                -->
+                A deep research agent searches, reads, and revises through
+                multi-turn tool use before producing a final answer. As the
+                context window fills with raw search results, visited pages, and
+                intermediate reasoning traces, the agent's ability to attend to
+                what matters most begins to degrade.
               </p>
               <p>
+                <!--
+                Previous memory contrast:
                 Most existing open-source agents sidestep this problem by
                 either capping the number of turns or relying on a sufficiently
                 large context window to hold everything at once. Quest takes a
@@ -886,6 +1012,12 @@
                 that compresses history into a compact state, enabling the agent
                 to reason over arbitrarily long horizons without context
                 overflow.
+                -->
+                Existing open-weight agents often sidestep this problem by
+                capping the number of turns or relying on a large context window
+                to hold everything. Quest instead uses a structured context
+                management module that compresses history into a compact state,
+                enabling long-horizon research without unbounded context growth.
               </p>
             </div>
 
@@ -901,12 +1033,21 @@
             <div class="subsection">
               <h3>Memory Condenser</h3>
               <p>
+                <!--
+                Previous condenser description:
                 When the agent's context usage approaches a threshold, a
                 <em>Memory Condenser</em> is triggered. The condenser takes as
                 input the full raw history - search queries and their results,
                 visited URLs and extracted content, reasoning traces, and any
                 previous summarized memory - and produces a structured JSON
                 object we call the <strong>Memory State</strong>.
+                -->
+                When context usage crosses a threshold, a
+                <em>Context Condenser</em> based on GPT-5-mini is triggered.
+                The condenser reads the full raw history - search queries,
+                search results, visited URLs, extracted page content, reasoning
+                traces, and any previous memory - and produces a structured
+                JSON object we call the <strong>Memory State</strong>.
               </p>
               <p>
                 The Memory State organizes accumulated knowledge into three
@@ -989,6 +1130,8 @@
 
             <div class="body-copy">
               <p>
+                <!--
+                Previous infrastructure opening:
                 Training a Search Agent at scale introduces
                 infrastructure challenges that go beyond standard LLM
                 fine-tuning. The agent must interact with live web content
@@ -997,6 +1140,13 @@
                 URL visits executed in parallel. Without careful infrastructure
                 design, these external calls become the dominant bottleneck:
                 expensive and difficult to reproduce.
+                -->
+                Training a deep research agent at scale introduces
+                infrastructure challenges beyond standard LLM fine-tuning. The
+                agent interacts with live web content during task synthesis,
+                trajectory collection, and RL rollout, where parallel searches
+                and URL visits can become the dominant cost and reproducibility
+                bottleneck.
               </p>
               <p>
                 Quest addresses this through a dual-cache system that intercepts
@@ -1083,6 +1233,8 @@
 
             <div class="body-copy">
               <p>
+                <!--
+                Previous training opening:
                 Quest trains the Search Agent through a three-stage
                 pipeline: mid-training, supervised fine-tuning, and
                 reinforcement learning. We apply this pipeline across two model
@@ -1090,11 +1242,29 @@
                 included for fair comparison with prior work. We also train
                 smaller SFT-only variants, including Qwen3.5-9B, Qwen3.5-4B,
                 and Qwen3.5-2B, for compute-constrained deployment settings.
+                -->
+                Quest trains deep research agents through a three-stage
+                pipeline: mid-training, supervised fine-tuning, and
+                reinforcement learning. The full recipe is applied to
+                Qwen3.5-35B-A3B to obtain Quest-35B and to Qwen3-30B-A3B for
+                scale-controlled comparison. Smaller 2B, 4B, and 9B SFT-only
+                variants study how far the synthetic recipe transfers to
+                lightweight agents.
               </p>
             </div>
 
             <div class="subsection">
               <h3>Mid-Training</h3>
+
+              <!-- Previous order: Relevant Information Extraction first, then Memory Summarization. -->
+              <h4 class="subhead">Context Summarization</h4>
+              <p>
+                Given a long interaction history, the model is trained to
+                produce the structured Memory State JSON used by the context
+                management module. These summaries are produced by GPT-5-mini
+                during data synthesis and reused directly, aligning the model's
+                training target with the format consumed during inference.
+              </p>
 
               <h4 class="subhead">Relevant Information Extraction</h4>
               <p>
@@ -1105,6 +1275,8 @@
                 contexts - a prerequisite for effective web-based research.
               </p>
 
+              <!--
+              Previous memory summarization block:
               <h4 class="subhead">Memory Summarization</h4>
               <p>
                 Given a long history context, the model is required to produce a
@@ -1114,13 +1286,21 @@
                 format remains consistent with what the Resume Agent expects to
                 consume.
               </p>
+              -->
 
               <p>
+                <!--
+                Previous MT data note:
                 Both tasks require no additional data collection or human
                 annotation: the relevant information extraction targets are
                 derived directly from the Visit Tool, and the memory
                 summarization targets are produced by the Memory Condenser
                 throughout the pipeline.
+                -->
+                Both tasks require no additional data collection: relevant
+                information extraction targets come from visit-tool outputs in
+                collected trajectories, and context summarization targets are
+                produced by the context condenser throughout the pipeline.
               </p>
             </div>
 
@@ -1141,10 +1321,11 @@
               <p>
                 For trajectories that fail, rather than discarding them, we
                 adopt a reflection-based retry strategy. The error cause
-                identified by rubric evaluation is injected into the context as
-                a hidden hint. The teacher model is then re-run on the augmented
-                context, and if the corrected trajectory achieves a perfect
-                score, it is included in the training set.
+                <!-- Previous wording: identified by rubric evaluation is injected into the context as a hidden hint. -->
+                identified by the query-specific evaluation protocol is injected
+                into the context as a hint. The teacher model is then re-run on
+                the augmented context, and the retried trajectory is retained if
+                it exceeds the same threshold.
               </p>
 
               <h4 class="subhead">Inline Citation Format</h4>
@@ -1199,6 +1380,8 @@
 
               <h4 class="subhead">Rubric-tree Rewards</h4>
               <p>
+                <!--
+                Previous rubric reward description:
                 Each trajectory is evaluated against a hierarchical rubric
                 associated with its task, producing a fine-grained measure of
                 completion quality beyond binary correctness. For objective
@@ -1206,6 +1389,14 @@
                 tasks, we map the pairwise score into discrete reward levels to
                 sharpen distinctions near the ambiguous middle region and
                 stabilize optimization.
+                -->
+                Each trajectory is evaluated by the query-specific protocol
+                derived from its rubric tree. For objective tasks, the
+                evaluation score is used directly as \(s_{\mathrm{rubric}}\).
+                For open-ended tasks, the pairwise score against the reference
+                report is calibrated into ordered reward levels, making the
+                reward more separable and less sensitive to small judge-score
+                fluctuations.
               </p>
 
               <h4 class="subhead">Fact-checking Rewards</h4>
@@ -1225,15 +1416,17 @@
               </div>
 
               <p>
-                The two signals are combined into a single composite reward.
+                <!-- Previous reward wording: The two signals are combined into a single composite reward. -->
+                The rubric and fact-checking signals are combined into a single
+                composite reward.
               </p>
 
               <div class="equation-block">
                 \[
-                  r =
-                  0.75 \cdot s_{\mathrm{base}}
+                  R =
+                  0.75 \cdot s_{\mathrm{rubric}}
                   + 0.25 \cdot
-                  \min(s_{\mathrm{cite}}, s_{\mathrm{base}})
+                  \min(s_{\mathrm{fact}}, s_{\mathrm{rubric}})
                 \]
               </div>
 
@@ -1386,6 +1579,8 @@
 
             <div class="body-copy">
               <p>
+                <!--
+                Previous closing opening:
                 In this project, we explored the full pipeline for training a
                 search agent from scratch, including data synthesis,
                 training, infrastructure, and system design. We hope this work
@@ -1393,6 +1588,13 @@
                 advance search agents. At the same time, our study
                 reveals several promising directions that warrant further
                 investigation.
+                -->
+                Quest is an open family of general-purpose deep research agents
+                capable of solving tasks that require fact seeking, citation
+                grounding, and report synthesis. Beyond the models themselves,
+                the main contribution is a reproducible recipe: synthetic
+                rubric-tree data, structured context management, and a training
+                pipeline that combines MT, SFT, and RL.
               </p>
             </div>
 
@@ -1449,8 +1651,13 @@
 
             <div class="body-copy closing-note">
               <p>
+                <!--
+                Previous final note:
                 We will continue to develop Quest to pave the way for truly
                 autonomous intellectual agents. This is, after all, our Quest.
+                -->
+                We hope Quest provides a strong open foundation for advancing
+                deep research agents.
               </p>
             </div>
           </section>
@@ -1485,9 +1692,15 @@
 
       <footer class="site-footer">
         <p>
+          <!--
+          Previous footer:
           Quest is a fully open recipe for training search agents, covering
           data synthesis, memory management, infrastructure, and long-horizon
           training.
+          -->
+          Quest is an open recipe for training deep research agents with fully
+          synthetic rubric-tree tasks, structured context management, and
+          long-horizon training.
         </p>
         <div class="footer-links">
           <a href="#tasks">Tasks</a>
@@ -1533,6 +1746,8 @@
         const EDGE  = ['#93C5FD', '#60A5FA', '#3B82F6'];
         const SIZES = ['2B', '4B', '9B'];
 
+        /*
+        Previous smaller-model chart data:
         const defs = [
           { id: 'c-browsecomp', vals: [28,    40,    45.4],  min: 0, max: 50, step: 10 },
           { id: 'c-m2w2',       vals: [8.81,  24.3,  24.4],  min: 0,  max: 30, step: 10 },
@@ -1542,6 +1757,17 @@
           { id: 'c-gaia',       vals: [72.82, 77.67, 78.64], min: 0, max: 82, step: 20 },
           { id: 'c-bcp',        vals: [52.57, 52.05, 55.64], min: 0, max: 58, step: 15 },
           { id: 'c-ws',         vals: [40.9,  55,    58.5],  min: 0, max: 60, step: 15 },
+        ];
+        */
+        const defs = [
+          { id: 'c-browsecomp', vals: [28,    40,    45.4],  min: 0, max: 50, step: 10 },
+          { id: 'c-m2w2',       vals: [8.8,   24.3,  24.4],  min: 0, max: 30, step: 10 },
+          { id: 'c-hle',        vals: [30.3,  36.2,  36.9],  min: 0, max: 42, step: 10 },
+          { id: 'c-drb',        vals: [21.0,  22.0,  32.6],  min: 0, max: 40, step: 10 },
+          { id: 'c-lrb',        vals: [57.4,  62.1,  63.5],  min: 0, max: 68, step: 17 },
+          { id: 'c-gaia',       vals: [72.8,  77.7,  78.6],  min: 0, max: 86, step: 20 },
+          { id: 'c-bcp',        vals: [52.6,  52.1,  55.6],  min: 0, max: 60, step: 15 },
+          { id: 'c-ws',         vals: [40.9,  55.0,  58.5],  min: 0, max: 64, step: 16 },
         ];
 
         const valueLabelPlugin = {
@@ -1568,6 +1794,8 @@
         const PERF_FILL = ['#4360E8', '#C63F00', '#008B5F'];
         const PERF_EDGE = ['#344BC7', '#A63400', '#00754F'];
         const PERF_LABELS = ['Quest-30B', 'Tongyi-DR', 'OpenResearcher'];
+        /*
+        Previous 30B-scale chart data:
         const perfDefs = [
           { id: 'p-browsecomp',   vals: [37.0, 43.4, 26.3], min: 0,  max: 50 },
           { id: 'p-hle',          vals: [26.0, 32.9, 20.4], min: 0,  max: 36 },
@@ -1576,6 +1804,17 @@
           { id: 'p-liveresearch', vals: [66.7, 56.3, 61.3], min: 0,  max: 70 },
           { id: 'p-deepresearch', vals: [44.3, 40.5, 39.8], min: 0,  max: 46 },
           { id: 'p-widesearch',   vals: [57.2, 37.3, 19.2], min: 0,  max: 60 },
+          { id: 'p-bcp',          vals: [48.2, 44.5, 54.8], min: 0,  max: 58 },
+        ];
+        */
+        const perfDefs = [
+          { id: 'p-browsecomp',   vals: [37.0, 43.4, 26.3], min: 0,  max: 50 },
+          { id: 'p-hle',          vals: [24.6, 32.9, 19.6], min: 0,  max: 36 },
+          { id: 'p-gaia',         vals: [69.0, 70.9, 64.1], min: 0,  max: 74 },
+          { id: 'p-m2w2',         vals: [28.6, 16.7, 14.8], min: 0,  max: 32 },
+          { id: 'p-liveresearch', vals: [74.1, 56.3, 61.3], min: 0,  max: 78 },
+          { id: 'p-deepresearch', vals: [45.3, 40.5, 35.4], min: 0,  max: 48 },
+          { id: 'p-widesearch',   vals: [54.2, 37.3, 19.2], min: 0,  max: 60 },
           { id: 'p-bcp',          vals: [48.2, 44.5, 54.8], min: 0,  max: 58 },
         ];
 
@@ -1649,6 +1888,7 @@
           'Gemini 2.5 Pro':  'figures/gemini.png',
           'Opus 4.6':        'figures/claude.svg',
           'Opus 4.5':        'figures/claude.svg',
+          'Claude Opus 4.5': 'figures/claude.svg',
           'GPT-5.4':         'figures/openai.png',
           'GPT-5':           'figures/openai.png',
           'GPT-OSS-120B':    'figures/openai.png',
@@ -1664,8 +1904,11 @@
           'MiroThinker-1.7-mini': 'figures/mirothinker.png',
           'Redsearcher':     'figures/redsearcher.png',
           'OpenResearcher':  'figures/openresearcher.webp',
+          'Quest-30B':       'figures/osu_nlp.png',
         };
 
+        /*
+        Previous Quest-35B benchmark comparison data:
         const benchmarkCharts = [
           { title:'BrowseComp', bars:[
             {role:'sota',  l:'Gemini 3.1 Pro', v:85.9},
@@ -1705,7 +1948,74 @@
             {role:'match', l:'GLM-4.6',        v:48.2},
             {role:'open',  l:'GPT-OSS-120B',   v:44.1},
             {role:'open2', l:'Tongyi-DR',      v:44.5},
-            {role:'quest', l:BENCHMARK_LABEL,  v:67.2},
+            {role:'quest', l:BENCHMARK_LABEL,  v:69.5},
+          ]},
+          { title:'WideSearch', bars:[
+            {role:'sota',  l:'Kimi K2.5',      v:72.7},
+            {role:'s2',    l:'Gemini 3 Pro',   v:57.0},
+            {role:'match', l:'OpenAI-o3',      v:52.6},
+            {role:'open',  l:'Gemini 2.5 Pro', v:51.0},
+            {role:'open2', l:'GPT-OSS-120B',   v:40.4},
+            {role:'quest', l:BENCHMARK_LABEL,  v:60.6},
+          ]},
+          { title:'GAIA', bars:[
+            {role:'quest', l:BENCHMARK_LABEL,  v:80.8},
+            {role:'open',  l:'MiroThinker-1.7-mini', v:80.3},
+            {role:'open2', l:'Redsearcher',    v:80.1},
+            {role:'sota',  l:'GPT-5',          v:76.4},
+            {role:'s2',    l:'Tongyi-DR',      v:70.9},
+            {role:'match', l:'OpenAI-DR',      v:67.4},
+          ]},
+          { title:'LiveResearchBench', bars:[
+            {role:'sota',  l:'GPT-5',          v:73.1},
+            {role:'s2',    l:'Grok-DR',        v:65.6},
+            {role:'match', l:'Gemini-DR',      v:63.3},
+            {role:'open',  l:'OpenResearcher', v:61.3},
+            {role:'open2', l:'Tongyi-DR',      v:56.3},
+            {role:'quest', l:BENCHMARK_LABEL,  v:68.2},
+          ]},
+        ];
+        */
+        const benchmarkCharts = [
+          { title:'BrowseComp', bars:[
+            {role:'sota',  l:'Gemini 3.1 Pro', v:85.9},
+            {role:'s2',    l:'Opus 4.6',       v:84.0},
+            {role:'match', l:'GPT-5.4',        v:82.7},
+            {role:'open',  l:'MiroThinker-1.7-mini', v:67.9},
+            {role:'open2', l:'Redsearcher',    v:57.4},
+            {role:'quest', l:BENCHMARK_LABEL,  v:64.6},
+          ]},
+          { title:'Mind2Web 2', bars:[
+            {role:'sota',  l:'OpenAI-DR',      v:28.0},
+            {role:'s2',    l:'Grok-DR',        v:27.0},
+            {role:'match', l:'Tencent Youtu',  v:27.0},
+            {role:'open',  l:'Tongyi-DR',      v:16.7},
+            {role:'open2', l:'OpenResearcher', v:14.8},
+            {role:'quest', l:BENCHMARK_LABEL,  v:30.7},
+          ]},
+          { title:'HLE', bars:[
+            {role:'sota',  l:'Opus 4.6',       v:53.1},
+            {role:'s2',    l:'GPT-5.4',        v:52.1},
+            {role:'match', l:'Gemini 3.1 Pro', v:51.4},
+            {role:'open',  l:'MiroThinker-1.7-mini', v:36.4},
+            {role:'open2', l:'Redsearcher',    v:34.9},
+            {role:'quest', l:BENCHMARK_LABEL,  v:37.2},
+          ]},
+          { title:'DeepResearch Bench', bars:[
+            {role:'sota',  l:'Gemini-DR',      v:49.7},
+            {role:'s2',    l:'OpenAI-DR',      v:46.5},
+            {role:'match', l:'DR Tulu',        v:45.5},
+            {role:'open',  l:'Tongyi-DR',      v:40.5},
+            {role:'open2', l:'OpenResearcher', v:35.4},
+            {role:'quest', l:BENCHMARK_LABEL,  v:48.2},
+          ]},
+          { title:'BrowseComp-Plus', bars:[
+            {role:'sota',  l:'Opus 4.6',       v:83.0},
+            {role:'s2',    l:'Opus 4.5',       v:67.6},
+            {role:'match', l:'GLM-4.6',        v:48.2},
+            {role:'open',  l:'GPT-OSS-120B',   v:44.1},
+            {role:'open2', l:'Tongyi-DR',      v:44.5},
+            {role:'quest', l:BENCHMARK_LABEL,  v:69.5},
           ]},
           { title:'WideSearch', bars:[
             {role:'sota',  l:'Kimi K2.5',      v:72.7},
@@ -1880,6 +2190,8 @@
         const STAGE_POINT_COLOR = '#1E40AF';
         const STAGE_FILL_COLOR  = 'rgba(59, 130, 246, 0.12)';
 
+        /*
+        Previous training-stage chart data:
         const effectDefs = [
           { id: 'e-browsecomp', vals: [38.4, 45.1,  45.9,  46.5], min: 36, max: 48, step: 3 },
           { id: 'e-m2w2',       vals: [22.3, 26.5,  29.9,  31.2], min: 20, max: 32, step: 4 },
@@ -1889,6 +2201,17 @@
           { id: 'e-gaia',       vals: [72.8, 83.5,  83.17, 83.8], min: 70, max: 86, step: 4 },
           { id: 'e-bcp',        vals: [60.51, 54.87, 55.64, 63.0], min: 52, max: 64, step: 3 },
           { id: 'e-ws',         vals: [43.8, 61.1,  62.5,  63.5], min: 40, max: 66, step: 6 },
+        ];
+        */
+        const effectDefs = [
+          { id: 'e-browsecomp', vals: [38.4, 45.1,  45.5,  45.5], min: 36, max: 48, step: 3 },
+          { id: 'e-m2w2',       vals: [15.1, 26.5,  29.9,  30.7], min: 12, max: 33, step: 5 },
+          { id: 'e-hle',        vals: [32.3, 39.49, 39.74, 37.9], min: 30, max: 42, step: 3 },
+          { id: 'e-drb',        vals: [44.05, 36.35, 39.72, 48.15], min: 34, max: 50, step: 4 },
+          { id: 'e-lrb',        vals: [65.02, 64.69, 65.47, 68.2], min: 64, max: 69, step: 1 },
+          { id: 'e-gaia',       vals: [72.8, 83.5,  83.17, 80.8], min: 70, max: 86, step: 4 },
+          { id: 'e-bcp',        vals: [58.5, 57.9, 58.6, 61.0], min: 57, max: 62, step: 1 },
+          { id: 'e-ws',         vals: [43.8, 61.1,  62.5,  64.5], min: 38, max: 70, step: 8 },
         ];
 
         const pointValueLabelPlugin = {
