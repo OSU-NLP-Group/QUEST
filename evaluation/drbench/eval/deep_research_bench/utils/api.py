@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 # Read API keys and model configurations from environment variables
 READ_API_KEY = os.environ.get("JINA_API_KEY", "")
-FACT_Model = os.environ.get("FACT_MODEL", "gemini/gemini-2.5-flash-preview-05-20")
-Model = os.environ.get("DEFAULT_MODEL", "gemini/gemini-2.5-pro-preview-06-05")
+FACT_Model = os.environ.get("FACT_MODEL", "gpt-5-mini")
+Model = os.environ.get("DEFAULT_MODEL", "gpt-5-mini")
 
 class AIClient:
 
@@ -39,7 +39,9 @@ class AIClient:
                 "vertexai package not installed. Run: pip install google-cloud-aiplatform"
             )
 
-        project_id = os.environ.get("VERTEXAI_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT") or "osu-prd-osunlp101-dd72"
+        project_id = os.environ.get("VERTEXAI_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT")
+        if not project_id:
+            raise RuntimeError("Set VERTEXAI_PROJECT or GOOGLE_CLOUD_PROJECT for vertexai/* models.")
         location = os.environ.get("VERTEXAI_LOCATION", "us-central1")
 
         credentials, _ = google.auth.default(quota_project_id=project_id)

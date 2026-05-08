@@ -1,6 +1,8 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd)"
+INFERENCE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${INFERENCE_DIR}/.." && pwd)"
 
 load_api_config() {
     local config_file="$1"
@@ -58,28 +60,28 @@ export NLP_WEB_SEARCH_ENABLE_SFILTER=false
 export QWEN_SEARCH_ENABLE_CSI=false
 export SPECIAL_CODE_MODE=false
 export PYTHONDONTWRITEBYTECODE=1
-export CACHE_DIR="${CACHE_DIR:-${SCRIPT_DIR}/cache/${USER:-default}}"
+export CACHE_DIR="${CACHE_DIR:-${INFERENCE_DIR}/cache/${USER:-default}}"
 
 # Model and Inference Hyperparameters
 export MODEL_NAME="${MODEL_NAME:-deepresearch}"
 export MODEL_PATH="${MODEL_PATH:-Alibaba-NLP/Tongyi-DeepResearch-30B-A3B}"
-export DATASET="${DATASET:-${SCRIPT_DIR}/../evaluation/drbench/deepresearch_bench_questions.jsonl}"
-export OUTPUT_PATH="${OUTPUT_PATH:-${SCRIPT_DIR}/outputs/drbench/results}"
-export TASK_LOG_DIR="${TASK_LOG_DIR:-${SCRIPT_DIR}/outputs/drbench/memory_logs}"
+export DATASET="${DATASET:-${REPO_ROOT}/evaluation/browsecomp/browsecomp.jsonl}"
+export OUTPUT_PATH="${OUTPUT_PATH:-${INFERENCE_DIR}/outputs/browsecomp/results}"
+export TASK_LOG_DIR="${TASK_LOG_DIR:-${INFERENCE_DIR}/outputs/browsecomp/memory_logs}"
 export ROLLOUT_COUNT=3
 export TEMPERATURE=1
 export PRESENCE_PENALTY=1.1
 export MAX_WORKERS="${MAX_WORKERS:-150}"
-export MAX_TURN="${MAX_TURN:-200}"
+export MAX_TURN="${MAX_TURN:-400}"
 export MAX_LLM_CALL_PER_RUN=$MAX_TURN
 
 # API and external service configuration
-export API_CONFIG_FILE="${API_CONFIG_FILE:-${SCRIPT_DIR}/api_config.yaml}"
+export API_CONFIG_FILE="${API_CONFIG_FILE:-${INFERENCE_DIR}/api_config.yaml}"
 load_api_config "$API_CONFIG_FILE"
 echo "Loaded API config from ${API_CONFIG_FILE}"
 
-export MEMORY_THRESHOLD="${MEMORY_THRESHOLD:-16000}"
-export LLM_MAX_TOKENS="${LLM_MAX_TOKENS:-10000}"
+export MEMORY_THRESHOLD="${MEMORY_THRESHOLD:-80000}"
+export LLM_MAX_TOKENS="${LLM_MAX_TOKENS:-20000}"
 export SANDBOX_FUSION_ENDPOINT="${SANDBOX_FUSION_ENDPOINT:-your_sandbox_endpoint}"
 
 # Multi-Worker Configuration (Optional)
@@ -89,7 +91,7 @@ export SANDBOX_FUSION_ENDPOINT="${SANDBOX_FUSION_ENDPOINT:-your_sandbox_endpoint
 
 # Server endpoint configuration (supports runtime edits via SERVER_ENDPOINTS_FILE)
 # react_agent.py will hot-reload SERVER_ENDPOINTS_FILE on every service call.
-export SERVER_ENDPOINTS_FILE="${SERVER_ENDPOINTS_FILE:-${SCRIPT_DIR}/server_endpoints.conf}"
+export SERVER_ENDPOINTS_FILE="${SERVER_ENDPOINTS_FILE:-${INFERENCE_DIR}/server_endpoints.conf}"
 
 normalize_list_value() {
     local value="$1"
@@ -134,7 +136,7 @@ load_server_endpoints_from_file() {
 # Hostname List Configuration (multi-node access settings)
 # Default values; can be overridden by server_endpoints.conf or external environment variables
 # Example: export HOSTNAME_LIST="node1,node2,node3"
-export HOSTNAME_LIST="${HOSTNAME_LIST:-a0012,a0013, a0002,a0010,a0005,a0017}"
+export HOSTNAME_LIST="${HOSTNAME_LIST:-c0820,c0821,c0827,c0822}"
 
 # Main model port list, comma-separated
 export PORTS="${PORTS:-6000,6001,6002,6003}"
@@ -302,6 +304,6 @@ echo "==== start infer... ===="
 # Note:if these environment variables are not set, caching is enabled by default and uses the default paths
 # Cache files will be created in the current working directory(usually the script run directory)
 
-cd "$( dirname -- "${BASH_SOURCE[0]}" )"
+cd "${INFERENCE_DIR}"
 
 python -u run_multi_react.py --dataset "$DATASET" --output "$OUTPUT_PATH" --max_workers $MAX_WORKERS --model $MODEL_NAME --model_path $MODEL_PATH --temperature $TEMPERATURE --presence_penalty $PRESENCE_PENALTY --total_splits ${WORLD_SIZE:-1} --worker_split $((${RANK:-0} + 1)) --roll_out_count $ROLLOUT_COUNT

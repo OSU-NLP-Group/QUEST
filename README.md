@@ -125,10 +125,13 @@ Evaluation scripts consume prediction directories produced by `inference/`.
 | Benchmark | Directory |
 | --- | --- |
 | BrowseComp | [`evaluation/browsecomp/`](evaluation/browsecomp/) |
+| BrowseComp-Plus | [`evaluation/browsecomp_plus/`](evaluation/browsecomp_plus/) |
 | GAIA | [`evaluation/gaia/`](evaluation/gaia/) |
 | HLE | [`evaluation/hle/`](evaluation/hle/) |
 | DeepResearch Bench | [`evaluation/drbench/`](evaluation/drbench/) |
+| LiveResearchBench | [`evaluation/liveresearchbench/`](evaluation/liveresearchbench/) |
 | Mind2Web2 | [`evaluation/Mind2Web2/`](evaluation/Mind2Web2/) |
+| WideSearch | [`evaluation/widesearch/`](evaluation/widesearch/) |
 
 For a new run, update the target result directory, dataset path, model or run
 name, judge model, worker count, and judge credentials.

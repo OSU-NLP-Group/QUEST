@@ -23,6 +23,25 @@ BLOCK_HUGGINGFACE = os.getenv("BLOCK_HUGGINGFACE", "false").lower() == "true"
 if BLOCK_HUGGINGFACE:
     print("[Warining] BLOCK_HUGGINGFACE is enabled.")
 
+# BrowseComp-Plus offline retrieval configuration.
+BM25_INDEX_PATH = os.environ.get('BM25_INDEX_PATH', '')
+BM25_TOP_K = int(os.environ.get('BM25_TOP_K', '10'))
+FAISS_INDEX_PATH = os.environ.get('FAISS_INDEX_PATH', '')
+_bm25_searcher = None
+_bm25_lock = threading.Lock()
+
+
+def _get_bm25_searcher():
+    """Lazy-init a shared LuceneSearcher for BM25 retrieval."""
+    global _bm25_searcher
+    if _bm25_searcher is None:
+        with _bm25_lock:
+            if _bm25_searcher is None:
+                from pyserini.search.lucene import LuceneSearcher
+                _bm25_searcher = LuceneSearcher(BM25_INDEX_PATH)
+                print(f"[search] BM25 searcher initialized: {BM25_INDEX_PATH}")
+    return _bm25_searcher
+
 # Cache configuration
 _shared_cache_dir = os.getenv(
     "SHARED_CACHE_DIR",
@@ -464,19 +483,58 @@ class Search(BaseTool):
 
         return result
 
+    def search_with_bm25(self, query: str):
+        """Search using a local BM25 index for BrowseComp-Plus static corpus."""
+        import json as _json
+        searcher = _get_bm25_searcher()
+        hits = searcher.search(query, BM25_TOP_K)
+
+        if not hits:
+            return f"No results found for query: '{query}'. Use a less specific query."
+
+        if not hasattr(self, '_snippet_tokenizer'):
+            from transformers import AutoTokenizer
+            self._snippet_tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-0.6B")
+
+        snippet_max_tokens = int(os.environ.get('BM25_SNIPPET_MAX_TOKENS', '512'))
+
+        web_snippets = []
+        for hit in hits:
+            raw = _json.loads(hit.lucene_document.get("raw"))
+            text = raw.get("contents", "")
+            tokens = self._snippet_tokenizer.encode(text, add_special_tokens=False)
+            if len(tokens) > snippet_max_tokens:
+                text = self._snippet_tokenizer.decode(tokens[:snippet_max_tokens], skip_special_tokens=True)
+            web_snippets.append(
+                f"Title: Document {hit.docid}\n"
+                f"Link: bm25://{hit.docid}\n"
+                f"Score: {hit.score:.4f}\n"
+                f"Snipptes: {text}"
+            )
+
+        return f"A search for '{query}' found {len(web_snippets)} results:\n\n" + "\n\n".join(web_snippets)
+
     def call(self, params: Union[str, dict], **kwargs) -> str:
         params = self._verify_json_format_args(params)
         query = params['query']
         if not query:
             return "[Tool Error] Search query cannot be empty."
 
+        if FAISS_INDEX_PATH:
+            from search_faiss_bridge import faiss_search
+            search_fn = faiss_search
+        elif BM25_INDEX_PATH:
+            search_fn = self.search_with_bm25
+        else:
+            search_fn = self.search_with_serp
+
         if isinstance(query, str):
-            response = self.search_with_serp(query)
+            response = search_fn(query)
         else:
             queries = query if isinstance(query, List) else [query]
             responses = []
             for q in queries:
-                responses.append(self.search_with_serp(q))
+                responses.append(search_fn(q))
             response = "\n\n".join(responses)
         # print("[DEBUG]", response)
         return response

@@ -33,23 +33,24 @@ from litellm import completion
 DATASET_URL = "https://openaipublic.blob.core.windows.net/simple-evals/browse_comp_test_set.csv"
 
 GRADER_TEMPLATE = """
-Judge whether the following [response] to [question] is correct or not based on the precise and unambiguous [correct_answer] below.
+Here is a question and sample answer:
+<question>
+{question}
+</question>
+<sample_answer>
+{answer}
+</sample_answer>
+Here is the actual, ground-truth, correct answer:
+<answer_key>
+{ground_truth_answer}
+</answer_key>
+Now consider the following statements about the sample answer:
+(A) The response given in the sample answer matches the ground truth answer.
+(B) The response given in the sample answer does not match the ground truth answer.
+(C) The response given in the sample answer just says something like "I'm not sure" or
+"I don't know"
 
-[question]: {question}
-
-[response]: {response}
-
-Your judgement must be in the format and criteria specified below:
-
-extracted_final_answer: The final exact answer extracted from the [response]. Put the extracted answer as 'None' if there is no exact, final answer to extract from the response.
-
-[correct_answer]: {correct_answer}
-
-reasoning: Explain why the extracted_final_answer is correct or incorrect based on [correct_answer], focusing only on if there are meaningful differences between [correct_answer] and the extracted_final_answer. Do not comment on any background to the problem, do not attempt to solve the problem, do not argue for any answer different than [correct_answer], focus only on whether the answers match.
-
-correct: Answer 'yes' if extracted_final_answer matches the [correct_answer] given above, or is within a small margin of error for numerical problems. Answer 'no' otherwise, i.e. if there if there is any inconsistency, ambiguity, non-equivalency, or if the extracted answer is incorrect.
-
-confidence: The extracted confidence score between 0|%| and 100|%| from [response]. Put 100 if there is no confidence score available.
+Which statement do you think is more likely: (A), (B), or (C)?
 """.strip()
 
 _ANSWER_TAG_RE = re.compile(r"<answer>\s*(.*?)\s*</answer>", re.DOTALL | re.IGNORECASE)
@@ -173,8 +174,8 @@ def call_litellm_for_judgment(question: str, gold_answer: str, predicted_answer:
 
     grader_prompt = GRADER_TEMPLATE.format(
         question=question,
-        correct_answer=gold_answer,
-        response=predicted_answer,
+        answer=predicted_answer,
+        ground_truth_answer=gold_answer,
     )
 
     call_kwargs = {
@@ -218,8 +219,34 @@ def call_litellm_for_judgment(question: str, gold_answer: str, predicted_answer:
         return ""
 
 
+def _extract_statement_choice(text: str) -> Optional[str]:
+    """Parse judge reply for (A), (B), or (C) after ABC-style grading prompt."""
+    if not text or not text.strip():
+        return None
+    tail = "\n".join(text.strip().splitlines()[-20:])
+
+    for pat in (
+        r"(?:more likely|most likely)[^\n.:]{0,80}?(?:\(|\s)([ABC])\)",
+        r"(?:choose|prefer|would (?:say|pick|select)|answer is)[^\n.:]{0,40}?\(?([ABC])\)?",
+        r"(?:statement|option)[^\n.:]{0,20}?\(?([ABC])\)?",
+        r"\(([ABC])\)",
+    ):
+        matches = list(re.finditer(pat, tail, flags=re.IGNORECASE))
+        if matches:
+            return matches[-1].group(1).upper()
+    last_line = tail.splitlines()[-1] if tail else ""
+    lone = re.search(r"\b([ABC])\b(?![\da-z])\s*\.?$", last_line.strip(), re.IGNORECASE)
+    if lone:
+        return lone.group(1).upper()
+    return None
+
+
 def parse_verdict(grader_output: str) -> Optional[str]:
-    """Extract 'yes' or 'no' from the grader output."""
+    """Extract a yes/no verdict from ABC-style or legacy judge output."""
+    choice = _extract_statement_choice(grader_output)
+    if choice in ("A", "B", "C"):
+        return "yes" if choice == "A" else "no"
+
     m = re.search(r"correct:\s*(yes|no)\b", grader_output, flags=re.IGNORECASE)
     if m:
         return m.group(1).lower()

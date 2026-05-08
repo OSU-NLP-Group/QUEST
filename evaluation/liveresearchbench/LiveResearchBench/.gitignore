@@ -1,0 +1,41 @@
+# Environment
+.env
+.venv/
+venv/
+*.pyc
+__pycache__/
+
+# Private configuration (keep your actual paths private)
+configs/batch_config.yaml
+
+# Results and outputs
+results/
+results_*/
+outputs/
+test_*/
+extracted_reports*/
+reference_reports_*/
+*.csv
+*.json
+!configs/*.json
+!data/**/*.csv
+
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation 
+docs/DEPTH_EVALUATION.md
+

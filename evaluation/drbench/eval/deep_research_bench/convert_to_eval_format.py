@@ -4,12 +4,10 @@ Convert iter1-iter5.jsonl files into the claude-3-7-sonnet-latest.jsonl format.
 The article field is taken from the prediction field.
 """
 
+import argparse
 import json
 import os
 from pathlib import Path
-
-SCRIPT_DIR = Path(__file__).resolve().parent
-DRBENCH_DIR = SCRIPT_DIR.parents[1]
 
 
 def load_questions(questions_file):
@@ -68,47 +66,80 @@ def convert_iter_to_claude_format(iter_file, questions_file, output_file):
     print(f"Converted {len(converted_data)} records in total")
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Convert iter*.jsonl inference outputs into DeepResearch Bench raw_data format."
+    )
+    parser.add_argument(
+        "--base-dir",
+        type=Path,
+        action="append",
+        required=True,
+        help="Directory containing iter{N}.jsonl files. Can be passed multiple times for multiple runs.",
+    )
+    parser.add_argument(
+        "--questions-file",
+        type=str,
+        required=True,
+        help="Path to the deepresearch_bench_questions.jsonl file (provides question -> id mapping).",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/test_data/raw_data"),
+        help="Output directory for converted jsonl files (default: data/test_data/raw_data).",
+    )
+    parser.add_argument(
+        "--identifier",
+        type=str,
+        action="append",
+        default=None,
+        help="Identifier prefix for output filenames. If passed multiple times, must match the number of --base-dir. "
+             "If omitted, defaults to the parent directory name of each base-dir.",
+    )
+    parser.add_argument(
+        "--iters",
+        type=int,
+        nargs="+",
+        default=[1, 2, 3],
+        help="Which iter indices to convert (default: 1 2 3).",
+    )
+    return parser.parse_args()
+
+
 def main():
-    # File path configuration.
-    # Define multiple base_dir entries. Add more directories as needed.
-    base_dirs = [
-        DRBENCH_DIR / "results/deepresearch/deepresearch_bench_questions",
-    ]
-    questions_file = DRBENCH_DIR / "deepresearch_bench_questions.jsonl"
-    output_dir = SCRIPT_DIR / "data/test_data/raw_data"
+    args = parse_args()
+
+    base_dirs = args.base_dir
+    questions_file = args.questions_file
+    output_dir = args.output_dir
+
+    if args.identifier is not None:
+        if len(args.identifier) != len(base_dirs):
+            raise ValueError(
+                f"--identifier was passed {len(args.identifier)} times but --base-dir was passed "
+                f"{len(base_dirs)} times; counts must match."
+            )
+        identifiers = args.identifier
+    else:
+        identifiers = [bd.parent.name or "unknown" for bd in base_dirs]
 
     # Ensure the output directory exists.
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Process each base_dir in order.
-    for base_dir in base_dirs:
-        # Extract a directory identifier from the path (for example: vanilla or search-only).
-        # Assume the path format is .../drbench/{identifier}/results/...
-        path_parts = base_dir.parts
-        try:
-            # Use the directory name after 'a3b-results' as the identifier.
-            a3b_idx = path_parts.index('a3b-results')
-            if a3b_idx + 1 < len(path_parts):
-                identifier = path_parts[a3b_idx + 1]
-            else:
-                identifier = base_dir.name
-        except (ValueError, IndexError):
-            # Fall back to the parent directory name if not found.
-            identifier = base_dir.parent.name if base_dir.parent.name else "unknown"
-        
+    for base_dir, identifier in zip(base_dirs, identifiers):
         print(f"\n{'='*80}")
         print(f"Processing directory: {base_dir}")
         print(f"Identifier: {identifier}")
         print(f"{'='*80}")
-        
+
         if not base_dir.exists():
             print(f"Warning: directory does not exist, skipping: {base_dir}")
             continue
 
-        # Convert iter1 through iter5.
-        for i in range(1, 4):
+        for i in args.iters:
             iter_file = base_dir / f"iter{i}.jsonl"
-            # Include the identifier in the output filename to distinguish different sources.
             output_file = output_dir / f"{identifier}-iter{i}.jsonl"
 
             if iter_file.exists():

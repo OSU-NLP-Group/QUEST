@@ -1,6 +1,7 @@
 .secrets/
 __pycache__/
 *.py[cod]
+inference/cache/
 *.log
 *.tmp
 *.bak

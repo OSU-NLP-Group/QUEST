@@ -1,0 +1,46 @@
+# Batch Grading Configuration Example
+# Copy this to batch_config.yaml and modify as needed
+
+# List of all JSON files to process
+# Use relative paths (from project root) or absolute paths
+input_files:
+  - extracted_reports/reports_openai_deep_research.json
+  - extracted_reports/reports_gpt4_search.json
+  - extracted_reports/reports_gpt5_search.json
+  # Add more JSON file paths here
+
+# Model name mapping for results output (optional)
+# If not specified, model name is extracted from JSON metadata
+model_names:
+  extracted_reports/reports_openai_deep_research.json: openai-deep-research
+  extracted_reports/reports_gpt4_search.json: gpt-4.1-search
+  extracted_reports/reports_gpt5_search.json: gpt-5-search
+  # Add more mappings here
+
+# Criteria to evaluate (choose 1-5)
+# Available: presentation, consistency, coverage, citation, depth
+criteria:
+  - presentation     # ❶ Presentation & Organization (checklist-based)
+  - consistency      # ❷ Factual & Logical Consistency (pointwise)
+  - coverage         # ❸ Coverage & Comprehensiveness (checklist-based)
+  - citation         # ❺ Citation Association (pointwise)
+  # Note: depth requires pairwise comparison setup
+
+# Questions and checklists are automatically loaded from HuggingFace
+# Dataset: Salesforce/LiveResearchBench
+
+# Providers to use for grading
+providers:
+  - openai    # GPT models
+  - gemini    # Google Gemini models
+
+# Models to use (optional, defaults to recommended models)
+models:
+  openai: gpt-5-mini
+  gemini: gemini-2.5-pro
+
+# Maximum concurrent API calls
+max_concurrent: 5
+
+# Whether to average results across providers
+average_across_providers: true

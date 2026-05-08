@@ -27,6 +27,9 @@ if __name__ == "__main__":
     parser.add_argument("--worker_start_batch_size", type=int, default=0)
     parser.add_argument("--worker_start_batch_delay", type=float, default=0.0)
     parser.add_argument("--worker_start_stagger", type=float, default=0.0)
+    parser.add_argument("--resume_from_messages", action="store_true")
+    parser.add_argument("--resume_terminations", type=str, default="No answer found after 1440min,temporal save")
+    parser.add_argument("--resume_overwrite_existing", action="store_true")
     args = parser.parse_args()
 
     model = args.model
@@ -64,6 +67,17 @@ if __name__ == "__main__":
         f"batch_delay={args.worker_start_batch_delay}, "
         f"stagger={args.worker_start_stagger}"
     )
+    resume_terminations = {
+        item.strip()
+        for item in args.resume_terminations.split(",")
+        if item.strip()
+    }
+    print(
+        "Resume from messages: "
+        f"{args.resume_from_messages} "
+        f"(terminations={sorted(resume_terminations)}, "
+        f"overwrite_existing={args.resume_overwrite_existing})"
+    )
 
     data_filepath = f"{args.dataset}"
     try:
@@ -93,11 +107,7 @@ if __name__ == "__main__":
     start_idx = (worker_split - 1) * items_per_split
     end_idx = min(worker_split * items_per_split, total_items)
 
-    # Split the dataset
     items = items[start_idx:end_idx]
-    
-    # max_samples = 2
-    # items = items[:max_samples]
 
     print(f"Total items in dataset: {total_items}")
     print(f"Processing items {start_idx} to {end_idx-1} ({len(items)} items)")
@@ -114,6 +124,8 @@ if __name__ == "__main__":
         output_file = output_files[rollout_idx]
         processed_filenames = set()
         processed_questions = set()
+        resume_by_filename = {}
+        resume_by_question = {}
         if os.path.exists(output_file):
             try:
                 with open(output_file, "r", encoding="utf-8") as f:
@@ -129,12 +141,43 @@ if __name__ == "__main__":
                                 continue
                             # Use filename to track processed items
                             filename_val = data.get("filename", "")
-                            if filename_val:
-                                processed_filenames.add(filename_val.strip())
-                            # Track processed questions(used for resume when filename is missing)
+                            filename_key = filename_val.strip() if filename_val else ""
                             question_val = data.get("question", "")
+                            question_key = question_val.strip() if question_val else ""
+
+                            should_resume = (
+                                args.resume_from_messages
+                                and data.get("termination") in resume_terminations
+                                and isinstance(data.get("messages"), list)
+                            )
+                            if should_resume:
+                                if filename_key and filename_key in processed_filenames:
+                                    continue
+                                if not filename_key and question_key and question_key in processed_questions:
+                                    continue
+                                resume_record = {
+                                    "messages": data["messages"],
+                                    "num_rounds": int(data.get("num_rounds") or 0),
+                                    "previous_termination": data.get("termination"),
+                                    "previous_prediction": data.get("prediction"),
+                                }
+                                if filename_key:
+                                    current = resume_by_filename.get(filename_key)
+                                    if current is None or resume_record["num_rounds"] > current["num_rounds"]:
+                                        resume_by_filename[filename_key] = resume_record
+                                elif question_key:
+                                    current = resume_by_question.get(question_key)
+                                    if current is None or resume_record["num_rounds"] > current["num_rounds"]:
+                                        resume_by_question[question_key] = resume_record
+                                continue
+
+                            if filename_val:
+                                processed_filenames.add(filename_key)
+                                resume_by_filename.pop(filename_key, None)
+                            # Track processed questions(used for resume when filename is missing)
                             if question_val:
-                                processed_questions.add(question_val.strip())
+                                processed_questions.add(question_key)
+                                resume_by_question.pop(question_key, None)
                         except json.JSONDecodeError:
                             print(f"Warning: Skipping invalid line in output file: {line.strip()}")
             except FileNotFoundError:
@@ -142,6 +185,8 @@ if __name__ == "__main__":
         processed_keys_per_rollout[rollout_idx] = {
             "filenames": processed_filenames,
             "questions": processed_questions,
+            "resume_by_filename": resume_by_filename,
+            "resume_by_question": resume_by_question,
         }
 
     tasks_to_run_all = []
@@ -149,6 +194,8 @@ if __name__ == "__main__":
     for rollout_idx in range(1, roll_out_count + 1):
         processed_filenames = processed_keys_per_rollout[rollout_idx]["filenames"]
         processed_questions = processed_keys_per_rollout[rollout_idx]["questions"]
+        resume_by_filename = processed_keys_per_rollout[rollout_idx]["resume_by_filename"]
+        resume_by_question = processed_keys_per_rollout[rollout_idx]["resume_by_question"]
         for item_idx, item in enumerate(items):
             question = item.get("question", "").strip()
             if question == "":
@@ -171,7 +218,7 @@ if __name__ == "__main__":
                 elif filename.endswith(".json"):
                     filename = filename[:-5]  # Remove the .json
             
-            # Resumelogic:use filename if available; otherwise use question
+            # Resume logic: use filename if available; otherwise use question
             if not filename:
                 print(f"Warning: Item has no filename field, resume will use question: {question[:50]}...")
             
@@ -184,28 +231,50 @@ if __name__ == "__main__":
                     # Already processed, skip
                     continue
 
+            resume_record = None
+            if args.resume_from_messages:
+                if filename:
+                    resume_record = resume_by_filename.get(filename)
+                else:
+                    resume_record = resume_by_question.get(question)
+
             # Tasks that still need processing
             # Get task_id if available; otherwise use the index
             task_id = item.get("task_id") or item.get("id") or f"idx_{start_idx + item_idx}"
-            
-            tasks_to_run_all.append({
+            task = {
                 "item": item.copy(),
                 "rollout_idx": rollout_idx,
                 "task_id": task_id,
                 "filename": filename,  # Add the filename field
-            })
+                "output_file": output_files[rollout_idx],
+            }
+            if resume_record is not None:
+                task.update({
+                    "resume_messages": resume_record["messages"],
+                    "resume_num_rounds": resume_record["num_rounds"],
+                    "resume_previous_termination": resume_record["previous_termination"],
+                    "resume_previous_prediction": resume_record["previous_prediction"],
+                })
+            tasks_to_run_all.append(task)
             per_rollout_task_counts[rollout_idx] += 1
 
     print(f"Total questions in current split: {len(items)}")
     for rollout_idx in range(1, roll_out_count + 1):
         processed_filename_count = len(processed_keys_per_rollout[rollout_idx]["filenames"])
         processed_question_count = len(processed_keys_per_rollout[rollout_idx]["questions"])
-        print(f"Rollout {rollout_idx}: already successfully processed (by filename: {processed_filename_count}, by question: {processed_question_count}), to run: {per_rollout_task_counts[rollout_idx]}")
+        resume_count = (
+            len(processed_keys_per_rollout[rollout_idx]["resume_by_filename"])
+            + len(processed_keys_per_rollout[rollout_idx]["resume_by_question"])
+        )
+        print(f"Rollout {rollout_idx}: already successfully processed (by filename: {processed_filename_count}, by question: {processed_question_count}), resumable: {resume_count}, to run: {per_rollout_task_counts[rollout_idx]}")
 
     if not tasks_to_run_all:
         print("All rollouts have been completed and no execution is required.")
     else:
         function_list = ["search", "visit", "condenser"]
+        if os.environ.get("DISABLE_VISIT_TOOL", "").lower() in ("1", "true", "yes"):
+            function_list = [t for t in function_list if t != "visit"]
+            print("Visit tool DISABLED via DISABLE_VISIT_TOOL env var")
         if SCHOLAR_TOOL_ENABLED:
             function_list.append("google_scholar")
         if PYTHON_TOOL_ENABLED:
@@ -236,6 +305,64 @@ if __name__ == "__main__":
 
         def run_task(task):
             return test_agent._run(task, model)
+
+        def same_output_key(record, task):
+            record_filename = (record.get("filename") or "").strip()
+            task_filename = (task.get("filename") or "").strip()
+            if task_filename:
+                return record_filename == task_filename
+
+            record_question = (record.get("question") or "").strip()
+            task_question = (task["item"].get("question") or "").strip()
+            return bool(task_question) and record_question == task_question
+
+        def write_result(output_file, result, task_info):
+            should_overwrite = (
+                args.resume_from_messages
+                and args.resume_overwrite_existing
+                and "resume_messages" in task_info
+            )
+
+            if not should_overwrite:
+                with open(output_file, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(result, ensure_ascii=False) + "\n")
+                return
+
+            lines = []
+            replaced = False
+            if os.path.exists(output_file):
+                with open(output_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if not line.strip():
+                            lines.append(line)
+                            continue
+                        try:
+                            record = json.loads(line)
+                        except json.JSONDecodeError:
+                            lines.append(line)
+                            continue
+
+                        is_target = (
+                            not replaced
+                            and same_output_key(record, task_info)
+                            and record.get("termination") in resume_terminations
+                            and (record.get("rollout_idx") or record.get("rollout_id")) == task_info["rollout_idx"]
+                        )
+                        if is_target:
+                            lines.append(json.dumps(result, ensure_ascii=False) + "\n")
+                            replaced = True
+                        else:
+                            lines.append(line)
+
+            if not replaced:
+                print(
+                    "[Resume] Warning: no matching resumable row found to overwrite; "
+                    f"appending result to {output_file}"
+                )
+                lines.append(json.dumps(result, ensure_ascii=False) + "\n")
+
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.writelines(lines)
 
         with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
             future_to_task = {}
@@ -307,8 +434,7 @@ if __name__ == "__main__":
                         result["rollout_idx"] = rollout_idx
                         result["rollout_id"] = rollout_idx
                         with write_locks[rollout_idx]:
-                            with open(output_file, "a", encoding="utf-8") as f:
-                                f.write(json.dumps(result, ensure_ascii=False) + "\n")
+                            write_result(output_file, result, task_info)
                         pbar.update(1)
 
         print("\nAll tasks completed!")

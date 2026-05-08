@@ -1,0 +1,26 @@
+[project]
+name = "liveresearchbench"
+version = "0.1.0"
+description = "Evaluation benchmark for AI-generated research reports"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "google-genai>=0.2.0",
+    "openai>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "pandas>=2.0.0",
+    "pyyaml>=6.0.0",
+    "datasets>=2.0.0",
+    "tqdm>=4.65.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+

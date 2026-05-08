@@ -739,7 +739,7 @@ class Visit(BaseTool):
             os.getenv("AZURE_OPENAI_API_VERSION")
             or "2024-08-01-preview"
         )
-        if azure_endpoint and model_name!="openai.gpt-oss-120b":
+        if azure_endpoint:
             model_name = os.environ.get("AZURE_OPENAI_DEPLOYMENT") or model_name
             client = AzureOpenAI(
                 api_key=api_key,

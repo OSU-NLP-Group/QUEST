@@ -29,7 +29,6 @@ if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
 from tool_scholar import *
-from tool_python import *
 from tool_search import *
 from tool_visit import *
 from tool_memory import *
@@ -46,6 +45,17 @@ def is_python_tool_enabled():
 
 PYTHON_TOOL_ENABLED = is_python_tool_enabled()
 
+if PYTHON_TOOL_ENABLED:
+    try:
+        from tool_python import PythonInterpreter
+    except ImportError as exc:
+        raise RuntimeError(
+            "ENABLE_PYTHON_TOOL=true requires the optional Python tool dependencies. "
+            "Install sandbox_fusion or set ENABLE_PYTHON_TOOL=false."
+        ) from exc
+else:
+    PythonInterpreter = None
+
 
 def is_scholar_tool_enabled():
     enable_scholar = os.getenv("ENABLE_SCHOLAR_TOOL", "false").strip().lower()
@@ -61,6 +71,10 @@ if PYTHON_TOOL_ENABLED:
     TOOL_CLASS.append(PythonInterpreter())
 TOOL_MAP = {tool.name: tool for tool in TOOL_CLASS}
 
+# Remove visit from TOOL_MAP when disabled to prevent execution even if a model emits it.
+if os.environ.get("DISABLE_VISIT_TOOL", "").lower() in ("1", "true", "yes"):
+    TOOL_MAP.pop("visit", None)
+
 import random
 
 PYTHON_TOOL_PROMPT = """{"type": "function", "function": {"name": "PythonInterpreter", "description": "Executes Python code in a sandboxed environment. To use this tool, you must follow this format:\n1. The 'arguments' JSON object must be empty: {}.\n2. The Python code to be executed must be placed immediately after the JSON block, enclosed within <code> and </code> tags.\n\nIMPORTANT: Any output you want to see MUST be printed to standard output using the print() function.\n\nExample of a correct call:\n<tool_call>\n{\"name\": \"PythonInterpreter\", \"arguments\": {}}\n<code>\nimport numpy as np\n# Your code here\nprint(f\"The result is: {np.mean([1,2,3])}\")\n</code>\n</tool_call>", "parameters": {"type": "object", "properties": {}}}}
@@ -70,12 +84,80 @@ def today_date():
     return date.today().strftime("%Y-%m-%d")
 
 
+def _visit_disabled_notice() -> str:
+    return """
+
+# CRITICAL - visit tool is DISABLED in this run
+
+- Do not call `visit`. Never emit a `<tool_call>` whose `"name"` is `"visit"`.
+- The `visit` tool is not available; such calls fail and waste context.
+- Gather new evidence using `search` only. If `condenser` appears in <tools> above, you may still call it for memory / state summarization.
+- If `prev_state`, instructions, or your own plan mention visiting a URL, issue another `search` query instead.
+
+"""
+
+
+def _apply_visit_disabled_text_overrides(prompt: str) -> str:
+    replacements = [
+        (
+            "- Check `visited_sources` to avoid visiting URLs that have already been visited.",
+            "- Check `visited_sources` to avoid redoing work already reflected in state (there is no `visit` tool in this run).",
+        ),
+        (
+            "You can use these directly in your answer without re-searching or re-visiting.",
+            "You can use these directly in your answer without re-running the same searches.",
+        ),
+        (
+            'The `need` field specifies the exact next action (e.g., "visit <URL>" or "search <query>") to resolve the uncertainty.',
+            'The `need` field may suggest a next action; if it mentions visiting a URL, use an additional `search` query instead (`visit` is disabled).',
+        ),
+        (
+            "IMPORTANT: Do NOT search for or visit information that is already in `prev_state`, unless it's insufficient to answer the user's question. Only in this case, you are encouraged to search for more information or even visit the same URL. Instead, use the information from `prev_state` directly, or follow the specific actions suggested in `information_state.uncertain.need` if more information is needed.",
+            "IMPORTANT: Do NOT search for information that is already in `prev_state`, unless it's insufficient to answer the user's question. Only in this case, issue additional `search` queries (`visit` is disabled). Use `prev_state` directly where possible, or follow `information_state.uncertain.need` but map any \"visit\" suggestion to `search`.",
+        ),
+        (
+            "- The visit tool can ONLY open bm25://<docid> URLs from search results. External URLs (https://, http://) will fail.",
+            "- Visit is disabled in this run; rely on search snippets and metadata from the local index only.",
+        ),
+        (
+            "- Do NOT attempt to visit Wikipedia, Google, or any other external website.",
+            "- Do not call `visit` for external sites or bm25 links; use search only.",
+        ),
+        (
+            "- When search returns relevant documents, use visit to read their full content via the bm25:// links before drawing conclusions.",
+            "- When search returns relevant documents, base conclusions on returned snippets and scores; do not call `visit`.",
+        ),
+    ]
+    for old, new in replacements:
+        if old in prompt:
+            prompt = prompt.replace(old, new, 1)
+    return prompt
+
+
 def build_system_prompt(enable_python_tool: bool) -> str:
-    prompt = SYSTEM_PROMPT
+    prompt_name = os.getenv("SYSTEM_PROMPT_NAME", "").strip()
+    if prompt_name and prompt_name != "SYSTEM_PROMPT":
+        prompt = globals().get(prompt_name)
+        if prompt is None:
+            print(
+                f"[build_system_prompt] Warning: SYSTEM_PROMPT_NAME={prompt_name!r} "
+                "not found in prompt.py, falling back to SYSTEM_PROMPT"
+            )
+            prompt = SYSTEM_PROMPT
+    elif os.environ.get('BM25_INDEX_PATH', '') or os.environ.get('FAISS_INDEX_PATH', ''):
+        prompt = BROWSECOMP_PLUS_SYSTEM_PROMPT
+    else:
+        prompt = SYSTEM_PROMPT
     if SCHOLAR_TOOL_ENABLED:
         prompt = prompt.replace("</tools>", f"{SCHOLAR_TOOL_PROMPT}</tools>")
     if enable_python_tool:
-        return prompt.replace("</tools>", f"{PYTHON_TOOL_PROMPT}</tools>")
+        prompt = prompt.replace("</tools>", f"{PYTHON_TOOL_PROMPT}</tools>")
+    visit_disabled = os.environ.get("DISABLE_VISIT_TOOL", "").lower() in ("1", "true", "yes")
+    if visit_disabled:
+        prompt = re.sub(r'\{"type": "function", "function": \{"name": "visit".*?\}\}\n?', '', prompt)
+        if "</tools>" in prompt:
+            prompt = prompt.replace("</tools>", "</tools>" + _visit_disabled_notice(), 1)
+        prompt = _apply_visit_disabled_text_overrides(prompt)
     return prompt
 
 
@@ -113,6 +195,9 @@ class MultiTurnReactAgent(FnCallAgent):
         # ========== Key fix: use threading.local() to store thread-specific state ==========
         # this gives each thread its own independent state and prevents interference
         self._thread_local = threading.local()
+
+        # Cache tokenizer to avoid reloading every time
+        self._tokenizer = None
     
     def _get_thread_state(self):
         """Get the current thread state, initializing it if needed"""
@@ -142,6 +227,8 @@ class MultiTurnReactAgent(FnCallAgent):
         tl.current_filename = ""
         tl.trajectory_update_count = 0
         tl.model = None
+        tl.preferred_endpoint = None  # (host, port) for endpoint affinity to utilize KV cache
+        tl.endpoint_failure_count = 0  # consecutive failure count for current endpoint
         tl.user_prompt = None
 
     def sanity_check_output(self, content):
@@ -814,25 +901,68 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
 
         return hosts, ports, endpoint_source
 
+    def _select_endpoint(self, available_endpoints: List[Tuple[str, int]]) -> Tuple[str, int]:
+        """Select endpoint with affinity to utilize KV cache.
+
+        - First call: randomly select and bind an endpoint
+        - Subsequent calls: reuse the bound endpoint if still available
+        - If bound endpoint is removed (hot-swap): re-select from available endpoints
+        """
+        tl = self._get_thread_state()
+
+        if tl.preferred_endpoint and tl.preferred_endpoint in available_endpoints:
+            return tl.preferred_endpoint
+
+        selected = random.choice(available_endpoints)
+        tl.preferred_endpoint = selected
+        tl.endpoint_failure_count = 0
+        return selected
+
+    def _failover_endpoint(self, current_endpoint: Tuple[str, int],
+                           all_endpoints: List[Tuple[str, int]],
+                           hosts: List[str], ports: List[int]) -> Optional[Tuple[str, int]]:
+        """Select a new endpoint for failover.
+
+        Priority:
+        1. Try a different host first (to avoid host-level failures)
+        2. If no other hosts, try a different port on the same host
+        3. If no alternatives, return None
+        """
+        current_host, current_port = current_endpoint
+
+        other_host_endpoints = [ep for ep in all_endpoints
+                                if ep[0] != current_host and ep != current_endpoint]
+        if other_host_endpoints:
+            return random.choice(other_host_endpoints)
+
+        same_host_other_ports = [ep for ep in all_endpoints
+                                 if ep[0] == current_host and ep[1] != current_port]
+        if same_host_other_ports:
+            return random.choice(same_host_other_ports)
+
+        return None
+
     def call_server(self, msgs, max_tries=10):
 
         openai_api_key = "EMPTY"
+        FAILOVER_THRESHOLD = 2  # Switch endpoint after 2 consecutive failures
 
+        tl = self._get_thread_state()
         base_sleep_time = 1
         for attempt in range(max_tries):
             # Reload endpoint configuration on each attempt to support runtime hot-swapping
             hosts, ports, endpoint_source = self._load_server_endpoints()
             all_endpoints = [(host, port) for host in hosts for port in ports]
-            # Randomly choose a host/port combination on each attempt(load balancing)
-            selected_host, selected_port = random.choice(all_endpoints)
+            # Use endpoint affinity to utilize KV cache
+            selected_host, selected_port = self._select_endpoint(all_endpoints)
             openai_api_base = f"http://{selected_host}:{selected_port}/v1"
 
             print(f"--- Attempting to call the service, try {attempt + 1}/{max_tries} ---")
             print(f"--- Endpoint source: {endpoint_source} (hosts={hosts}, ports={ports}) ---")
-            print(f"--- Using endpoint: {selected_host}:{selected_port} ---")
-            
+            print(f"--- Using endpoint: {selected_host}:{selected_port} (preferred={tl.preferred_endpoint}, f_count={tl.endpoint_failure_count}) ---")
+
+            call_failed = False
             try:
-                tl = self._get_thread_state()
                 client = OpenAI(
                     api_key=openai_api_key,
                     base_url=openai_api_base,
@@ -854,17 +984,38 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
                 # OpenRouter provides API calling. If you want to use OpenRouter, you need to uncomment line 89 - 90.
                 # reasoning_content = "<think>\n" + chat_response.choices[0].message.reasoning.strip() + "\n</think>"
                 # content = reasoning_content + content                
-                
+
                 if content and content.strip():
                     print(f"--- Service call successful, received a valid response from {selected_host}:{selected_port} ---")
+                    tl.endpoint_failure_count = 0
                     return content.strip()
                 else:
                     print(f"Warning: Attempt {attempt + 1} received an empty response from {selected_host}:{selected_port}.")
+                    call_failed = True
 
             except (APIError, APIConnectionError, APITimeoutError) as e:
                 print(f"Error: Attempt {attempt + 1} failed with an API or network error on {selected_host}:{selected_port}: {e}")
+                call_failed = True
             except Exception as e:
                 print(f"Error: Attempt {attempt + 1} failed with an unexpected error on {selected_host}:{selected_port}: {e}")
+                call_failed = True
+
+            if call_failed:
+                tl.endpoint_failure_count += 1
+                print(f"--- Endpoint {selected_host}:{selected_port} failure count: {tl.endpoint_failure_count}/{FAILOVER_THRESHOLD} ---")
+
+                if tl.endpoint_failure_count >= FAILOVER_THRESHOLD:
+                    new_endpoint = self._failover_endpoint(
+                        tl.preferred_endpoint, all_endpoints, hosts, ports
+                    )
+                    if new_endpoint:
+                        old_endpoint = tl.preferred_endpoint
+                        tl.preferred_endpoint = new_endpoint
+                        tl.endpoint_failure_count = 0
+                        print(f"--- Failover: switched from {old_endpoint} to {new_endpoint} ---")
+                    else:
+                        print(f"--- Failover: no alternative endpoints available, continuing with {tl.preferred_endpoint} ---")
+                        tl.endpoint_failure_count = 0
 
             if attempt < max_tries - 1:
                 sleep_time = base_sleep_time * (2 ** attempt) + random.uniform(0, 1)
@@ -878,9 +1029,10 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
         return f"vllm server error!!!"
 
     def count_tokens(self, messages):
-        tokenizer = AutoTokenizer.from_pretrained(self.llm_local_path) 
-        full_prompt = tokenizer.apply_chat_template(messages, tokenize=False)
-        tokens = tokenizer(full_prompt, return_tensors="pt")
+        if self._tokenizer is None:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.llm_local_path)
+        full_prompt = self._tokenizer.apply_chat_template(messages, tokenize=False)
+        tokens = self._tokenizer(full_prompt, return_tensors="pt")
         token_count = len(tokens["input_ids"][0])
 
         return token_count
@@ -911,6 +1063,18 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
         except Exception:
             raw_msg = data["item"]["messages"][1]["content"]
             question = raw_msg.split("User:")[1].strip() if "User:" in raw_msg else raw_msg
+
+        resume_messages = data.get("resume_messages")
+        resume_num_rounds = int(data.get("resume_num_rounds") or 0)
+        resume_enabled = isinstance(resume_messages, list) and len(resume_messages) > 0
+
+        def attach_resume_metadata(result: Dict) -> Dict:
+            if resume_enabled:
+                result["resumed_from_messages"] = True
+                result["resume_start_num_rounds"] = resume_num_rounds
+                result["resume_previous_termination"] = data.get("resume_previous_termination")
+                result["resume_previous_prediction"] = data.get("resume_previous_prediction")
+            return result
 
         # Save the current question for trajectory persistence(thread-local)
         tl.current_question = question
@@ -983,15 +1147,36 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
                     interactions_text = json.dumps(ref_interactions, ensure_ascii=False)
                 except Exception:
                     interactions_text = str(ref_interactions)
-            
-            extra_ref = (
-                    "\n\nYou are also given some possibly relevant solution information that you may refer to while thinking. "
-                    "Use it as a helpful reference, but write your own answer from scratch and DO NOT copy or quote this solution verbatim.\n\n "
-                    "You must always start your reasoning and tool usage from scratch: "
+
+            visit_off = os.environ.get("DISABLE_VISIT_TOOL", "").lower() in ("1", "true", "yes")
+            if visit_off:
+                tool_usage_clause = (
+                    "perform your own search tool calls only (the visit tool is disabled in this run), "
+                    "and base your explanation and final answer only on evidence actually obtained from tools. "
+                    "You must never fabricate search queries, search results, "
+                    "or intermediate reasoning steps that you did not genuinely perform, "
+                )
+                chain_clause = (
+                    "full chain-of-thought from scratch using only information obtained "
+                    "via your own search tool calls.\n\n"
+                )
+            else:
+                tool_usage_clause = (
                     "perform your own searches and webpage visits, and base your explanation "
                     "and final answer only on evidence actually obtained from tools. "
                     "You must never fabricate search queries, search results, visit outputs, "
                     "or intermediate reasoning steps that you did not genuinely perform, "
+                )
+                chain_clause = (
+                    "full chain-of-thought from scratch using only URLs and information obtained "
+                    "via your own search and webpage visit tool calls.\n\n"
+                )
+
+            extra_ref = (
+                    "\n\nYou are also given some possibly relevant solution information that you may refer to while thinking. "
+                    "Use it as a helpful reference, but write your own answer from scratch and DO NOT copy or quote this solution verbatim.\n\n "
+                    "You must always start your reasoning and tool usage from scratch: "
+                    + tool_usage_clause +
                     "even if they would be consistent with any reference solution.\n"
                     "The reference solution is only a potential guide. Even if you cannot find "
                     "enough evidence through search or tools, you are strictly forbidden from "
@@ -1003,25 +1188,33 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
                     "The above reference information (including any solution and interaction logs) "
                     "must NOT be directly used as evidence in your reasoning or final answer. "
                     "You should behave as if you had never seen it, and instead reconstruct your "
-                    "full chain-of-thought from scratch using only URLs and information obtained "
-                    "via your own search and webpage visit tool calls.\n\n"
+                    + chain_clause +
                     f"{interactions_text}\n"
                 )
         
         user_prompt = tl.user_prompt + extra_ref
 
-        messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
+        if resume_enabled:
+            messages = copy.deepcopy(resume_messages)
+            print(
+                f"[Resume] Continuing from saved messages: "
+                f"message_count={len(messages)}, start_num_rounds={resume_num_rounds}, "
+                f"previous_termination={data.get('resume_previous_termination')}"
+            )
+        else:
+            messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
         # Initialize the full message history (not compressed by condenser), used for trajectory_no_memory
         tl.full_messages = copy.deepcopy(messages)
-        num_llm_calls_available = MAX_LLM_CALL_PER_RUN
-        round = 0
+        num_llm_calls_available = max(0, MAX_LLM_CALL_PER_RUN - resume_num_rounds)
+        round = resume_num_rounds
         # Note:memory state has already been reset at the start of the function, so it does not need to be reset again here
         
         while num_llm_calls_available > 0:
             # Check whether time is reached
-            if time.time() - start_time > 24 * 60 * 60:  # 24 hours in seconds
-                prediction = 'No answer found after 24h'
-                termination = 'No answer found after 24h'
+            max_minutes = int(os.getenv('MAX_RUNTIME_MINUTES', '1440'))
+            if time.time() - start_time > max_minutes * 60:
+                prediction = f'No answer found after {max_minutes}min'
+                termination = f'No answer found after {max_minutes}min'
                 
                 # Save the final trajectory(timeout case)
                 if self.memory_enabled and tl.task_log_dir:
@@ -1050,7 +1243,7 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
                     "task_log_dir": tl.task_log_dir,  # Add the log directory path to the result
                     "filename": tl.current_filename,  # Add the filename field for resume checks
                 }
-                return result
+                return attach_resume_metadata(result)
             round += 1
             num_llm_calls_available -= 1
             # Reset the CONTEXT_THRESHOLD trigger flag at the start of each round so it can trigger again in the new round
@@ -1212,7 +1405,7 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
                     "task_log_dir": tl.task_log_dir,  # Add the log directory path to the result
                     "filename": tl.current_filename,  # Add the filename field for resume checks
                 }
-                return result
+                return attach_resume_metadata(result)
 
             if token_count > max_tokens:
                 print(f"Token quantity exceeds the limit: {token_count} > {max_tokens}")
@@ -1255,7 +1448,7 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
                     "task_log_dir": tl.task_log_dir,  # Add the log directory path to the result
                     "filename": tl.current_filename,  # Add the filename field for resume checks
                 }
-                return result
+                return attach_resume_metadata(result)
 
         if '<answer>' in messages[-1]['content']:
             prediction = messages[-1]['content'].split('<answer>')[1].split('</answer>')[0]
@@ -1289,7 +1482,7 @@ IMPORTANT: This state summary is maintained automatically. You can reference it 
             "task_log_dir": tl.task_log_dir,  # Add the log directory path to the result
             "filename": tl.current_filename,  # Add the filename field for resume checks
         }
-        return result
+        return attach_resume_metadata(result)
 
     def custom_call_tool(self, tool_name: str, tool_args: dict, **kwargs):
         if tool_name not in TOOL_MAP:
