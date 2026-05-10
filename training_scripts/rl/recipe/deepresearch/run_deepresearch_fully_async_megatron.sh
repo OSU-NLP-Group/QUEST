@@ -246,7 +246,7 @@ MODEL_PATH=${MODEL_PATH:-"${RAY_DATA_HOME}/models/qwen3_5-moe-mid-training-plus-
 CKPTS_DIR=${CKPTS_DIR:-"${RAY_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
 ROLLOUT_DATA_DIR=${ROLLOUT_DATA_DIR:-"${RAY_DATA_HOME}/rollouts/${project_name}/${exp_name}"}
 TRAIN_FILE=${TRAIN_FILE:-"${WORKING_DIR}/recipe/deepresearch/data/train_v4.parquet"}
-VAL_FILE=${VAL_FILE:-"${WORKING_DIR}/recipe/deepresearch/data/val_v4.parquet"}
+VAL_FILE=${VAL_FILE:-}
 DATA_KIND=${DATA_KIND:-both}
 
 data_kind="$(echo "${DATA_KIND}" | tr '[:upper:]' '[:lower:]')"
@@ -358,7 +358,27 @@ fi
 
 echo "[INFO] DATA_KIND=${data_kind}"
 echo "[INFO] TRAIN_FILE=${TRAIN_FILE}"
-echo "[INFO] VAL_FILE=${VAL_FILE} (always full validation set)"
+if [[ -n "${VAL_FILE}" ]]; then
+    if [[ ! -f "${VAL_FILE}" ]]; then
+        echo "[ERROR] VAL_FILE not found: ${VAL_FILE}" >&2
+        exit 1
+    fi
+    VALIDATION_OVERRIDES=(
+        "data.val_files='${VAL_FILE}'"
+        "async_training.use_trainer_do_validate=${async_use_trainer_do_validate}"
+        "trainer.val_before_train=${trainer_val_before_train}"
+        "trainer.test_freq=5"
+    )
+    echo "[INFO] VAL_FILE=${VAL_FILE}"
+else
+    VALIDATION_OVERRIDES=(
+        "data.val_files=[]"
+        "async_training.use_trainer_do_validate=False"
+        "trainer.val_before_train=False"
+        "trainer.test_freq=-1"
+    )
+    echo "[INFO] VAL_FILE disabled"
+fi
 
 if [[ -z "${debug_save_base_dir}" ]]; then
     debug_save_base_dir="${CKPTS_DIR}"
@@ -1004,7 +1024,7 @@ python3 -m "${launcher_module}" \
     "+ray_kwargs.ray_init.runtime_env.env_vars.CONTEXT_THRESHOLD='${context_threshold}'" \
     "+ray_kwargs.ray_init.runtime_env.env_vars.MAX_TURN_RESPONSE_LENGTH='${max_turn_response_length}'" \
     "data.train_files='${TRAIN_FILE}'" \
-    "data.val_files='${VAL_FILE}'" \
+    "${VALIDATION_OVERRIDES[@]}" \
     data.prompt_key=prompt \
     data.reward_fn_key=data_source \
     data.truncation='left' \
@@ -1146,7 +1166,6 @@ python3 -m "${launcher_module}" \
     async_training.staleness_threshold=${async_staleness_threshold} \
     async_training.partial_rollout=${async_partial_rollout} \
     +async_training.reward_cancel_mode=${async_reward_cancel_mode} \
-    async_training.use_trainer_do_validate=${async_use_trainer_do_validate} \
     async_training.checkpoint_engine.enable=${async_ckpt_enable} \
     async_training.checkpoint_engine.overlap_broadcast_and_consume=${async_ckpt_overlap} \
     async_training.checkpoint_engine.device_buffer_size_M=${async_ckpt_device_buffer_size_m} \
@@ -1157,8 +1176,6 @@ python3 -m "${launcher_module}" \
     rollout.test_freq=${rollout_test_freq} \
     trainer.nnodes=${NNODES} \
     trainer.n_gpus_per_node=${TRAINER_NGPUS_PER_NODE} \
-    trainer.val_before_train=${trainer_val_before_train} \
-    trainer.test_freq=5 \
     trainer.save_freq=5 \
     trainer.total_epochs=10 \
     "trainer.default_local_dir='${CKPTS_DIR}'" \
