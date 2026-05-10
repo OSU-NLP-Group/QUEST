@@ -9,8 +9,7 @@ answers, and exports final open-ended QA data.
 High-level flow:
 
 ```text
-generate longform tasks -> extract proposed QAs -> generate criteria
--> polish criteria -> generate reference answers -> refine final answers
+generate longform tasks -> extract proposed QAs -> generate criteria -> generate reference answers -> refine final answers
 -> extract final answers
 ```
 
@@ -21,7 +20,6 @@ Main entrypoints:
 | Generate longform tasks | `bash run_generate_tasks_longform.sh` | Raw trajectory JSON files |
 | Extract proposed QAs | `python extract_proposed_qa.py` | JSONL task set |
 | Generate criteria | `python longform_rubric/generate_criteria.py` | Draft criteria JSONL |
-| Polish criteria | `python longform_rubric/polish_criteria.py` | Polished criteria JSONL |
 | Generate reference answers | `bash ref_gen/run.sh` | Reference-answer JSONL files |
 | Refine final answers | `python polish_answer.py` | Refined answer files |
 | Extract final answers | `python extract_polished_answer.py` | Final open-ended QA JSONL |
@@ -39,9 +37,6 @@ python extract_proposed_qa.py \
 python longform_rubric/generate_criteria.py \
   --input_file /path/to/openended_outputs/proposed_qa.jsonl \
   --output_file /path/to/openended_outputs/criteria.jsonl
-python longform_rubric/polish_criteria.py \
-  --input_file /path/to/openended_outputs/criteria.jsonl \
-  --output_file /path/to/openended_outputs/polished_criteria.jsonl
 DATASET=/path/to/openended_outputs/proposed_qa.jsonl \
 OUTPUT_PATH=/path/to/openended_outputs/reference_answers \
 bash ref_gen/run.sh
@@ -111,8 +106,7 @@ Typical generated files are organized as:
 outputs/openended_trajectories/
 /path/to/openended_outputs/proposed_qa.jsonl
 /path/to/openended_outputs/criteria.jsonl
-/path/to/openended_outputs/polished_criteria.jsonl
-/path/to/openended_outputs/reference_answers*
+/path/to/openended_outputs/reference_answers
 /path/to/openended_outputs/refined_answers/
 /path/to/openended_outputs/final_answers.jsonl
 ```
@@ -128,7 +122,6 @@ outputs/openended_trajectories/
 | `tool_search.py`, `tool_visit.py` | Search and page-reading tools |
 | `extract_proposed_qa.py` | Extract generated QAs into JSONL |
 | `longform_rubric/generate_criteria.py` | Generate open-ended evaluation criteria |
-| `longform_rubric/polish_criteria.py` | Polish generated criteria |
 | `ref_gen/run.sh` | Reference-answer generation launcher |
 | `ref_gen/run_multi_react_ref_gen.py` | Multi-worker reference generation entrypoint |
 | `polish_answer.py` | Refine answers from teacher-model trajectories |

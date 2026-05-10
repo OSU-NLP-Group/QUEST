@@ -5,8 +5,8 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description='Extract prediction fields from JSON files')
-    parser.add_argument('--input_dir', type=str, required=True, help='Input directory containing JSON files')
-    parser.add_argument('--output_file', type=str, default='extracted_questions.jsonl', help='Output JSONL file path')
+    parser.add_argument('--input_dir', type=str, default="./outputs/openended_trajectories/", help='Input directory containing JSON files')
+    parser.add_argument('--output_file', type=str, default='./outputs/extracted_questions.jsonl', help='Output JSONL file path')
     args = parser.parse_args()
 
     filelist = os.listdir(args.input_dir)

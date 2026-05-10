@@ -8,8 +8,16 @@ import concurrent.futures
 import threading
 from litellm import completion
 
-os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
-model="openai/gpt-5" 
+# OPENAI
+# os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
+# model="openai/gpt-5" 
+
+# AZURE
+os.environ["AZURE_API_KEY"] = "" # "my-azure-api-key"
+os.environ["AZURE_API_BASE"] = "" # "https://example-endpoint.openai.azure.com"
+os.environ["AZURE_API_VERSION"] = "" # "2023-05-15"
+model="azure/gpt-5" 
+
 
 # Import dimension weight generation prompts for English
 from prompt.criteria_prompt_en import (
@@ -26,7 +34,7 @@ RETRY_ATTEMPTS = 5
 RETRY_DELAY = 5
 PROCESS_LIMIT = 500
 MAX_WORKERS = 10
-DEFAULT_SAMPLE_COUNT = 2    
+DEFAULT_SAMPLE_COUNT = 3
 
 # Thread-safe locks
 print_lock = threading.Lock()
@@ -291,8 +299,8 @@ def generate_criteria_pipeline(input_file, output_file, process_limit, max_worke
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate evaluation criteria for longform tasks")
-    parser.add_argument("--input_file", type=str, required=True, help="Input JSONL file path")
-    parser.add_argument("--output_file", type=str, required=True, help="Output JSONL file path")
+    parser.add_argument("--input_file", type=str, default="./outputs/extracted_questions.jsonl", help="Input JSONL file path")
+    parser.add_argument("--output_file", type=str, default="./outputs/criteria.jsonl", help="Output JSONL file path")
     args = parser.parse_args()
     
     generate_criteria_pipeline(
