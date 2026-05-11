@@ -143,7 +143,10 @@ def flatten_rubric_tree(tree: Dict[str, Any]) -> str:
             child_prefix = prefix + ("    " if is_last else "│   ")
             walk(child, child_prefix, idx == len(children_list) - 1, depth + 1)
 
-    roots = list(tree.values())
+    if "name" in tree or "node_name" in tree:
+        roots = [tree]
+    else:
+        roots = list(tree.values())
     for idx, root in enumerate(roots):
         walk(root, "", idx == len(roots) - 1, depth=0)
 
@@ -513,10 +516,11 @@ async def evaluate_folder(
             orig_stem = stem[: -len("_formatted")] if stem.endswith("_formatted") else stem
             traj_id = orig_stem  # Use filename stem (without _formatted) as ID.
             orig_filename = orig_stem + ".json"
-            if task_path.parent.name == "formatted":
-                orig_dir = task_path.parent.parent
-            else:
-                orig_dir = task_path.parent
+            # Walk up the path through any "formatted" or "refined" directories
+            # to find the base directory containing original trajectory files.
+            orig_dir = task_path.parent
+            while orig_dir.name in ("formatted", "refined"):
+                orig_dir = orig_dir.parent
             orig_path = orig_dir / orig_filename
 
             if result.decision == "YES":
@@ -533,6 +537,8 @@ async def evaluate_folder(
                             target_path,
                             copy_exc,
                         )
+                    except Exception as exc:
+                        print(e)
                 else:
                     logger.warning(
                         "Original trajectory file for %s not found at %s",
