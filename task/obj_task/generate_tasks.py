@@ -220,7 +220,7 @@ DOMAIN_TO_CSV = {
 
 TRENDING_KEYWORDS_DIR = os.getenv(
     "TRENDING_KEYWORDS_DIR",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "keywords"),
+    "../trending_keywords/merge_keywords",
 )
 
 def sample_keywords_from_csv(domain, num_keywords=10):
@@ -361,8 +361,8 @@ async def run_single_iteration(iteration_id, subcategory_counts, complexity_coun
 
 async def main():
     """Documentation omitted."""
-    num_iterations = 8000
-    workers = 10
+    num_iterations = 5
+    workers = 1
     global executor
     executor = ThreadPoolExecutor(max_workers=workers)
     semaphore = asyncio.Semaphore(workers)
