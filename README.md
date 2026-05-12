@@ -5,17 +5,20 @@
 </p>
 
 <div align="center" style="line-height: 1; margin-top: 16px;">
-  <a href="#"><img src="https://img.shields.io/badge/arXiv-B31B1B?style=for-the-badge&logo=arXiv&logoColor=white" alt="arXiv"></a>
-  <a href="#"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"></a>
-  <a href="#"><img src="https://img.shields.io/badge/Dataset-FFB7B2?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Dataset"></a>
-  <a href="#"><img src="https://img.shields.io/badge/Model-FFD966?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Model"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Paper-B31B1B?style=for-the-badge&logo=arXiv&logoColor=white" alt="Paper"></a>
+  <a href="https://github.com/OSU-NLP-Group/QUEST"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"></a>
+  <a href="https://huggingface.co/datasets/osunlp/QUEST"><img src="https://img.shields.io/badge/Dataset-FFB7B2?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Dataset"></a>
+  <a href="https://huggingface.co/osunlp/QUEST-35B-RL"><img src="https://img.shields.io/badge/Model-FFD966?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Model"></a>
   <a href="#documentation-map"><img src="https://img.shields.io/badge/Docs-2563EB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
 </div>
 
 <br>
 
 <p align="center">
-  <a href="#">Hugging Face</a> | <a href="#documentation-map">Documentation</a>
+  <a href="https://huggingface.co/spaces/osunlp/QUEST">Demo</a> |
+  <a href="https://huggingface.co/datasets/osunlp/QUEST">Dataset</a> |
+  <a href="https://huggingface.co/osunlp/QUEST-35B-RL">Model Weights</a> |
+  <a href="#documentation-map">Documentation</a>
 </p>
 
 ## Introduction
