@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Previous title: QUEST: A Fully Open Recipe for Training Search Agents -->
+    <title>QUEST: Training Frontier Deep Research Agents with Fully Synthetic Tasks</title>
+    <meta
+      name="description"
+      content="QUEST is an open family of 2B to 35B deep research agents trained with fully synthetic rubric-tree tasks, structured context management, and a mid-training, SFT, and RL pipeline."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["\\(", "\\)"]],
+          displayMath: [["\\[", "\\]"]]
+        },
+        svg: {
+          fontCache: "global"
+        }
+      };
+    </script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+    ></script>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="logo">
+          <a class="logo-link" href="#top"><strong>QUEST</strong></a>
+        </div>
+
+        <nav class="site-nav">
+          <a href="#tasks">Overview</a>
+          <a href="#quest">Analysis</a>
+          <a href="#data">Recipe</a>
+          <a href="#demo">Demo</a>
+        </nav>
+
+      </header>
+
+      <main id="top" class="article-shell">
+        <nav class="toc-sidebar" aria-label="Table of contents">
+          <div class="toc-label">Contents</div>
+          <ol class="toc-list">
+            <li><a href="#snapshot">Snapshot</a></li>
+            <li><a href="#tasks">Overview</a></li>
+            <li><a href="#quest">Analysis</a></li>
+            <li><a href="#data">Training Recipe</a></li>
+            <li><a href="#demo">Try QUEST</a></li>
+          </ol>
+        </nav>
+        <article class="article">
+          <section class="cover">
+            <div class="article-head">
+              <div class="article-meta-row">
+                <time datetime="2026-05-11">May 11, 2026</time>
+              </div>
+              <!-- Previous headline: <span class="brand">QUEST</span>: A Fully Open Recipe for Training Search Agents -->
+              <h1>
+                <span class="title-line"><span class="brand">QUEST</span>: Training Frontier Deep Research Agents</span>
+                <span class="title-line">with Fully Synthetic Tasks</span>
+              </h1>
+              <div class="author-block" aria-label="Authors">
+                <p class="author-row author-row-core">
+                  <span><a href="https://hsaest.github.io" target="_blank" rel="noopener">Jian Xie</a><sup>1*‡</sup></span>
+                  <span><a href="https://tianhel.github.io/" target="_blank" rel="noopener">Tianhe Lin</a><sup>1*</sup></span>
+                  <span><a href="https://wzlulip.github.io/" target="_blank" rel="noopener">Zilu Wang</a><sup>1*</sup></span>
+                </p>
+                <p class="author-row">
+                  <span><a href="https://nnnyt.github.io" target="_blank" rel="noopener">Yuting Ning</a><sup>1</sup></span>
+                  <span><a href="https://ykyaol7.github.io/" target="_blank" rel="noopener">Yuekun Yao</a><sup>1</sup></span>
+                  <span><a href="https://xuetianci.github.io" target="_blank" rel="noopener">Tianci Xue</a><sup>1</sup></span>
+                  <span><a href="https://zhehaozhang123.github.io/" target="_blank" rel="noopener">Zhehao Zhang</a><sup>1</sup></span>
+                  <span><a href="https://zhongyangli0124.github.io/" target="_blank" rel="noopener">Zhongyang Li</a><sup>1</sup></span>
+                </p>
+                <p class="author-row">
+                  <span><a href="https://drogozhang.github.io" target="_blank" rel="noopener">Kai Zhang</a><sup>1</sup></span>
+                  <span><a href="https://www.linkedin.com/in/yufan-wu-a27b6b24b" target="_blank" rel="noopener">Yufan Wu</a><sup>1</sup></span>
+                  <span><a href="https://chensj98.github.io" target="_blank" rel="noopener">Shijie Chen</a><sup>1</sup></span>
+                  <span><a href="https://boyugou.github.io" target="_blank" rel="noopener">Boyu Gou</a><sup>1</sup></span>
+                  <span><a href="https://scholar.google.com/citations?user=0JlaO58AAAAJ&amp;hl=en" target="_blank" rel="noopener">Mingzhe Han</a><sup>1</sup></span>
+                </p>
+                <p class="author-row author-row-amazon">
+                  <span><a href="https://yifeiwang77.com/" target="_blank" rel="noopener">Yifei Wang</a><sup>2</sup></span>
+                  <span><a href="https://vint-1.github.io/" target="_blank" rel="noopener">Vint Lee</a><sup>2</sup></span>
+                  <span><a href="https://www.linkedin.com/in/william-xp-wei" target="_blank" rel="noopener">Xinpeng Wei</a><sup>2</sup></span>
+                  <span><a href="https://www.linkedin.com/in/xjwang" target="_blank" rel="noopener">Xiangjun Wang</a><sup>2</sup></span>
+                </p>
+                <p class="author-row author-row-last">
+                  <span><a href="https://ysu1989.github.io" target="_blank" rel="noopener">Yu Su</a><sup>1†</sup></span>
+                  <span><a href="https://u.osu.edu" target="_blank" rel="noopener">Huan Sun</a><sup>1†</sup></span>
+                </p>
+                <p class="affiliation-row">
+                  <span><sup>1</sup>The Ohio State University</span>
+                  <span><sup>2</sup>Amazon AGI SF Lab</span>
+                </p>
+                <p class="contribution-row">
+                  <span>*Equal contribution.</span>
+                  <span>‡Project lead.</span>
+                  <span>†Joint last author.</span>
+                </p>
+              </div>
+              <div class="resource-links" aria-label="QUEST resources">
+                <a class="resource-link" href="../latex/quest-blog/main.pdf" target="_blank" rel="noopener">
+                  <span class="resource-icon resource-icon-paper" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="img" focusable="false">
+                      <path d="M6 2.5h8.2L19 7.3v14.2H6V2.5Zm8 1.9v3.2h3.2L14 4.4ZM8.1 9.8h8.8V8.4H8.1v1.4Zm0 3.3h8.8v-1.4H8.1v1.4Zm0 3.3h6.4V15H8.1v1.4Z" />
+                    </svg>
+                  </span>
+                  <span>
+                    <strong>Paper</strong>
+                    <small>PDF</small>
+                  </span>
+                </a>
+                <a class="resource-link" href="https://huggingface.co/spaces/osunlp/QUEST" target="_blank" rel="noopener">
+                  <span class="resource-icon resource-icon-hf" aria-hidden="true">
+                    <img src="./figures/hf-logo.png" alt="" loading="lazy" />
+                  </span>
+                  <span>
+                    <strong>Demo</strong>
+                    <small>Hugging Face Space</small>
+                  </span>
+                </a>
+                <a class="resource-link" href="https://huggingface.co/datasets/osunlp/QUEST" target="_blank" rel="noopener">
+                  <span class="resource-icon resource-icon-hf" aria-hidden="true">
+                    <img src="./figures/hf-logo.png" alt="" loading="lazy" />
+                  </span>
+                  <span>
+                    <strong>Data</strong>
+                    <small>Hugging Face Dataset</small>
+                  </span>
+                </a>
+                <a class="resource-link" href="https://huggingface.co/osunlp/QUEST-35B-RL" target="_blank" rel="noopener">
+                  <span class="resource-icon resource-icon-hf" aria-hidden="true">
+                    <img src="./figures/hf-logo.png" alt="" loading="lazy" />
+                  </span>
+                  <span>
+                    <strong>Model Weights</strong>
+                    <small>QUEST-35B-RL</small>
+                  </span>
+                </a>
+                <a class="resource-link" href="https://github.com/OSU-NLP-Group/QUEST" target="_blank" rel="noopener">
+                  <span class="resource-icon resource-icon-github" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="img" focusable="false">
+                      <path d="M12 1.8c-5.7 0-10.3 4.6-10.3 10.3 0 4.6 3 8.5 7.1 9.8.5.1.7-.2.7-.5v-1.8c-2.9.6-3.5-1.2-3.5-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .8.1-.7.4-1.1.7-1.3-2.3-.3-4.7-1.2-4.7-5.1 0-1.1.4-2.1 1.1-2.8-.1-.3-.5-1.4.1-2.8 0 0 .9-.3 2.9 1.1.8-.2 1.7-.3 2.6-.3s1.8.1 2.6.3c2-1.4 2.9-1.1 2.9-1.1.6 1.4.2 2.5.1 2.8.7.8 1.1 1.7 1.1 2.8 0 4-2.4 4.8-4.7 5.1.4.3.7 1 .7 2v2.9c0 .3.2.6.7.5 4.1-1.4 7.1-5.2 7.1-9.8C22.3 6.4 17.7 1.8 12 1.8Z" />
+                    </svg>
+                  </span>
+                  <span>
+                    <strong>GitHub</strong>
+                    <small>Code and release</small>
+                  </span>
+                </a>
+                <a class="resource-link" href="https://x.com/osunlp" target="_blank" rel="noopener">
+                  <span class="resource-icon resource-icon-x" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="img" focusable="false">
+                      <path d="M14.2 10.2 22.1 1h-1.9l-6.9 8L7.8 1H1.5l8.3 12.1L1.5 23h1.9l7.2-8.4 5.8 8.4h6.3l-8.5-12.8Zm-2.6 3-0.8-1.2L4.1 2.4h2.8l5.4 7.7 0.8 1.2 7 10.1h-2.8l-5.7-8.2Z" />
+                    </svg>
+                  </span>
+                  <span>
+                    <strong>X Post</strong>
+                    <small>Tweet</small>
+                  </span>
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <section class="lede">
+            <p>
+              <!--
+              Previous lede:
+              QUEST is a general-purpose agent designed to handle a wide range
+              of search tasks, with strong capabilities in fact-seeking, claim
+              grounding, and report synthesis. It covers the full recipe:
+              synthetic data generation across diverse research scenarios,
+              context management for long-horizon reasoning, infrastructure for
+              efficient and stable training, and a multi-stage pipeline spanning
+              mid-training, SFT, and RL.
+              -->
+              <strong>We release QUEST, a family of open models ranging from
+              2B to 35B that serve as <em>general-purpose</em> deep research
+              agents designed to handle a wide range of search tasks, with
+              strong capabilities in <em>fact seeking</em>,
+              <em>citation grounding</em>, and <em>report synthesis</em>.</strong>
+            </p>
+            <p>
+              <!-- Previous release note: We release everything: model, data, and training scripts. -->
+              The recipe combines a rubric-tree-based data synthesis pipeline,
+              structured context management, and a three-stage training process
+              spanning mid-training, supervised fine-tuning, and reinforcement
+              learning. We released everything: models, data, and training
+              scripts.
+            </p>
+          </section>
+
+          <section id="snapshot" class="top-benchmark-showcase" aria-label="Eight-benchmark QUEST leaderboard snapshot">
+              <div class="benchmark-comparison-panel benchmark-hero-panel">
+                <div
+                  class="benchmark-comparison-grid"
+                  id="benchmarkComparisonGrid"
+                  aria-label="QUEST-35B benchmark comparison charts"
+                ></div>
+              </div>
+
+              <div class="body-copy showcase-copy">
+                <p>
+                  Comprehensive comparison across eight benchmarks that
+                  evaluate different capabilities: fact seeking, citation
+                  grounding, and report synthesis. For BrowseComp and
+                  BrowseComp-Plus, following prior work, we adopt the
+                  discard-all strategy.
+                </p>
+              </div>
+
+          </section>
+
+          <section id="tasks" class="section">
+            <div class="section-head">
+              <h2>Overview</h2>
+            </div>
+
+            <div class="body-copy">
+              <p>
+                QUEST's performance comes from three components: a data synthesis
+                pipeline that constructs tasks with tree-structured rubrics, a
+                context management strategy for long-horizon trajectories, and
+                a training pipeline that optimizes the model with rubric-based
+                signals.
+              </p>
+              <p>
+                We evaluate QUEST on eight benchmarks spanning both objective
+                and open-ended research settings. The overview below summarizes
+                which capabilities these benchmarks test and how QUEST compares
+                with existing deep research agents in training recipe and
+                released assets.
+              </p>
+            </div>
+
+            <div class="evaluation-overview-grid">
+              <div class="cap-panel">
+                <div class="table-label">Benchmark Coverage</div>
+
+                <div class="cap-legend" aria-label="Capability legend">
+                  <div class="cap-legend-row">
+                    <span><i class="cap-dot cap-dot-fact"></i>Fact-seeking</span>
+                    <span><i class="cap-dot cap-dot-report"></i>Report synthesis</span>
+                    <span><i class="cap-dot cap-dot-cite"></i>Citation grounding</span>
+                  </div>
+                  <div class="cap-legend-row">
+                    <span><i class="cap-na"></i>N/A for category</span>
+                    <span><i class="cap-no"></i>Not covered</span>
+                  </div>
+                </div>
+
+                <div class="cap-list-head" aria-label="Capability columns">
+                  <span class="cap-list-head-label">Benchmark</span>
+                  <span class="cap-head-dots">
+                    <i class="cap-dot cap-dot-fact" title="Fact-seeking"></i>
+                    <i class="cap-dot cap-dot-report" title="Report synthesis"></i>
+                    <i class="cap-dot cap-dot-cite" title="Citation grounding"></i>
+                  </span>
+                </div>
+
+                <div class="cap-section cap-section-objective">
+                  <div class="cap-section-header">
+                    <span class="cap-section-badge cap-section-obj">Objective</span>
+                  </div>
+                  <div class="cap-rows">
+                    <div class="cap-row">
+                      <span class="cap-name">BrowseComp</span>
+                      <span class="cap-pills">
+                        <span class="cap-dot cap-dot-fact" title="Fact-seeking: covered"></span>
+                        <span class="cap-na" title="Report synthesis: N/A for objective tasks"></span>
+                        <span class="cap-no" title="Citation grounding: not covered"></span>
+                      </span>
+                    </div>
+                    <div class="cap-row">
+                      <span class="cap-name">Mind2Web 2</span>
+                      <span class="cap-pills">
+                        <span class="cap-dot cap-dot-fact" title="Fact-seeking: covered"></span>
+                        <span class="cap-na" title="Report synthesis: N/A for objective tasks"></span>
+                        <span class="cap-dot cap-dot-cite" title="Citation grounding: covered"></span>
+                      </span>
+                    </div>
+                    <div class="cap-row">
+                      <span class="cap-name">HLE</span>
+                      <span class="cap-pills">
+                        <span class="cap-dot cap-dot-fact" title="Fact-seeking: covered"></span>
+                        <span class="cap-na" title="Report synthesis: N/A for objective tasks"></span>
+                        <span class="cap-no" title="Citation grounding: not covered"></span>
+                      </span>
+                    </div>
+                    <div class="cap-row">
+                      <span class="cap-name">BrowseComp-Plus</span>
+                      <span class="cap-pills">
+                        <span class="cap-dot cap-dot-fact" title="Fact-seeking: covered"></span>
+                        <span class="cap-na" title="Report synthesis: N/A for objective tasks"></span>
+                        <span class="cap-no" title="Citation grounding: not covered"></span>
+                      </span>
+                    </div>
+                    <div class="cap-row">
+                      <span class="cap-name">WideSearch</span>
+                      <span class="cap-pills">
+                        <span class="cap-dot cap-dot-fact" title="Fact-seeking: covered"></span>
+                        <span class="cap-na" title="Report synthesis: N/A for objective tasks"></span>
+                        <span class="cap-no" title="Citation grounding: not covered"></span>
+                      </span>
+                    </div>
+                    <div class="cap-row">
+                      <span class="cap-name">GAIA</span>
+                      <span class="cap-pills">
+                        <span class="cap-dot cap-dot-fact" title="Fact-seeking: covered"></span>
+                        <span class="cap-na" title="Report synthesis: N/A for objective tasks"></span>
+                        <span class="cap-no" title="Citation grounding: not covered"></span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cap-section cap-section-open-group">
+                  <div class="cap-section-header">
+                    <span class="cap-section-badge cap-section-open">Open-ended</span>
+                  </div>
+                  <div class="cap-rows">
+                    <div class="cap-row">
+                      <span class="cap-name">DeepResearch Bench</span>
+                      <span class="cap-pills">
+                        <span class="cap-na" title="Fact-seeking: N/A for open-ended tasks"></span>
+                        <span class="cap-dot cap-dot-report" title="Report synthesis: covered"></span>
+                        <span class="cap-dot cap-dot-cite" title="Citation grounding: covered"></span>
+                      </span>
+                    </div>
+                    <div class="cap-row">
+                      <span class="cap-name">LiveResearchBench</span>
+                      <span class="cap-pills">
+                        <span class="cap-na" title="Fact-seeking: N/A for open-ended tasks"></span>
+                        <span class="cap-dot cap-dot-report" title="Report synthesis: covered"></span>
+                        <span class="cap-dot cap-dot-cite" title="Citation grounding: covered"></span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="comparison-col">
+                <div class="comparison-inline">
+                  <!-- Previous label: Deep Search Agent Training Recipe Comparison -->
+                  <div class="table-label">Deep Research Agent Training Recipe Comparison</div>
+                  <div class="table-scroll">
+                    <table class="content-table comparison-table">
+                      <colgroup>
+                        <col class="comparison-col-model" />
+                        <col class="comparison-col-scale" />
+                        <col class="comparison-col-coverage" />
+                        <col class="comparison-col-synth" />
+                        <col class="comparison-col-verification" />
+                        <col class="comparison-col-context" />
+                        <col class="comparison-col-pipeline" />
+                        <col class="comparison-col-data" />
+                        <col class="comparison-col-synth-code" />
+                        <col class="comparison-col-train-code" />
+                      </colgroup>
+                      <thead>
+                        <tr class="comparison-group-row">
+                          <th rowspan="2" class="comparison-model-head th-spanned">Model</th>
+                          <th rowspan="2" class="th-spanned">Scale</th>
+                          <th rowspan="2" class="th-spanned">Capability</th>
+                          <th rowspan="2" class="th-spanned">Task Synthesis</th>
+                          <th rowspan="2" class="th-spanned">Verification</th>
+                          <th rowspan="2" class="th-spanned">Context Management</th>
+                          <th rowspan="2" class="th-spanned">Training Pipeline</th>
+                          <th colspan="3" class="comparison-open-source-head">Open-Sourced</th>
+                        </tr>
+                        <tr class="comparison-column-row">
+                          <th>Data</th>
+                          <th>Synthesis<br />Script</th>
+                          <th>Training<br />Code</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="comparison-model-cell">
+                            <span class="comparison-model-label">Tongyi-DR</span>
+                          </td>
+                          <td>30B</td>
+                          <td>
+                            <div class="scenario-stack">
+                              <span class="scenario-pill scenario-fact"><i class="scenario-dot"></i>Fact Seeking</span>
+                              <span class="scenario-pill scenario-report"><i class="scenario-dot"></i>Report Synthesis</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td>Exact Match</td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td>
+                            <div class="pipeline-track">
+                              <span class="pipeline-pill pipeline-mt">MT</span>
+                              <span class="pipeline-arrow-inline">&#8594;</span>
+                              <span class="pipeline-pill pipeline-sft">SFT</span>
+                              <span class="pipeline-arrow-inline">&#8594;</span>
+                              <span class="pipeline-pill pipeline-rl">RL</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                        </tr>
+                        <tr>
+                          <td class="comparison-model-cell">
+                            <span class="comparison-model-label">DR Tulu</span>
+                          </td>
+                          <td>8B</td>
+                          <td>
+                            <div class="scenario-stack">
+                              <span class="scenario-pill scenario-report"><i class="scenario-dot"></i>Report Synthesis</span>
+                              <span class="scenario-pill scenario-citation"><i class="scenario-dot"></i>Citation Grounding</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td>Rubric</td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td>
+                            <div class="pipeline-track">
+                              <span class="pipeline-pill pipeline-sft">SFT</span>
+                              <span class="pipeline-arrow-inline">&#8594;</span>
+                              <span class="pipeline-pill pipeline-rl">RL</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                        </tr>
+                        <tr>
+                          <td class="comparison-model-cell">
+                            <span class="comparison-model-label">OpenResearcher</span>
+                          </td>
+                          <td>30B</td>
+                          <td>
+                            <div class="scenario-stack">
+                              <span class="scenario-pill scenario-fact"><i class="scenario-dot"></i>Fact Seeking</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td>Exact Match</td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td>
+                            <div class="pipeline-track">
+                              <span class="pipeline-pill pipeline-sft">SFT</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                        </tr>
+                        <tr>
+                          <td class="comparison-model-cell">
+                            <span class="comparison-model-label">REDSearcher</span>
+                          </td>
+                          <td>30B</td>
+                          <td>
+                            <div class="scenario-stack">
+                              <span class="scenario-pill scenario-fact"><i class="scenario-dot"></i>Fact Seeking</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td>Exact Match</td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td>
+                            <div class="pipeline-track">
+                              <span class="pipeline-pill pipeline-mt">MT</span>
+                              <span class="pipeline-arrow-inline">&#8594;</span>
+                              <span class="pipeline-pill pipeline-sft">SFT</span>
+                              <span class="pipeline-arrow-inline">&#8594;</span>
+                              <span class="pipeline-pill pipeline-rl">RL</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-no">&#215;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                        </tr>
+                        <tr class="comparison-quest-row">
+                          <td class="comparison-model-cell">
+                            <span class="comparison-model-label">QUEST (ours)</span>
+                          </td>
+                          <td>2B&ndash;35B</td>
+                          <td>
+                            <div class="scenario-stack">
+                              <span class="scenario-pill scenario-fact"><i class="scenario-dot"></i>Fact Seeking</span>
+                              <span class="scenario-pill scenario-report"><i class="scenario-dot"></i>Report Synthesis</span>
+                              <span class="scenario-pill scenario-citation"><i class="scenario-dot"></i>Citation Grounding</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td>Rubric Tree</td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td>
+                            <div class="pipeline-track">
+                              <span class="pipeline-pill pipeline-mt">MT</span>
+                              <span class="pipeline-arrow-inline">&#8594;</span>
+                              <span class="pipeline-pill pipeline-sft">SFT</span>
+                              <span class="pipeline-arrow-inline">&#8594;</span>
+                              <span class="pipeline-pill pipeline-rl">RL</span>
+                            </div>
+                          </td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                          <td class="comparison-center"><span class="support-mark support-yes">&#10003;</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="comparison-legend">
+                    <span class="comparison-legend-item"><span class="support-mark support-yes">&#10003;</span>supported</span>
+                    <span class="comparison-legend-item"><span class="support-mark support-no">&#215;</span>not supported</span>
+                    <span class="comparison-legend-item"><span class="pipeline-pill pipeline-mt">MT</span>Mid-Training</span>
+                    <span class="comparison-legend-item"><span class="pipeline-pill pipeline-sft">SFT</span>Supervised Fine-Tuning</span>
+                    <span class="comparison-legend-item"><span class="pipeline-pill pipeline-rl">RL</span>Reinforcement Learning</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="body-copy">
+              <p>
+                These three capabilities define a broad capability profile for
+                deep research agents: retrieving precise information,
+                synthesizing knowledge into coherent, well-structured reports,
+                and providing verifiable citations to support the claims in
+                their responses. Despite their complementary nature, existing
+                benchmarks and agent systems typically evaluate or support them
+                only in isolation. QUEST addresses them jointly within a unified
+                framework.
+              </p>
+            </div>
+          </section>
+
+          <section id="quest" class="section">
+            <div class="section-head">
+              <h2>Additional Analysis</h2>
+            </div>
+
+            <div class="subsection system-comparison">
+              <h3>30B-Scale Research Agent Comparison</h3>
+              <p>
+                <!--
+                Previous 30B comparison description:
+                We further compare 30B-scale research agents across the same
+                benchmark suite. The reported metric follows the primary metric
+                used by each benchmark.
+                -->
+                To control for scale, we also train QUEST-30B from
+                Qwen3-30B-A3B and compare it with Tongyi-DR and OpenResearcher.
+                QUEST-30B performs best on four of the eight benchmarks,
+                including Mind2Web 2 and DeepResearch Bench, suggesting that
+                broad benchmark coverage comes from the training recipe rather
+                than parameter count alone.
+              </p>
+              <p>
+                The pattern is capability-specific. Tongyi-DR remains strong
+                on fact-seeking benchmarks such as BrowseComp, HLE, and GAIA,
+                which align with single-answer synthetic data. OpenResearcher
+                is strongest on BrowseComp-Plus. QUEST-30B is more evenly
+                balanced across fact seeking, citation grounding, and report
+                synthesis.
+              </p>
+
+              <div class="small-model-panel">
+                <div class="small-model-legend" aria-label="30B research agent legend">
+                  <span><i class="legend-quest-model"></i>QUEST-30B</span>
+                  <span><i class="legend-tongyi"></i>Tongyi-DR</span>
+                  <span><i class="legend-openresearcher"></i>OpenResearcher</span>
+                </div>
+                <div class="small-model-grid" aria-label="30B-scale research agent benchmark results">
+                  <div class="small-model-card">
+                    <h4>BrowseComp</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="p-browsecomp"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>HLE</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="p-hle"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>GAIA</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="p-gaia"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>Mind2Web 2</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="p-m2w2"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>LiveResearchBench</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="p-liveresearch"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>DeepResearch Bench</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="p-deepresearch"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>WideSearch</h4>
+                    <p class="chart-metric">Item F1 avg@4</p>
+                    <div class="chart-wrap"><canvas id="p-widesearch"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>BrowseComp Plus</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="p-bcp"></canvas></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="subsection smaller-versions">
+              <h3>Smaller Versions</h3>
+              <p>
+                <!--
+                Previous smaller-model description:
+                We also train smaller SFT-only variants to provide lightweight
+                search agents for compute-constrained deployment scenarios. The
+                2B, 4B, and 9B models use the same agent interface and training
+                format, allowing us to study how search capability scales under
+                a fixed recipe.
+                -->
+                We also train SFT-only variants from 2B through 35B
+                scales. These models use the same data and inference
+                configuration, letting us isolate how much deep research
+                capability can be transferred into deployable, lower-cost
+                agents.
+              </p>
+              <p>
+                <!--
+                Previous smaller-model result summary:
+                Across objective, citation-grounded, and open-ended benchmarks,
+                the smaller variants preserve the core behavior of QUEST while
+                exposing the expected tradeoff between model size and task
+                performance. The results below report the average score for
+                each benchmark, using a per-benchmark y-axis range to make close
+                differences visible.
+                -->
+                The result is unexpectedly strong on fact-seeking benchmarks:
+                even QUEST-2B-SFT reaches 30.3 on HLE and 72.8 on GAIA.
+                Open-ended report synthesis remains harder for small models,
+                which points to a useful next target for lightweight private or
+                local deep research agents.
+              </p>
+
+              <div class="small-model-panel">
+                <div class="small-model-legend" aria-label="Model size legend">
+                  <span><i class="legend-2b"></i>QUEST-2B-SFT</span>
+                  <span><i class="legend-4b"></i>QUEST-4B-SFT</span>
+                  <span><i class="legend-9b"></i>QUEST-9B-SFT</span>
+                  <span><i class="legend-35b"></i>QUEST-35B-SFT</span>
+                </div>
+                <div class="small-model-grid" aria-label="Smaller model benchmark results">
+                  <div class="small-model-card">
+                    <h4>BrowseComp</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="c-browsecomp"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>Mind2Web 2</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="c-m2w2"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>HLE</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="c-hle"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>DeepResearch Bench</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="c-drb"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>BrowseComp-Plus</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="c-bcp"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>WideSearch</h4>
+                    <p class="chart-metric">Item F1 avg@4</p>
+                    <div class="chart-wrap"><canvas id="c-ws"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>GAIA</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="c-gaia"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>LiveResearchBench</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="c-lrb"></canvas></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="subsection effect-study">
+              <h3>The Effect of Mid-training and Reinforcement Learning</h3>
+              <p>
+                <!--
+                Previous training-stage setup:
+                To trace how each training stage contributes, we evaluate the
+                same 35B agent from the vanilla checkpoint through three
+                training stages: SFT only, after adding mid-training (SFT+MT),
+                and after the final reinforcement learning stage (SFT+MT+RL).
+                Each panel below plots the score progression on one benchmark.
+                -->
+                To trace how each training stage contributes, we evaluate the
+                same 35B base checkpoint across four variants: the vanilla
+                Qwen3.5-35B-A3B agent, SFT, MT+SFT, and the full MT+SFT+RL
+                recipe.
+              </p>
+              <p>
+                <!--
+                Previous training-stage interpretation:
+                Mid-training yields consistent gains on several search-heavy
+                and citation-grounded benchmarks, while keeping performance
+                largely stable on tasks where the SFT-only model is already
+                strong. Reinforcement learning further compounds these gains
+                on tasks that reward iterative search and reasoning.
+                -->
+                The effect is not uniform: SFT helps most objective tasks but
+                can hurt open-ended report quality; MT improves the SFT model
+                overall; RL produces the largest gains on open-ended benchmarks
+                while slightly trading off reasoning-heavy HLE and GAIA scores.
+                Overall, the full MT+SFT+RL recipe performs best across the
+                compared variants.
+              </p>
+
+              <div class="small-model-panel">
+                <div class="small-model-legend" aria-label="Training stage legend">
+                  <span><i class="legend-stage-line"></i>QUEST-35B-A3B across training stages</span>
+                </div>
+                <div class="small-model-grid" aria-label="Training-stage progression benchmark results">
+                  <div class="small-model-card">
+                    <h4>BrowseComp</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="e-browsecomp"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>Mind2Web 2</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="e-m2w2"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>HLE</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="e-hle"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>DeepResearch Bench</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="e-drb"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>LiveResearchBench</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="e-lrb"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>GAIA</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="e-gaia"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>BrowseComp-Plus</h4>
+                    <p class="chart-metric">avg@3</p>
+                    <div class="chart-wrap"><canvas id="e-bcp"></canvas></div>
+                  </div>
+                  <div class="small-model-card">
+                    <h4>WideSearch</h4>
+                    <p class="chart-metric">Item F1 avg@4</p>
+                    <div class="chart-wrap"><canvas id="e-ws"></canvas></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+          <section id="data" class="section">
+            <div class="section-head">
+              <h2>Training Recipe</h2>
+            </div>
+
+            <div class="body-copy">
+              <p>
+                Training a deep research agent requires data that goes beyond
+                standard question-answer pairs. Single-answer supervision is
+                useful for fact-seeking tasks with short final answers, but it
+                does not cover many research tasks that require aggregating
+                information across multiple sources, satisfying several
+                constraints, or producing source-supported long-form outputs.
+              </p>
+              <p>
+                QUEST builds its training data around synthetic queries paired
+                with rubric trees. A rubric tree decomposes each task into
+                verifiable criteria, allowing the same framework to handle
+                unique-answer tasks, tasks with multiple valid solutions, and
+                open-ended report-style questions. Its score also provides a
+                fine-grained training signal beyond binary correctness, which
+                is used later for filtering SFT trajectories and defining
+                rubric-based rewards in RL.
+              </p>
+            </div>
+
+            <figure class="figure-block">
+              <img
+                class="figure-media"
+                src="./figures/Task.pdf.png"
+                alt="QUEST task synthesis overview"
+              />
+            </figure>
+
+            <div class="subsection">
+              <h3>Synthetic Rubric Trees</h3>
+              <p>
+                Each training task is paired with a rubric tree: a structured
+                set of criteria that can score fact correctness, constraints,
+                citations, completeness, readability, and insight. Objective
+                tasks are translated into executable checks, while open-ended
+                tasks are judged against reference reports with rubric-level
+                scoring.
+              </p>
+              <p>
+                This lets one framework cover unique-answer tasks, tasks with
+                multiple valid solutions, and open-ended research questions.
+                The root score gives a fine-grained reward beyond binary
+                correctness, while the leaves expose which factual or
+                citation-level requirements were actually satisfied.
+              </p>
+            </div>
+
+            <div class="subsection">
+              <h3>Structured Context Management</h3>
+              <p>
+                Deep research requires many search and visit steps, so QUEST
+                does not keep every raw observation forever. When the context
+                grows long, a condenser turns the interaction history into a
+                structured context state containing trusted facts, uncertain leads, and
+                untrusted claims. The agent then resumes from that compact
+                context and continues researching.
+              </p>
+              <p>
+                The context state is deliberately structured rather than a loose
+                summary. Trusted entries can be reused without redundant
+                searches, uncertain entries become follow-up actions, and
+                untrusted entries are deprioritized. This keeps long-horizon
+                research coherent even when the raw interaction history no
+                longer fits in the active context window.
+              </p>
+            </div>
+
+            <figure class="figure-block">
+              <img
+                class="figure-media"
+                src="./figures/Memory.pdf.png"
+                alt="QUEST context management overview"
+              />
+            </figure>
+
+            <div class="subsection">
+              <h3>MT, SFT, and RL</h3>
+              <div class="table-block training-data-table">
+                <div class="table-label">Data distribution in three stages</div>
+                <table class="content-table">
+                  <thead>
+                    <tr>
+                      <th>Stage</th>
+                      <th>Type</th>
+                      <th>#Task</th>
+                      <th>#Trajectory</th>
+                      <th>#Session</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>MT</td>
+                      <td>Context Summarization</td>
+                      <td>309,346</td>
+                      <td>-</td>
+                      <td>-</td>
+                    </tr>
+                    <tr>
+                      <td>MT</td>
+                      <td>Relevant Info Extraction</td>
+                      <td>1,052,663</td>
+                      <td>-</td>
+                      <td>-</td>
+                    </tr>
+                    <tr>
+                      <td>SFT</td>
+                      <td>Objective</td>
+                      <td>5,070</td>
+                      <td>19,435</td>
+                      <td>39,861</td>
+                    </tr>
+                    <tr>
+                      <td>SFT</td>
+                      <td>Open-ended</td>
+                      <td>1,958</td>
+                      <td>4,485</td>
+                      <td>11,903</td>
+                    </tr>
+                    <tr>
+                      <td>RL</td>
+                      <td>Objective</td>
+                      <td>864</td>
+                      <td>-</td>
+                      <td>-</td>
+                    </tr>
+                    <tr>
+                      <td>RL</td>
+                      <td>Open-ended</td>
+                      <td>269</td>
+                      <td>-</td>
+                      <td>-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="stage-stack">
+                <article class="stage-card">
+                  <div class="stage-kicker">Stage 1</div>
+                  <h4>MT: Context Management and Evidence Extraction</h4>
+                  <p>
+                    MT equips the base model with long-context understanding
+                    and awareness of the structured context state used by the
+                    agent. It contains two auxiliary tasks. In
+                    <strong>context summarization</strong>, the model receives
+                    a long interaction history and learns to produce a
+                    structured context-state JSON generated by the context
+                    condenser. In <strong>relevant information extraction</strong>,
+                    the model receives a raw HTML page and an extraction goal,
+                    then filters out navigation elements, advertisements, and
+                    off-topic content.
+                  </p>
+                  <p>
+                    Both MT targets are reused from the agent pipeline rather
+                    than separately annotated: context-state targets come from
+                    the condenser, while extraction targets are derived from
+                    visit-tool outputs in collected trajectories. They teach
+                    the model to work with the same intermediate artifacts it
+                    will see during inference: condensed context states and
+                    extracted evidence from webpages.
+                  </p>
+                  <p>
+                    The goal is not to teach the model a final-answer format,
+                    but to adapt it to the intermediate artifacts that deep
+                    research depends on: noisy webpage content, extracted
+                    evidence, and compact context states that can be reused after
+                    long histories are compressed.
+                  </p>
+                </article>
+
+                <article class="stage-card">
+                  <div class="stage-kicker">Stage 2</div>
+                  <h4>Supervised Fine-Tuning: Tool-Use Trajectories</h4>
+                  <p>
+                    SFT trains the model on full tool-use trajectories collected
+                    from synthetic tasks and scored by their rubric trees. For
+                    each synthesized query, a teacher agent attempts the task
+                    and the output is evaluated against the query-specific
+                    protocol. Successful trajectories are retained as SFT
+                    targets; for objective tasks that fail initially, the
+                    fine-grained evaluation result is injected as feedback and
+                    the teacher retries the task.
+                  </p>
+                  <p>
+                    Outputs are standardized into an inline citation format,
+                    where factual claims are paired with supporting URLs. Long
+                    trajectories are then decomposed into session-level examples
+                    between context condensation events, aligning the training
+                    unit with the agent's effective working context during
+                    inference.
+                  </p>
+                  <p>
+                    This session-level formulation is important for long
+                    trajectories: the model does not need the entire trajectory
+                    in context at once, but it still learns to continue from the
+                    same structured state that will be available at inference
+                    time.
+                  </p>
+                </article>
+
+                <article class="stage-card">
+                  <div class="stage-kicker">Stage 3</div>
+                  <h4>Reinforcement Learning: Rubric and Fact Rewards</h4>
+                  <p>
+                    RL applies GRPO-style outcome-based reinforcement tuning
+                    with two reward signals. The first is the
+                    <strong>rubric-tree reward</strong>, computed by the
+                    task-specific evaluation protocol. Objective tasks use the
+                    rubric score directly, while open-ended tasks map pairwise
+                    rubric judgments against a reference response into ordered
+                    reward levels.
+                  </p>
+                  <p>
+                    The second is the <strong>fact-checking reward</strong> for
+                    citation faithfulness. QUEST extracts cited fact-URL pairs,
+                    retrieves the referenced webpages, and uses an evaluator
+                    model to label each citation as supported, unsupported, or
+                    unknown. The fact-checking score is the fraction of
+                    supported citations among determinate labels.
+                  </p>
+                  <p>
+                    The final reward is \(R = 0.75 \cdot s_{\mathrm{rubric}} +
+                    0.25 \cdot \min(s_{\mathrm{fact}},
+                    s_{\mathrm{rubric}})\), so citation credit is upper-bounded
+                    by task completion. For each prompt, rewards are computed
+                    from full rollout responses and assigned to all
+                    session-level examples derived from the same rollout, with
+                    advantages normalized within the rollout group.
+                  </p>
+                  <p>
+                    This design keeps the optimization target tied to the
+                    complete research outcome while still allowing training to
+                    scale over condensed sessions. The rubric reward pushes the
+                    agent toward task completion; the fact-checking reward
+                    discourages unsupported citations and hallucinated evidence.
+                  </p>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section id="demo" class="section">
+            <div class="section-head">
+              <h2>Try <span class="brand">QUEST</span></h2>
+            </div>
+
+            <div class="body-copy">
+              <p>
+                Send a question to
+                <a href="https://huggingface.co/spaces/osunlp/QUEST" target="_blank" rel="noopener" style="text-decoration: underline;">QUEST HuggingFace Space</a>.
+                The first request may take 30–60 seconds while the Space wakes up.
+              </p>
+            </div>
+
+            <div class="quest-chat" aria-label="QUEST demo chat">
+              <div class="quest-chat-stream" id="quest-chat-stream" aria-live="polite"></div>
+
+              <form class="quest-chat-input" id="quest-chat-form">
+                <textarea
+                  id="qc-question"
+                  rows="2"
+                  placeholder="Ask QUEST a research question…"
+                  required>Who was the first person to walk on the Moon, and which U.S. President set that goal in his famous 1962 “Moon speech”?</textarea>
+                <button type="submit" id="qc-send">Run Research</button>
+              </form>
+
+              <details class="quest-chat-advanced">
+                <summary>Advanced settings</summary>
+                <div class="quest-chat-controls">
+                  <label>
+                    Max turns
+                    <input type="number" id="qc-max-turns" value="16" min="1" max="100" step="1">
+                  </label>
+                  <label>
+                    Context strategy
+                    <select id="qc-context">
+                      <option value="vanilla">vanilla</option>
+                      <option value="condenser" selected>condenser</option>
+                      <option value="discard-all">discard-all</option>
+                      <option value="hide-tool-results">hide-tool-results</option>
+                    </select>
+                  </label>
+                  <label>
+                    Temperature
+                    <input type="number" id="qc-temperature" value="0.4" min="0" max="1.5" step="0.1">
+                  </label>
+                </div>
+              </details>
+
+              <p class="quest-chat-status" id="qc-status"></p>
+            </div>
+          </section>
+        </article>
+      </main>
+
+      <footer class="site-footer">
+        <p>QUEST · OSU NLP</p>
+        <div class="footer-links">
+          <a href="#tasks">Overview</a>
+          <a href="#quest">Analysis</a>
+          <a href="#data">Recipe</a>
+          <a href="#demo">Demo</a>
+        </div>
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <button
+      class="back-to-top"
+      id="backToTop"
+      aria-label="Back to top"
+      onclick="window.scrollTo({top:0,behavior:'smooth'})"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path
+          d="M8 12V4M4 7l4-4 4 4"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      Top
+    </button>
+
+    <script>
+      // ── Small model benchmark charts ─────────────────────────
+      (function initModelCharts() {
+        if (typeof Chart === 'undefined') return;
+        Chart.defaults.font.family = "'Manrope', sans-serif";
+
+        const FILL = [
+          '#BFDBFE',
+          '#93C5FD',
+          '#60A5FA',
+          '#3A55E3',
+        ];
+        const EDGE  = ['#93C5FD', '#60A5FA', '#3B82F6', '#273DB5'];
+        const SIZES = ['2B', '4B', '9B', '35B'];
+
+        /*
+        Previous smaller-model chart data:
+        const defs = [
+          { id: 'c-browsecomp', vals: [28,    40,    45.4],  min: 0, max: 50, step: 10 },
+          { id: 'c-m2w2',       vals: [8.81,  24.3,  24.4],  min: 0,  max: 30, step: 10 },
+          { id: 'c-hle',        vals: [30.26, 36.15, 36.92], min: 0, max: 40, step: 10 },
+          { id: 'c-drb',        vals: [22.27, 41.99, 41.13], min: 0, max: 50, step: 10 },
+          { id: 'c-lrb',        vals: [33.75, 55.74, 52.91], min: 0, max: 60, step: 15 },
+          { id: 'c-gaia',       vals: [72.82, 77.67, 78.64], min: 0, max: 82, step: 20 },
+          { id: 'c-bcp',        vals: [52.57, 52.05, 55.64], min: 0, max: 58, step: 15 },
+          { id: 'c-ws',         vals: [40.9,  55,    58.5],  min: 0, max: 60, step: 15 },
+        ];
+        */
+        const defs = [
+          { id: 'c-browsecomp', vals: [28,    40,    45.4, 45.1], min: 20, max: 52, step: 10 },
+          { id: 'c-m2w2',       vals: [8.8,   24.3,  24.4, 26.5], min: 0,  max: 32, step: 10 },
+          { id: 'c-hle',        vals: [30.3,  36.2,  36.9, 39.5], min: 25, max: 42, step: 5 },
+          { id: 'c-drb',        vals: [21.0,  22.0,  32.6, 36.4], min: 15, max: 42, step: 5 },
+          { id: 'c-bcp',        vals: [52.6,  52.1,  55.6, 57.9], min: 45, max: 62, step: 5 },
+          { id: 'c-ws',         vals: [40.9,  55.0,  58.5, 61.1], min: 35, max: 67, step: 10 },
+          { id: 'c-gaia',       vals: [72.8,  77.7,  78.6, 83.5], min: 70, max: 87, step: 5 },
+          { id: 'c-lrb',        vals: [57.4,  62.1,  63.5, 64.7], min: 55, max: 67, step: 5 },
+        ];
+
+        const valueLabelPlugin = {
+          id: 'barValueLabels',
+          afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            const horizontal = chart.options.indexAxis === 'y';
+            chart.data.datasets.forEach((ds, datasetIndex) => {
+              chart.getDatasetMeta(datasetIndex).data.forEach((bar, i) => {
+                const v   = ds.data[i];
+                const txt = v.toFixed(1);
+                ctx.save();
+                ctx.font = '700 9.5px "Manrope", sans-serif';
+                ctx.fillStyle = '#475569';
+                ctx.textAlign = horizontal ? 'left' : 'center';
+                ctx.textBaseline = horizontal ? 'middle' : 'bottom';
+                ctx.fillText(txt, horizontal ? bar.x + 5 : bar.x, horizontal ? bar.y : bar.y - 3);
+                ctx.restore();
+              });
+            });
+          },
+        };
+
+        const PERF_FILL = ['#4360E8', '#C63F00', '#008B5F'];
+        const PERF_EDGE = ['#344BC7', '#A63400', '#00754F'];
+        const PERF_LABELS = ['QUEST-30B', 'Tongyi-DR', 'OpenResearcher'];
+        /*
+        Previous 30B-scale chart data:
+        const perfDefs = [
+          { id: 'p-browsecomp',   vals: [37.0, 43.4, 26.3], min: 0,  max: 50 },
+          { id: 'p-hle',          vals: [26.0, 32.9, 20.4], min: 0,  max: 36 },
+          { id: 'p-gaia',         vals: [69.0, 70.9, 64.1], min: 0,  max: 74 },
+          { id: 'p-m2w2',         vals: [28.6, 16.7, 14.8], min: 0,  max: 32 },
+          { id: 'p-liveresearch', vals: [66.7, 56.3, 61.3], min: 0,  max: 70 },
+          { id: 'p-deepresearch', vals: [44.3, 40.5, 39.8], min: 0,  max: 46 },
+          { id: 'p-widesearch',   vals: [57.2, 37.3, 19.2], min: 0,  max: 60 },
+          { id: 'p-bcp',          vals: [48.2, 44.5, 54.8], min: 0,  max: 58 },
+        ];
+        */
+        const perfDefs = [
+          { id: 'p-browsecomp',   vals: [37.0, 43.4, 26.3], min: 0,  max: 50 },
+          { id: 'p-hle',          vals: [24.6, 32.9, 19.6], min: 0,  max: 36 },
+          { id: 'p-gaia',         vals: [69.0, 70.9, 64.1], min: 0,  max: 74 },
+          { id: 'p-m2w2',         vals: [28.6, 16.7, 14.8], min: 0,  max: 32 },
+          { id: 'p-liveresearch', vals: [74.1, 56.3, 61.3], min: 0,  max: 78 },
+          { id: 'p-deepresearch', vals: [45.3, 40.5, 35.4], min: 0,  max: 48 },
+          { id: 'p-widesearch',   vals: [54.2, 37.3, 19.2], min: 0,  max: 60 },
+          { id: 'p-bcp',          vals: [48.2, 44.5, 54.8], min: 0,  max: 58 },
+        ];
+
+        perfDefs.forEach(({ id, vals, min, max }) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          new Chart(el, {
+            type: 'bar',
+            plugins: [valueLabelPlugin],
+            data: {
+              labels: PERF_LABELS,
+              datasets: [{
+                data: vals,
+                backgroundColor: PERF_FILL,
+                borderColor: PERF_EDGE,
+                borderWidth: 1.5,
+                borderRadius: 5,
+              }],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: { duration: 500, easing: 'easeOutQuart' },
+              plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false },
+              },
+              events: [],
+              scales: {
+                x: {
+                  grid:   { display: false },
+                  border: { display: false },
+                  ticks:  {
+                    color: '#94A3B8',
+                    font:  { size: 10, weight: '700' },
+                    padding: 2,
+                  },
+                },
+                y: {
+                  min,
+                  max,
+                  grid:   { color: 'rgba(10,15,40,0.055)', lineWidth: 1 },
+                  border: { display: false },
+                  ticks:  {
+                    color: '#B8C4D0',
+                    font:  { size: 9.5 },
+                    maxTicksLimit: 4,
+                    padding: 4,
+                  },
+                },
+              },
+              layout: { padding: { top: 18 } },
+            },
+          });
+        });
+
+        const BENCHMARK_LABEL = 'QUEST-35B';
+        const BENCHMARK_COLORS = {
+          quest: '#2563EB',
+          sota:  '#1E293B',
+          s2:    '#475569',
+          match: '#94A3B8',
+          open:  '#059669',
+          open2: '#34D399',
+        };
+
+        const MODEL_ICONS = {
+          'Gemini 3 Pro':    'figures/gemini.png',
+          'Gemini 3.1 Pro':  'figures/gemini.png',
+          'Gemini-DR':       'figures/gemini.png',
+          'Gemini 2.5 Pro':  'figures/gemini.png',
+          'Opus 4.6':        'figures/claude.svg',
+          'Opus 4.5':        'figures/claude.svg',
+          'Claude Opus 4.5': 'figures/claude.svg',
+          'GPT-5.4':         'figures/openai.png',
+          'GPT-5':           'figures/openai.png',
+          'GPT-OSS-120B':    'figures/openai.png',
+          'OpenAI-DR':       'figures/openai.png',
+          'OpenAI-o3':       'figures/openai.png',
+          'Tongyi-DR':       'figures/tongyi.png',
+          'Qwen3.5-122B':    'figures/tongyi.png',
+          'Grok-DR':         'figures/grok.png',
+          'Tencent Youtu':   'figures/hunyuan.png',
+          'Kimi K2.5':       'figures/kimi.webp',
+          'GLM-4.6':         'figures/glm.svg',
+          'DR Tulu':         'figures/tulu.png',
+          'MiroThinker-1.7-mini': 'figures/mirothinker.png',
+          'Redsearcher':     'figures/redsearcher.png',
+          'OpenResearcher':  'figures/openresearcher.webp',
+          'QUEST-30B':       'figures/osu_nlp.png',
+          'QUEST-35B':       'figures/osu_nlp.png',
+        };
+
+        /*
+        Previous QUEST-35B benchmark comparison data:
+        const benchmarkCharts = [
+          { title:'BrowseComp', bars:[
+            {role:'sota',  l:'Gemini 3.1 Pro', v:85.9},
+            {role:'s2',    l:'Opus 4.6',       v:84.0},
+            {role:'match', l:'GPT-5.4',        v:82.7},
+            {role:'open',  l:'MiroThinker-1.7-mini', v:67.9},
+            {role:'open2', l:'Redsearcher',    v:57.4},
+            {role:'quest', l:BENCHMARK_LABEL,  v:64.6},
+          ]},
+          { title:'Mind2Web 2', bars:[
+            {role:'sota',  l:'OpenAI-DR',      v:28.0},
+            {role:'s2',    l:'Grok-DR',        v:27.0},
+            {role:'match', l:'Tencent Youtu',  v:27.0},
+            {role:'open',  l:'Tongyi-DR',      v:16.7},
+            {role:'open2', l:'OpenResearcher', v:14.8},
+            {role:'quest', l:BENCHMARK_LABEL,  v:30.7},
+          ]},
+          { title:'HLE', bars:[
+            {role:'sota',  l:'Opus 4.6',       v:53.1},
+            {role:'s2',    l:'GPT-5.4',        v:52.1},
+            {role:'match', l:'Gemini 3.1 Pro', v:51.4},
+            {role:'open',  l:'MiroThinker-1.7-mini', v:36.4},
+            {role:'open2', l:'Redsearcher',    v:34.9},
+            {role:'quest', l:BENCHMARK_LABEL,  v:37.2},
+          ]},
+          { title:'DeepResearch Bench', bars:[
+            {role:'sota',  l:'Gemini-DR',      v:49.7},
+            {role:'s2',    l:'OpenAI-DR',      v:46.5},
+            {role:'match', l:'DR Tulu',        v:45.5},
+            {role:'open',  l:'Tongyi-DR',      v:40.5},
+            {role:'open2', l:'OpenResearcher', v:35.4},
+            {role:'quest', l:BENCHMARK_LABEL,  v:48.2},
+          ]},
+          { title:'BrowseComp-Plus', bars:[
+            {role:'sota',  l:'Opus 4.6',       v:83.0},
+            {role:'s2',    l:'Opus 4.5',       v:67.6},
+            {role:'match', l:'GLM-4.6',        v:48.2},
+            {role:'open',  l:'GPT-OSS-120B',   v:44.1},
+            {role:'open2', l:'Tongyi-DR',      v:44.5},
+            {role:'quest', l:BENCHMARK_LABEL,  v:69.5},
+          ]},
+          { title:'WideSearch', bars:[
+            {role:'sota',  l:'Kimi K2.5',      v:72.7},
+            {role:'s2',    l:'Gemini 3 Pro',   v:57.0},
+            {role:'match', l:'OpenAI-o3',      v:52.6},
+            {role:'open',  l:'Gemini 2.5 Pro', v:51.0},
+            {role:'open2', l:'GPT-OSS-120B',   v:40.4},
+            {role:'quest', l:BENCHMARK_LABEL,  v:60.6},
+          ]},
+          { title:'GAIA', bars:[
+            {role:'quest', l:BENCHMARK_LABEL,  v:80.8},
+            {role:'open',  l:'MiroThinker-1.7-mini', v:80.3},
+            {role:'open2', l:'Redsearcher',    v:80.1},
+            {role:'sota',  l:'GPT-5',          v:76.4},
+            {role:'s2',    l:'Tongyi-DR',      v:70.9},
+            {role:'match', l:'OpenAI-DR',      v:67.4},
+          ]},
+          { title:'LiveResearchBench', bars:[
+            {role:'sota',  l:'GPT-5',          v:73.1},
+            {role:'s2',    l:'Grok-DR',        v:65.6},
+            {role:'match', l:'Gemini-DR',      v:63.3},
+            {role:'open',  l:'OpenResearcher', v:61.3},
+            {role:'open2', l:'Tongyi-DR',      v:56.3},
+            {role:'quest', l:BENCHMARK_LABEL,  v:68.2},
+          ]},
+        ];
+        */
+        const benchmarkCharts = [
+          { title:'BrowseComp', bars:[
+            {role:'sota',  l:'Gemini 3.1 Pro', v:85.9},
+            {role:'s2',    l:'Opus 4.6',       v:84.0},
+            {role:'match', l:'GPT-5.4',        v:82.7},
+            {role:'open',  l:'MiroThinker-1.7-mini', v:67.9},
+            {role:'open2', l:'Redsearcher',    v:57.4},
+            {role:'quest', l:BENCHMARK_LABEL,  v:64.6},
+          ]},
+          { title:'Mind2Web 2', bars:[
+            {role:'sota',  l:'OpenAI-DR',      v:28.0},
+            {role:'s2',    l:'Grok-DR',        v:27.0},
+            {role:'match', l:'Tencent Youtu',  v:27.0},
+            {role:'open',  l:'Tongyi-DR',      v:16.7},
+            {role:'open2', l:'OpenResearcher', v:14.8},
+            {role:'quest', l:BENCHMARK_LABEL,  v:30.7},
+          ]},
+          { title:'HLE', bars:[
+            {role:'sota',  l:'Opus 4.6',       v:53.1},
+            {role:'s2',    l:'GPT-5.4',        v:52.1},
+            {role:'match', l:'Gemini 3.1 Pro', v:51.4},
+            {role:'open',  l:'MiroThinker-1.7-mini', v:36.4},
+            {role:'open2', l:'Redsearcher',    v:34.9},
+            {role:'quest', l:BENCHMARK_LABEL,  v:37.2},
+          ]},
+          { title:'DeepResearch Bench', bars:[
+            {role:'sota',  l:'Gemini-DR',      v:49.7},
+            {role:'s2',    l:'OpenAI-DR',      v:46.5},
+            {role:'match', l:'DR Tulu',        v:45.5},
+            {role:'open',  l:'Tongyi-DR',      v:40.5},
+            {role:'open2', l:'OpenResearcher', v:35.4},
+            {role:'quest', l:BENCHMARK_LABEL,  v:48.2},
+          ]},
+          { title:'BrowseComp-Plus', bars:[
+            {role:'sota',  l:'Opus 4.6',       v:83.0},
+            {role:'s2',    l:'Opus 4.5',       v:67.6},
+            {role:'match', l:'GLM-4.6',        v:48.2},
+            {role:'open',  l:'GPT-OSS-120B',   v:44.1},
+            {role:'open2', l:'Tongyi-DR',      v:44.5},
+            {role:'quest', l:BENCHMARK_LABEL,  v:69.5},
+          ]},
+          { title:'WideSearch', bars:[
+            {role:'sota',  l:'Kimi K2.5',      v:72.7},
+            {role:'s2',    l:'Gemini 3 Pro',   v:57.0},
+            {role:'match', l:'OpenAI-o3',      v:52.6},
+            {role:'open',  l:'Gemini 2.5 Pro', v:51.0},
+            {role:'open2', l:'GPT-OSS-120B',   v:40.4},
+            {role:'quest', l:BENCHMARK_LABEL,  v:60.6},
+          ]},
+          { title:'GAIA', bars:[
+            {role:'quest', l:BENCHMARK_LABEL,  v:80.8},
+            {role:'open',  l:'MiroThinker-1.7-mini', v:80.3},
+            {role:'open2', l:'Redsearcher',    v:80.1},
+            {role:'sota',  l:'GPT-5',          v:76.4},
+            {role:'s2',    l:'Tongyi-DR',      v:70.9},
+            {role:'match', l:'OpenAI-DR',      v:67.4},
+          ]},
+          { title:'LiveResearchBench', bars:[
+            {role:'sota',  l:'GPT-5',          v:73.1},
+            {role:'s2',    l:'Grok-DR',        v:65.6},
+            {role:'match', l:'Gemini-DR',      v:63.3},
+            {role:'open',  l:'OpenResearcher', v:61.3},
+            {role:'open2', l:'Tongyi-DR',      v:56.3},
+            {role:'quest', l:BENCHMARK_LABEL,  v:68.2},
+          ]},
+        ];
+
+        const benchmarkGrid = document.getElementById('benchmarkComparisonGrid');
+        if (benchmarkGrid) {
+          const roleColor = (role) => {
+            if (role === 'quest') return BENCHMARK_COLORS.quest;
+            if (role === 'sota') return BENCHMARK_COLORS.sota + 'EE';
+            if (role === 's2') return BENCHMARK_COLORS.s2 + 'CC';
+            if (role === 'match') return BENCHMARK_COLORS.match + 'BB';
+            if (role === 'open') return BENCHMARK_COLORS.open + 'DD';
+            if (role === 'open2') return BENCHMARK_COLORS.open2 + 'BB';
+            return '#94A3B8';
+          };
+
+          benchmarkCharts.forEach((bm) => {
+            const sorted = [...bm.bars].sort((a, b) => b.v - a.v);
+            const maxValue = Math.max(...sorted.map((b) => b.v));
+
+            const card = document.createElement('div');
+            card.className = 'benchmark-comparison-card';
+
+            const title = document.createElement('h4');
+            title.textContent = bm.title;
+            card.appendChild(title);
+
+            const chartWrap = document.createElement('div');
+            chartWrap.className = 'benchmark-comparison-chart';
+            chartWrap.setAttribute('role', 'img');
+            chartWrap.setAttribute('aria-label', bm.title + ' benchmark comparison');
+
+            sorted.forEach((bar) => {
+              const row = document.createElement('div');
+              row.className = 'benchmark-bar-row'
+                + (bar.l === BENCHMARK_LABEL ? ' is-quest' : '');
+
+              const label = document.createElement('span');
+              label.className = 'benchmark-bar-label';
+              const iconSrc = MODEL_ICONS[bar.l];
+              if (iconSrc) {
+                const icon = document.createElement('img');
+                icon.className = 'benchmark-bar-icon';
+                icon.src = iconSrc;
+                icon.alt = '';
+                icon.loading = 'lazy';
+                label.appendChild(icon);
+              }
+              const name = document.createElement('span');
+              name.className = 'benchmark-bar-name';
+              if (bar.l === 'MiroThinker-1.7-mini') {
+                name.textContent = 'MiroThinker';
+                name.title = bar.l;
+                label.setAttribute('aria-label', bar.l);
+              } else {
+                name.textContent = bar.l;
+              }
+              label.appendChild(name);
+              row.appendChild(label);
+
+              const track = document.createElement('span');
+              track.className = 'benchmark-bar-track';
+
+              const fill = document.createElement('span');
+              fill.className = 'benchmark-bar-fill';
+              fill.style.setProperty('--bar-width', `${(bar.v / maxValue) * 100}%`);
+              fill.style.setProperty('--bar-color', roleColor(bar.role));
+              track.appendChild(fill);
+              row.appendChild(track);
+
+              const value = document.createElement('span');
+              value.className = 'benchmark-bar-value';
+              value.textContent = bar.v.toFixed(1);
+              row.appendChild(value);
+
+              chartWrap.appendChild(row);
+            });
+
+            card.appendChild(chartWrap);
+            benchmarkGrid.appendChild(card);
+          });
+
+        }
+
+        defs.forEach(({ id, vals, min, max, step }) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          new Chart(el, {
+            type: 'bar',
+            plugins: [valueLabelPlugin],
+            data: {
+              labels: SIZES,
+              datasets: [{
+                data: vals,
+                backgroundColor: FILL,
+                borderColor: EDGE,
+                borderWidth: 1.5,
+                borderRadius: 5,
+              }],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: { duration: 500, easing: 'easeOutQuart' },
+              plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false },
+              },
+              events: [],
+              scales: {
+                x: {
+                  grid:   { display: false },
+                  border: { display: false },
+                  ticks:  {
+                    color: '#94A3B8',
+                    font:  { size: 10.5, weight: '700' },
+                    padding: 2,
+                  },
+                },
+                y: {
+                  beginAtZero: min === 0,
+                  min,
+                  max,
+                  grid:   { color: 'rgba(10,15,40,0.055)', lineWidth: 1 },
+                  border: { display: false },
+                  ticks:  {
+                    color: '#B8C4D0',
+                    font:  { size: 9.5 },
+                    stepSize: step,
+                    padding: 4,
+                  },
+                },
+              },
+              layout: { padding: { top: 18 } },
+            },
+          });
+        });
+
+        const STAGE_LABELS = ['Vanilla', 'SFT', '+MT', '+RL'];
+        const STAGE_LINE_COLOR  = '#1D4ED8';
+        const STAGE_POINT_COLOR = '#1E40AF';
+        const STAGE_FILL_COLOR  = 'rgba(59, 130, 246, 0.12)';
+
+        /*
+        Previous training-stage chart data:
+        const effectDefs = [
+          { id: 'e-browsecomp', vals: [38.4, 45.1,  45.9,  46.5], min: 36, max: 48, step: 3 },
+          { id: 'e-m2w2',       vals: [22.3, 26.5,  29.9,  31.2], min: 20, max: 32, step: 4 },
+          { id: 'e-hle',        vals: [32.3, 39.49, 39.74, 42.0], min: 28, max: 44, step: 4 },
+          { id: 'e-drb',        vals: [42.8, 36.35, 37.9,  48.2], min: 32, max: 50, step: 6 },
+          { id: 'e-lrb',        vals: [57.15, 49.53, 49.99, 69.1], min: 46, max: 72, step: 6 },
+          { id: 'e-gaia',       vals: [72.8, 83.5,  83.17, 83.8], min: 70, max: 86, step: 4 },
+          { id: 'e-bcp',        vals: [60.51, 54.87, 55.64, 63.0], min: 52, max: 64, step: 3 },
+          { id: 'e-ws',         vals: [43.8, 61.1,  62.5,  63.5], min: 40, max: 66, step: 6 },
+        ];
+        */
+        const effectDefs = [
+          { id: 'e-browsecomp', vals: [38.4, 45.1,  45.5,  45.5], min: 36, max: 48, step: 3 },
+          { id: 'e-m2w2',       vals: [15.1, 26.5,  29.9,  30.7], min: 12, max: 33, step: 5 },
+          { id: 'e-hle',        vals: [32.3, 39.49, 39.74, 37.9], min: 30, max: 42, step: 3 },
+          { id: 'e-drb',        vals: [44.05, 36.35, 39.72, 48.15], min: 34, max: 50, step: 4 },
+          { id: 'e-lrb',        vals: [65.02, 64.69, 65.47, 68.2], min: 64, max: 69, step: 1 },
+          { id: 'e-gaia',       vals: [72.8, 83.5,  83.17, 80.8], min: 70, max: 86, step: 4 },
+          { id: 'e-bcp',        vals: [58.5, 57.9, 58.6, 61.0], min: 57, max: 62, step: 1 },
+          { id: 'e-ws',         vals: [43.8, 61.1,  62.5,  64.5], min: 38, max: 70, step: 8 },
+        ];
+
+        const pointValueLabelPlugin = {
+          id: 'pointValueLabels',
+          afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((ds, datasetIndex) => {
+              chart.getDatasetMeta(datasetIndex).data.forEach((pt, i) => {
+                const v = ds.data[i];
+                if (v == null) return;
+                const txt = v.toFixed(1);
+                ctx.save();
+                ctx.font = '700 9.5px "Manrope", sans-serif';
+                ctx.fillStyle = '#475569';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(txt, pt.x, pt.y - 6);
+                ctx.restore();
+              });
+            });
+          },
+        };
+
+        effectDefs.forEach(({ id, vals, min, max, step }) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          new Chart(el, {
+            type: 'line',
+            plugins: [pointValueLabelPlugin],
+            data: {
+              labels: STAGE_LABELS,
+              datasets: [{
+                data: vals,
+                spanGaps: false,
+                borderColor: STAGE_LINE_COLOR,
+                backgroundColor: STAGE_FILL_COLOR,
+                borderWidth: 2,
+                tension: 0,
+                fill: true,
+                pointBackgroundColor: STAGE_POINT_COLOR,
+                pointBorderColor: '#FFFFFF',
+                pointBorderWidth: 1.5,
+                pointRadius: 4,
+                pointHoverRadius: 4,
+              }],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: { duration: 500, easing: 'easeOutQuart' },
+              plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false },
+              },
+              events: [],
+              scales: {
+                x: {
+                  grid:   { display: false },
+                  border: { display: false },
+                  ticks: {
+                    color: '#94A3B8',
+                    font: { size: 10, weight: '700' },
+                    padding: 2,
+                  },
+                },
+                y: {
+                  beginAtZero: false,
+                  min,
+                  max,
+                  grid: { color: 'rgba(10,15,40,0.055)', lineWidth: 1 },
+                  border: { display: false },
+                  ticks: {
+                    color: '#B8C4D0',
+                    font: { size: 9.5 },
+                    stepSize: step,
+                    padding: 4,
+                  },
+                },
+              },
+              layout: { padding: { top: 18, right: 8, left: 4 } },
+            },
+          });
+        });
+
+      })();
+
+      // ── Back to top & TOC ────────────────────────────────────
+      const btn = document.getElementById("backToTop");
+      window.addEventListener(
+        "scroll",
+        () => {
+          btn.classList.toggle("visible", window.scrollY > 320);
+        },
+        { passive: true }
+      );
+
+      // TOC active-link scroll spy
+      (function () {
+        const tocLinks = Array.from(
+          document.querySelectorAll(".toc-list a")
+        );
+        const sectionIds = tocLinks.map((a) =>
+          a.getAttribute("href").slice(1)
+        );
+        const sections = sectionIds.map((id) =>
+          document.getElementById(id)
+        ).filter(Boolean);
+
+        function onScroll() {
+          let current = sectionIds[0];
+          for (const sec of sections) {
+            if (sec.getBoundingClientRect().top <= 120) {
+              current = sec.id;
+            }
+          }
+          tocLinks.forEach((a) => {
+            a.classList.toggle(
+              "toc-active",
+              a.getAttribute("href") === "#" + current
+            );
+          });
+        }
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        onScroll();
+      })();
+    </script>
+
+    <script type="module">
+      // ── QUEST demo chat ──────────────────────────────────────
+      import { Client } from "https://esm.sh/@gradio/client";
+
+      const SPACE_ID = "osunlp/QUEST";
+      const API_NAME = "/run_ui";
+      const DEFAULTS = { maxTurns: 16, contextStrategy: "condenser", temperature: 0.4 };
+
+      const form     = document.getElementById('quest-chat-form');
+      const textarea = document.getElementById('qc-question');
+      const stream   = document.getElementById('quest-chat-stream');
+      const statusEl = document.getElementById('qc-status');
+      const sendBtn  = document.getElementById('qc-send');
+      const maxTurnsInput    = document.getElementById('qc-max-turns');
+      const contextInput     = document.getElementById('qc-context');
+      const temperatureInput = document.getElementById('qc-temperature');
+      if (!form) { /* demo section absent */ } else {
+
+      function readSettings() {
+        const n  = parseInt(maxTurnsInput?.value, 10);
+        const t  = parseFloat(temperatureInput?.value);
+        const contextStrategy = (contextInput?.value || '').trim();
+        return {
+          maxTurns:    Number.isFinite(n) && n > 0 ? n : DEFAULTS.maxTurns,
+          contextStrategy: contextStrategy || DEFAULTS.contextStrategy,
+          temperature: Number.isFinite(t) && t >= 0 ? t : DEFAULTS.temperature,
+        };
+      }
+
+      let appPromise = null;
+      const getApp = () => {
+        if (!appPromise) {
+          const urlToken = new URLSearchParams(location.search).get("token");
+          const opts = urlToken ? { hf_token: urlToken, token: urlToken } : {};
+          appPromise = Client.connect(SPACE_ID, opts);
+        }
+        return appPromise;
+      };
+
+      const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+      ));
+
+      function appendMessage(role, html) {
+        const row = document.createElement('div');
+        row.className = `qc-msg qc-msg-${role}`;
+        const bubble = document.createElement('div');
+        bubble.className = 'qc-bubble';
+        bubble.innerHTML = html;
+        row.appendChild(bubble);
+        stream.appendChild(row);
+        stream.scrollTop = stream.scrollHeight;
+        return bubble;
+      }
+
+      const renderMd = (s) => (window.marked ? marked.parse(s) : escapeHtml(s));
+
+      // Send on Enter (Shift+Enter for newline)
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const question = textarea.value.trim();
+        if (!question || sendBtn.disabled) return;
+
+        textarea.value = '';
+        sendBtn.disabled = true;
+        appendMessage('user', escapeHtml(question));
+        const bubble = appendMessage(
+          'assistant',
+          '<span class="qc-thinking">Thinking…</span>'
+        );
+        statusEl.textContent =
+          'Connecting to Hugging Face Space (cold start may take 30–60s)…';
+
+        try {
+          const app = await getApp();
+          statusEl.textContent = 'Streaming response…';
+          const cfg = readSettings();
+          const job = app.submit(API_NAME, [
+            question,
+            cfg.maxTurns,
+            cfg.contextStrategy,
+            cfg.temperature,
+          ]);
+
+          let lastAnswer = '';
+          for await (const msg of job) {
+            if (msg.type === 'data' && Array.isArray(msg.data)) {
+              const [answer] = msg.data;
+              if (typeof answer === 'string' && answer !== lastAnswer) {
+                lastAnswer = answer;
+                bubble.innerHTML = renderMd(answer);
+                stream.scrollTop = stream.scrollHeight;
+              }
+            }
+          }
+          if (!lastAnswer) {
+            bubble.innerHTML =
+              '<span class="qc-error">No response received. Please retry.</span>';
+          }
+          statusEl.textContent = '';
+        } catch (err) {
+          bubble.innerHTML =
+            '<span class="qc-error">Service temporarily unavailable. Please retry.</span>';
+          statusEl.textContent = err?.message || 'Request failed.';
+          appPromise = null; // allow reconnect on next attempt
+        } finally {
+          sendBtn.disabled = false;
+        }
+      });
+      }
+    </script>
+  </body>
+</html>
