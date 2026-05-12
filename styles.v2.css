@@ -254,7 +254,7 @@ a { color: inherit; text-decoration: none; }
   max-width: min(100%, 1320px);
   margin: 0 auto;
   font-family: "Manrope", sans-serif;
-  font-size: clamp(2.25rem, 3.7vw, 3.65rem);
+  font-size: 2.5rem;
   line-height: 1.06;
   letter-spacing: -0.055em;
   color: #333333;
@@ -286,7 +286,7 @@ a { color: inherit; text-decoration: none; }
   justify-content: center;
   gap: 4px 15px;
   margin: 8px 0 0;
-  font-size: clamp(1.02rem, 1.7vw, 1.55rem);
+  font-size: 1.08rem;
   font-weight: 500;
   line-height: 1.35;
 }
@@ -319,7 +319,7 @@ a { color: inherit; text-decoration: none; }
   gap: 10px 44px;
   margin: 18px 0 0;
   color: #4B4B4B;
-  font-size: clamp(1rem, 1.6vw, 1.45rem);
+  font-size: 1.05rem;
   font-weight: 500;
   line-height: 1.4;
 }
@@ -336,7 +336,7 @@ a { color: inherit; text-decoration: none; }
   gap: 4px 18px;
   margin: 8px 0 0;
   color: #666666;
-  font-size: clamp(0.9rem, 1.25vw, 1.12rem);
+  font-size: 0.92rem;
   font-style: italic;
   line-height: 1.35;
 }
@@ -441,7 +441,7 @@ a { color: inherit; text-decoration: none; }
 
 .section-head h2 {
   margin: 8px 0 0;
-  font-size: clamp(1.7rem, 3.8vw, 2.8rem);
+  font-size: 2rem;
   line-height: 1.05;
   letter-spacing: -0.03em;
 }
@@ -1077,7 +1077,7 @@ a { color: inherit; text-decoration: none; }
   border-radius: 0 14px 14px 0;
   background: var(--accent-soft);
   font-family: "Source Serif 4", serif;
-  font-size: clamp(1.45rem, 2.6vw, 2rem);
+  font-size: 1.6rem;
   line-height: 1.22;
 }
 
@@ -2564,7 +2564,7 @@ sup.val-dagger {
   }
 
   .article-head h1 {
-    font-size: clamp(2.1rem, 3.2vw, 3.15rem);
+    font-size: 2.3rem;
   }
 
   .benchmark-comparison-grid {
@@ -2609,7 +2609,7 @@ sup.val-dagger {
   }
 
   .article-head h1 {
-    font-size: clamp(2rem, 3.4vw, 2.75rem);
+    font-size: 2.15rem;
   }
 
   .toc-sidebar {
@@ -2645,7 +2645,7 @@ sup.val-dagger {
   .site-footer { flex-direction: column; align-items: center; }
 
   .article-head h1 {
-    font-size: clamp(2rem, 6vw, 2.65rem);
+    font-size: 2rem;
   }
 
   .article-head .title-line {
