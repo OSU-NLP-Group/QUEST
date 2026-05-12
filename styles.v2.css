@@ -588,7 +588,7 @@ a { color: inherit; text-decoration: none; }
 
 .small-model-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
 }
 
@@ -925,7 +925,7 @@ a { color: inherit; text-decoration: none; }
 
 .benchmark-comparison-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 10px;
 }
 
@@ -2568,7 +2568,7 @@ sup.val-dagger {
   }
 
   .benchmark-comparison-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 
   .benchmark-comparison-chart {
@@ -2617,11 +2617,11 @@ sup.val-dagger {
   }
 
   .small-model-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 
   .benchmark-comparison-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 
   .benchmark-panel-head {
