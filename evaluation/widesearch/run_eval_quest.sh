@@ -10,7 +10,7 @@ WIDESEARCH_DIR="${WIDESEARCH_DIR:-${REPO_ROOT}/evaluation/widesearch}"
 load_api_config() {
     local config_file="$1"
     if [ ! -f "$config_file" ]; then
-        echo "Error: API config file not found: ${config_file}" >&2
+        echo "Error: API config file not found" >&2
         exit 1
     fi
 
@@ -37,7 +37,7 @@ PY
 
 export API_CONFIG_FILE="${API_CONFIG_FILE:-${REPO_ROOT}/inference/api_config.yaml}"
 load_api_config "$API_CONFIG_FILE"
-echo "Loaded API config from ${API_CONFIG_FILE}"
+echo "Loaded API config"
 
 export AZURE_OPENAI_DEPLOYMENT="${AZURE_OPENAI_DEPLOYMENT:-gpt-5-mini}"
 export API_KEY="${API_KEY:-${OPENAI_API_KEY:-}}"
@@ -48,12 +48,35 @@ export WIDESEARCH_RUN_SLOT="${WIDESEARCH_RUN_SLOT:-1}"
 export MODEL_NAME="${MODEL_NAME:-deepresearch}"
 export ROLLOUT_COUNT="${ROLLOUT_COUNT:-1}"
 
-CONFIG="${CONFIG:-35b_sft_midtrain_rl_mem80000_out32000_turn400_run_gpt-5-mini_slot${WIDESEARCH_RUN_SLOT}}"
 SWEEP_ROOT="${WIDESEARCH_SWEEP_ROOT:-${REPO_ROOT}/inference/outputs/widesearch}"
+CONFIG="${CONFIG:-}"
+if [ -z "$CONFIG" ]; then
+    CONFIG="$(
+        python3 - "$SWEEP_ROOT" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+if not root.is_dir():
+    raise SystemExit(1)
+
+candidates = [p for p in root.iterdir() if p.is_dir() and (p / "quest_output").is_dir()]
+if not candidates:
+    raise SystemExit(1)
+
+candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+print(candidates[0].name)
+PY
+    )" || {
+        echo "Error: no evaluation input found; set CONFIG explicitly" >&2
+        exit 1
+    }
+fi
+
 QUEST_OUTPUT="${QUEST_OUTPUT:-${SWEEP_ROOT}/${CONFIG}/quest_output}"
 RESPONSE_DIR="${RESPONSE_DIR:-${SWEEP_ROOT}/${CONFIG}/responses}"
 RESULT_DIR="${RESULT_DIR:-${SWEEP_ROOT}/${CONFIG}/results}"
-JUDGE_CONFIG="${JUDGE_CONFIG:-gpt-5-mini-eval}"
+JUDGE_CONFIG="${JUDGE_CONFIG:-default_eval_config}"
 THREAD_NUM="${THREAD_NUM:-4}"
 
 _WL=$(echo "$WIDESEARCH_LANGS" | tr '[:upper:]' '[:lower:]' | tr ',' '_')
@@ -71,7 +94,7 @@ case "$_WL" in
         EXPECTED_IDS=$(python3 -c "print(','.join([f'ws_en_{i:03d}' for i in range(1, 101)] + [f'ws_zh_{i:03d}' for i in range(1, 101)]))")
         ;;
     *)
-        echo "Invalid WIDESEARCH_LANGS=${WIDESEARCH_LANGS}; use en, zh, or both" >&2
+        echo "Invalid WIDESEARCH_LANGS; use en, zh, or both" >&2
         exit 1
         ;;
 esac
@@ -82,12 +105,7 @@ fi
 
 echo "============================================"
 echo "  WideSearch QUEST eval"
-echo "  config: ${CONFIG}"
 echo "  subset: ${WIDESEARCH_LANGS}"
-echo "  quest output: ${QUEST_OUTPUT}"
-echo "  responses: ${RESPONSE_DIR}"
-echo "  results: ${RESULT_DIR}"
-echo "  judge config: ${JUDGE_CONFIG}"
 echo "============================================"
 
 if [ "${SKIP_CONVERT:-0}" != "1" ]; then

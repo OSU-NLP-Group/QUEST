@@ -8,7 +8,7 @@ utilities, and judge conversion/evaluation scripts.
 | File | Purpose |
 | --- | --- |
 | `browsecomp_plus_quest_130.jsonl` | 130-query QUEST inference input |
-| `run_eval_quest_qwen3embed_mem80k.sh` | Convert QUEST iter files and run the BrowseComp-Plus judge |
+| `run_eval_quest.sh` | Convert QUEST iter files and run the BrowseComp-Plus judge |
 | `scripts_evaluation/evaluate_with_openai.py` | OpenAI-compatible judge runner |
 | `search_agent/` | BrowseComp-Plus prompts, FAISS search, and local tool helpers |
 
@@ -30,11 +30,11 @@ committed; set `FAISS_INDEX_PATH` if it is not available at the default
 Run from this directory:
 
 ```bash
-bash run_eval_quest_qwen3embed_mem80k.sh
+bash run_eval_quest.sh
 ```
 
-The script reads QUEST outputs from
-`inference/outputs/browsecomp_plus/quest35b_rl_qwen3embed8b_mem80k` by default.
+The script auto-detects the latest compatible QUEST output directory by default.
+Set `RUN_ROOT` when evaluating a specific run.
 The decrypted ground truth is not committed; set `GROUND_TRUTH` if it is not
 available at `data/browsecomp_plus/browsecomp_plus_decrypted.jsonl`.
 

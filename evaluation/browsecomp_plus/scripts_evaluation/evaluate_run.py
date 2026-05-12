@@ -380,7 +380,7 @@ def save_detailed_csv(all_results: List[dict], output_dir: Path):
                 }
             )
 
-    print(f"Detailed CSV results saved to {csv_path}")
+    print("Detailed CSV results saved")
     return csv_path
 
 
@@ -445,20 +445,20 @@ def main():
     if not gt_path.is_file():
         raise ValueError(f"Ground truth JSONL file {gt_path} does not exist")
 
-    print(f"Loading ground truth from {gt_path}")
+    print("Loading ground truth")
     ground_truth = load_ground_truth(gt_path)
 
     qrel_evidence_path = Path(args.qrel_evidence)
 
-    print(f"Loading qrel evidence from {qrel_evidence_path}")
+    print("Loading qrel evidence")
     qrel_evidence = load_qrel_data(qrel_evidence_path)
 
     output_dir = mirror_directory_structure(input_dir, eval_dir)
-    print(f"Evaluations will be saved to {output_dir}")
+    print("Evaluation output directory prepared")
 
     json_files = list(input_dir.glob("*.json"))
     if not json_files:
-        print(f"No JSON files found in {input_dir}")
+        print("No JSON files found")
         return
 
     print(f"Found {len(json_files)} JSON files to evaluate")
@@ -505,12 +505,12 @@ def main():
             with json_path.open("r", encoding="utf-8") as f:
                 run_data = json.load(f)
         except Exception as e:
-            print(f"Error loading {json_path}: {e}")
+            print(f"Error loading input JSON: {e}")
             continue
 
         query_id = run_data.get("query_id")
         if not query_id or str(query_id) not in ground_truth:
-            print(f"No ground truth for query_id {query_id} in {json_path}")
+            print(f"No ground truth for query_id {query_id}")
             continue
 
         correct_answer = ground_truth[str(query_id)]["answer"]
@@ -531,7 +531,7 @@ def main():
 
         if response == "" or not is_completed:
             result = {
-                "json_path": str(json_path),
+                "json_path": json_path.name,
                 "query_id": query_id,
                 "response": response,
                 "correct_answer": correct_answer,
@@ -557,14 +557,14 @@ def main():
                 with eval_path.open("w", encoding="utf-8") as f:
                     json.dump(result, f, indent=2, ensure_ascii=False)
             except Exception as e:
-                print(f"Error saving evaluation to {eval_path}: {e}")
+                print(f"Error saving evaluation: {e}")
             all_results.append(result)
             continue
 
         judge_prompt = create_judge_prompt(gt_question, response, correct_answer)
         pending_items.append(
             {
-                "json_path": json_path,
+                "json_path": json_path.name,
                 "eval_path": eval_path,
                 "query_id": query_id,
                 "gt_question": gt_question,
@@ -636,7 +636,7 @@ def main():
                 with item["eval_path"].open("w", encoding="utf-8") as f:
                     json.dump(result, f, indent=2, ensure_ascii=False)
             except Exception as e:
-                print(f"Error saving evaluation to {item['eval_path']}: {e}")
+                print(f"Error saving evaluation: {e}")
             all_results.append(result)
 
     print(f"\nProcessed {len(all_results)} evaluations")
@@ -819,7 +819,7 @@ def main():
     with summary_path.open("w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
 
-    print(f"\nSummary saved to {summary_path}")
+    print("\nSummary saved")
 
     save_detailed_csv(all_results, output_dir)
 

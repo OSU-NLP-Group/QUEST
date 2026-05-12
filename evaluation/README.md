@@ -6,13 +6,13 @@ produced by `inference/`.
 | Benchmark | Directory | Main Entry |
 | --- | --- | --- |
 | BrowseComp | [`browsecomp/`](browsecomp/) | `bash run_judge.sh` |
-| BrowseComp-Plus | [`browsecomp_plus/`](browsecomp_plus/) | `bash run_eval_quest_qwen3embed_mem80k.sh` |
+| BrowseComp-Plus | [`browsecomp_plus/`](browsecomp_plus/) | `bash run_eval_quest.sh` |
 | GAIA | [`gaia/`](gaia/) | `bash run_judge.sh` |
 | HLE | [`hle/`](hle/) | `bash run_judge.sh` |
 | DeepResearch Bench | [`drbench/`](drbench/) | `python convert_to_eval_format.py`, then `bash run_benchmark.sh` |
 | LiveResearchBench | [`liveresearchbench/`](liveresearchbench/) | See the benchmark-specific README and scripts |
 | Mind2Web2 | [`Mind2Web2/`](Mind2Web2/) | See the benchmark-specific README and scripts |
-| WideSearch | [`widesearch/`](widesearch/) | `bash run_eval_quest_gpt5mini.sh` |
+| WideSearch | [`widesearch/`](widesearch/) | `bash run_eval_quest.sh` |
 
 For a new run, update the target result directory, dataset path, model or run
 name, judge model, worker count, and judge credentials in the corresponding
@@ -50,17 +50,17 @@ The judge requires the decrypted ground-truth file, defaulting to
 
 ```bash
 cd evaluation/browsecomp_plus
-bash run_eval_quest_qwen3embed_mem80k.sh
+bash run_eval_quest.sh
 ```
 
 ## WideSearch
 
 The English 100-query QUEST input file is bundled as
 [`widesearch_en_input.jsonl`](widesearch/widesearch_en_input.jsonl). The eval
-script defaults to `WIDESEARCH_LANGS=en`, `gpt-5-mini` judging, and outputs under
-`inference/outputs/widesearch/`.
+script defaults to `WIDESEARCH_LANGS=en`, auto-detects the latest compatible
+run, and outputs under `inference/outputs/widesearch/`.
 
 ```bash
 cd evaluation/widesearch
-bash run_eval_quest_gpt5mini.sh
+bash run_eval_quest.sh
 ```
