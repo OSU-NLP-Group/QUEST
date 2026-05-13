@@ -1153,6 +1153,7 @@ a { color: inherit; text-decoration: none; }
   background: rgba(255, 255, 255, 0.62);
   overflow-wrap: break-word;
   word-break: break-word;
+  overflow: hidden;
 }
 
 .stage-kicker {
@@ -2683,6 +2684,11 @@ sup.val-dagger {
   .site-shell {
     width: calc(100vw - 32px);
     padding-top: 12px;
+  }
+  mjx-container {
+    max-width: 100%;
+    overflow-x: auto;
+    display: block !important;
   }
 
   .site-header,
