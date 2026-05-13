@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-合并 search 的 SQLite shard，并一次性建好 FAISS 索引。
-之后线上只做追加写即可。
+Merge search SQLite shards and build the FAISS index in one pass.
+After that, online serving only needs append writes.
 
-用法:
-  # 从 config/tools.yaml 读路径（推荐）
+Usage:
+  # Read paths from config/tools.yaml (recommended)
   python -m recipe.deepresearch.scripts.build_search_faiss
 
-  # 或指定参数
+  # Or pass explicit arguments
   python -m recipe.deepresearch.scripts.build_search_faiss \\
     --cache-dir /path/to/database \\
     --cache-file /path/to/database/search.db \\
@@ -15,11 +15,11 @@
     --embedding-model /path/to/Qwen-3-8B-Embedding \\
     --device cuda
 
-效率说明:
-  - FAISS 检索: IndexFlatIP 在 CPU 上 20w 条约 5–20ms/query，一般不需要 GPU。
-  - Embedding: 建索引时要对 20w 条 query 做向量化，是主要耗时。
-    - Qwen-3-8B 用 GPU 可到 ~几千条/分钟，用 CPU 会慢一个数量级以上，建议建索引时用 GPU。
-  - 结论: 建索引用 GPU 可大幅缩短时间；线上检索用 CPU 即可（FAISS+小模型也可全 CPU）。
+Efficiency notes:
+  - FAISS retrieval: IndexFlatIP over 200k entries on CPU is about 5-20 ms/query, so GPU is usually unnecessary.
+  - Embedding: index building must vectorize about 200k queries, which is the main cost.
+    - With Qwen-3-8B, GPU can process roughly thousands of entries per minute; CPU is over an order of magnitude slower, so GPU is recommended for index building.
+  - Conclusion: use GPU to reduce index build time; CPU is sufficient for online retrieval, and FAISS plus a small model can also run fully on CPU.
 """
 
 import argparse
@@ -27,9 +27,9 @@ import os
 import sys
 import time
 
-# 保证可 import recipe.deepresearch（从 verl 或 repo 根运行）
+# Ensure recipe.deepresearch can be imported when running from the RL root or repo root.
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-# .../verl/recipe/deepresearch/scripts -> 需要 path 包含 .../verl
+# .../verl/recipe/deepresearch/scripts -> the path must include the RL root
 RECIPE_PARENT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
 if RECIPE_PARENT not in sys.path:
     sys.path.insert(0, RECIPE_PARENT)
@@ -42,7 +42,7 @@ from recipe.deepresearch.tools.search_tool import (
 
 
 def load_config_paths():
-    """从 config/tools.yaml 读取 search 的 cache_dir, cache_file, shards, faiss_embedding_model。"""
+    """Read search cache_dir, cache_file, shards, and faiss_embedding_model from config/tools.yaml."""
     import os
     config_path = os.path.join(
         os.path.dirname(SCRIPT_DIR), "config", "tools.yaml"
@@ -112,13 +112,13 @@ def main():
     parser.add_argument(
         "--incremental",
         action="store_true",
-        help="增量更新: 合并 shard 后只对新增条目做 embedding 追加到已有 FAISS（不全量重建）",
+        help="Incremental update: after merging shards, embed only new entries and append them to the existing FAISS index instead of rebuilding it.",
     )
     parser.add_argument(
         "--batch-size",
         type=int,
         default=2048,
-        help="Encode batch size (default 2048; 显存充足可试 4096)",
+        help="Encode batch size (default 2048; try 4096 if GPU memory is sufficient)",
     )
     parser.add_argument(
         "--num-gpus",
@@ -142,7 +142,7 @@ def main():
 
     if not args.skip_merge and shards > 1:
         print("Step 1: Merging shards into master ...")
-        # 合并前先看 master 现有条数
+        # Check the existing master row count before merging.
         import sqlite3 as _sq
         _mc = _sq.connect(cache_file, timeout=30.0)
         _before = _mc.execute("SELECT COUNT(*) FROM search_cache").fetchone()[0] if os.path.exists(cache_file) else 0

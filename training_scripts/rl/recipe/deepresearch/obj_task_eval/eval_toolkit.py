@@ -877,7 +877,7 @@ class Verifier(BaseEvaluator):
         )
 
         message_content = self._build_message_content(prompt, screenshot_b64, params.use_screenshot)
-        # Truncate message_content if it exceeds the model context window.做截断
+        # Truncate message_content if it exceeds the model context window.truncate.
         if isinstance(message_content, list) and message_content:
             first = message_content[0]
             if isinstance(first, dict) and first.get("type") == "text" and isinstance(first.get("text"), str):

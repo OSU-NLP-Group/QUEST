@@ -47,11 +47,11 @@ max_num_gen_batches=${MAX_NUM_GEN_BATCHES:-10}
 # -----------------------------
 # Enable by default; set CURRICULUM_ENABLED=False to disable.
 curriculum_enabled=${CURRICULUM_ENABLED:-False}
-curriculum_objective=${CURRICULUM_OBJECTIVE:-adv}   # 'adv'（|advantage|越大越优先）or 'progress'（reward提升越快越优先）
+curriculum_objective=${CURRICULUM_OBJECTIVE:-adv}   # 'adv' (larger |advantage| has higher priority) or 'progress' (faster reward improvement has higher priority)
 curriculum_lr=${CURRICULUM_LR:-0.1}
 curriculum_temperature=${CURRICULUM_TEMPERATURE:-1.0}
 curriculum_min_weight=${CURRICULUM_MIN_WEIGHT:-0.02}
-curriculum_replacement=${CURRICULUM_REPLACEMENT:-False}   # True=放回采样，False=不放回（默认）
+curriculum_replacement=${CURRICULUM_REPLACEMENT:-False}   # True=sampling with replacement, False=sampling without replacement (default)
 
 # -----------------------------
 # Sequence lengths and sampling
@@ -168,14 +168,14 @@ debug_save_base_dir=${DEBUG_SAVE_BASE_DIR:-}
 debug_save_checkpoint_path=${DEBUG_SAVE_CHECKPOINT_PATH:-}
 
 # -----------------------------
-# Checkpoint resume (从 ckpt 重新训练)
+# Checkpoint resume
 # -----------------------------
-# resume_mode: disable=从头训, auto=在 default_local_dir 下自动找最新 ckpt, resume_path=用 resume_from_path 指定目录
+# resume_mode: disable=start from scratch, auto=find the latest checkpoint under default_local_dir, resume_path=use resume_from_path.
 resume_mode=${RESUME_MODE:-auto}
-# 仅当 resume_mode=resume_path 时生效，需为完整路径，例如：
+# Only effective when resume_mode=resume_path. Must be a full path, for example:
 #   ${CKPTS_DIR}/step_10
 #   ${CKPTS_DIR}/savefreq_step_10
-# 兼容旧格式：
+# Backward-compatible legacy format:
 #   ${CKPTS_DIR}/global_step_10
 resume_from_path=${RESUME_FROM_PATH:-}
 
@@ -193,7 +193,7 @@ RESUME_PATH_OVERRIDES=()
 if [[ "${resume_mode}" == "resume_path" ]] && [[ -n "${resume_from_path}" ]]; then
     RESUME_PATH_OVERRIDES=("trainer.resume_from_path='${resume_from_path}'")
 elif [[ "${resume_mode}" == "resume_path" ]]; then
-    echo "[ERROR] resume_mode=resume_path 时必须设置 RESUME_FROM_PATH 环境变量" >&2
+    echo "[ERROR] RESUME_FROM_PATH must be set when resume_mode=resume_path" >&2
     exit 1
 fi
 

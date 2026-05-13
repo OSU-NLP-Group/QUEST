@@ -21,6 +21,7 @@ report synthesis.
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Updates](#updates)
 - [Resources](#resources)
 - [Results Snapshot](#results-snapshot)
 - [Environment Setup](#environment-setup)
@@ -37,6 +38,11 @@ report synthesis.
   - [Open-Ended Tasks](#open-ended-tasks)
   - [Open-Ended Evaluation](#open-ended-evaluation)
 - [Documentation Map](#documentation-map)
+
+## Updates
+
+- **14/05/2026**: We released QUEST, including model checkpoints, data, code,
+  and documentation.
 
 ## Resources
 

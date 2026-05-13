@@ -108,15 +108,15 @@ def _is_empty_search_result(result: str) -> bool:
 
 
 def rewrite_faiss_result_header(result_text: str, current_query: str) -> str:
-    """FAISS 命中时把结果里的 'A Google search for ''...'' found N results' 改成当前 query，避免暴露原始 query。"""
+    """On a FAISS hit, rewrite 'A Google search for ''...'' found N results' to the current query to avoid exposing the original query."""
     if not result_text or not current_query:
         return result_text
-    # 只替换第一处，保留后面的正文
+    # Replace only the first occurrence and keep the remaining text.
     pattern = re.compile(r"^A Google search for '[^']*' found (\d+) results:\n\n", re.MULTILINE)
     def repl(m):
         return f"A Google search for '{current_query}' found {m.group(1)} results:\n\n"
     out = pattern.sub(repl, result_text, count=1)
-    # 若有 "No results found for '...'" 也改成当前 query
+    # If there is "No results found for '...'" also rewrite it to the current query.
     out = re.sub(r"^No results found for '[^']*'\.", f"No results found for '{current_query}'.", out, count=1)
     return out
 
@@ -265,7 +265,7 @@ class FaissRetriever:
         return self.search_top1_with_vec(q)
 
     def search_top1_with_vec(self, vec: "np.ndarray") -> Tuple[Optional[str], float]:
-        """与 search_top1 相同，但接受已算好的 embedding 向量 (1, dim)。用于多卡读时由外部 encoder 算好再传入。"""
+        """Same as search_top1, but accepts a precomputed embedding vector with shape (1, dim). Used when an external encoder computes vectors for multi-GPU reads."""
         idx, score = self._search_top1_id_with_vec(vec)
         if idx is None:
             return None, score
@@ -279,7 +279,7 @@ class FaissRetriever:
             return None, score
 
     def search_top1_with_vecs(self, vecs: "np.ndarray") -> list[Tuple[Optional[str], float]]:
-        """批量版 search_top1_with_vec。vecs 形状 (N, dim)；返回长度为 N 的 (result_or_none, score)。"""
+        """Batch version of search_top1_with_vec. vecs has shape (N, dim); returns N (result_or_none, score) pairs."""
         vecs = np.asarray(vecs, dtype=np.float32)
         if vecs.ndim == 1:
             vecs = vecs.reshape(1, -1)
@@ -335,7 +335,7 @@ class FaissRetriever:
     def search_topk(
         self, query: str, k: int = 10
     ) -> list[Tuple[str, str, float]]:
-        """Return top-k (cached_query, result, similarity_score). 用于测试/调试。"""
+        """Return top-k (cached_query, result, similarity_score). Used for testing/debugging."""
         if self._index.ntotal == 0:
             return []
         q = self._embed([query])
@@ -365,11 +365,11 @@ class FaissRetriever:
         self.add_vectors(vec, [query], [result])
 
     def add_vector(self, vec: "np.ndarray", query: str, result: str) -> None:
-        """追加一条已算好 embedding 的 (query, result)。vec 形状 (1, dim) 或 (dim,) float32，用于多卡并行写入。"""
+        """Append one (query, result) with a precomputed embedding. vec has shape (1, dim) or (dim,) float32 and is used for multi-GPU parallel writes."""
         self.add_vectors(vec, [query], [result])
 
     def add_vectors(self, vecs: "np.ndarray", queries: list[str], results: list[str]) -> None:
-        """批量追加多条已算好 embedding，减少写锁和 sqlite commit 次数。"""
+        """Batch append multiple entries with precomputed embeddings to reduce write locks and sqlite commits."""
         if len(queries) != len(results):
             raise ValueError(f"queries/results length mismatch: {len(queries)} vs {len(results)}")
         if len(queries) == 0:
@@ -384,8 +384,8 @@ class FaissRetriever:
         self._rwlock.write_acquire()
         try:
             start_idx = self._next_id
-            # IndexFlatIP 不支持 add_with_ids，用 add() 顺序追加，
-            # idx == self._index.ntotal（追加前），与 meta 表的 id 一一对应。
+            # IndexFlatIP does not support add_with_ids，use add() to append in order,
+            # idx == self._index.ntotal(before append)，and matches the id in the meta table one-to-one.
             self._index.add(vecs)
             self._next_id += len(queries)
             cur = self._meta_conn.cursor()
@@ -433,7 +433,7 @@ def merge_shards_into_master(
     """
     Merge all shard DBs (search_cache table) into the master DB file.
     Master path is cache_file; shards are cache_dir/{base}_shard{0..shards-1}.db.
-    clear_shards: 合并后清空已合并的 shard 表（下次只处理新数据）。
+    clear_shards: Clear merged shard tables after merging, so the next run only processes new data.
     Returns number of rows in master after merge.
     """
     os.makedirs(cache_dir, exist_ok=True)
@@ -454,7 +454,7 @@ def merge_shards_into_master(
         """
     )
     master.commit()
-    # 记录合并前 master 条数
+    # Record the master row count before merging.
     cur.execute("SELECT COUNT(*) FROM search_cache")
     before = cur.fetchone()[0]
     shard_total = 0
@@ -476,7 +476,7 @@ def merge_shards_into_master(
                 (row["query"], row["result"], row["timestamp"]),
             )
         master.commit()
-        # 合并后清空该 shard，下次不重复处理
+        # Clear this shard after merging so it is not processed again next time.
         if clear_shards and rows:
             c.execute("DELETE FROM search_cache")
             conn.commit()
@@ -506,8 +506,8 @@ def build_faiss_from_search_cache(
 ) -> int:
     """
     One-time build of FAISS index from existing SQLite search_cache (e.g. master DB).
-    device: "cuda" or "cpu". batch_size: 显存充足可调大 (如 2048/4096) 加速。
-    num_gpus: 多卡时设为 GPU 数，编码阶段并行到多卡，可接近线性加速。
+    device: "cuda" or "cpu". batch_size: increase this when GPU memory is sufficient (for example 2048/4096) for speedup.
+    num_gpus: Set to the GPU count for multi-GPU encoding, which can approach linear speedup.
     """
     if not _FAISS_AVAILABLE or not _SENTENCE_TRANSFORMERS_AVAILABLE:
         raise RuntimeError("Need faiss-cpu and sentence-transformers installed")
@@ -546,8 +546,8 @@ def build_faiss_from_search_cache(
         else:
             import subprocess
             import tempfile
-            # 用 subprocess 启动独立子进程，每个子进程在启动前就设好 CUDA_VISIBLE_DEVICES，
-            # 完全隔离 CUDA 环境，确保每个进程只看到自己那张卡。
+            # Use subprocesses to start isolated child processes. Set CUDA_VISIBLE_DEVICES before each child starts,
+            # fully isolating the CUDA environment so each process sees only its assigned GPU.
             worker_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_faiss_build_worker.py")
             chunk_size = (n + ngpu - 1) // ngpu
             temp_dir = tempfile.mkdtemp(prefix="faiss_build_")
@@ -658,9 +658,9 @@ def incremental_update_faiss(
     num_gpus: Optional[int] = None,
 ) -> int:
     """
-    增量更新: 先合并 shard 到 master，再只对 master 中有但 FAISS meta 中没有的新条目做 embedding 并追加到已有索引。
-    比全量重建快得多（只处理新增部分）。
-    Returns: 本次新增的条目数。
+    Incremental update: merge shards into master, then embed and append only entries present in master but missing from FAISS metadata.
+    This is much faster than a full rebuild because it only processes new entries.
+    Returns: number of entries added in this run.
     """
     if not _FAISS_AVAILABLE or not _SENTENCE_TRANSFORMERS_AVAILABLE:
         raise RuntimeError("Need faiss-cpu and sentence-transformers installed")
@@ -677,7 +677,7 @@ def incremental_update_faiss(
             "Run full build first (without --incremental)."
         )
 
-    # 1) 读取 master 中所有 query
+    # 1) Read all queries from master.
     master_conn = sqlite3.connect(cache_file, timeout=60.0)
     master_conn.row_factory = sqlite3.Row
     cur = master_conn.cursor()
@@ -685,7 +685,7 @@ def incremental_update_faiss(
     all_rows = cur.fetchall()
     master_conn.close()
 
-    # 2) 读取 FAISS meta 中已有的 query 集合
+    # 2) Read the existing query set from FAISS metadata.
     meta_conn = sqlite3.connect(mpath, timeout=30.0)
     meta_conn.row_factory = sqlite3.Row
     mcur = meta_conn.cursor()
@@ -695,7 +695,7 @@ def incremental_update_faiss(
     row = mcur.fetchone()
     next_id = (row[0] or 0) + 1 if row and row[0] is not None else 0
 
-    # 3) 找出新增条目
+    # 3) Find new entries.
     new_rows = [r for r in all_rows if r["query"] not in existing_queries]
     if not new_rows:
         meta_conn.close()
@@ -704,10 +704,10 @@ def incremental_update_faiss(
     total_new = len(new_rows)
     print(f"[incremental] total new entries: {total_new}", flush=True)
 
-    # 4) 加载已有索引
+    # 4) Load the existing index.
     index = faiss.read_index(ipath)
 
-    # 5) 编码新条目并追加
+    # 5) Encode and append new entries.
     if device is None:
         try:
             import torch
@@ -1028,10 +1028,10 @@ def google_search_sync(query: str, topk: int = 10, serper_key: str = "") -> str:
     if not serper_key:
         return "[Search Error] SERPER_KEY_ID environment variable not set."
 
-    # 单次 Serper 调用超时，缩短到 30s 避免拖慢整次 /search（客户端 120s 超时）
-    # 如果 Serper 慢，快速失败并重试，而不是等满 60s
+    # Use a 30s timeout for each Serper call to avoid slowing the whole /search request; client timeout is 120s.
+    # If Serper is slow, fail fast and retry instead of waiting the full 60s.
     serper_timeout = int(os.environ.get("SERPER_TIMEOUT", "30"))
-    max_retries = int(os.environ.get("SERPER_MAX_RETRIES", "2"))  # 减少重试次数，避免总时间累积
+    max_retries = int(os.environ.get("SERPER_MAX_RETRIES", "2"))  # Reduce retry count to avoid accumulated latency.
     
     if contains_chinese(query):
         payload = {"q": query, "location": "China", "gl": "cn", "hl": "zh-cn", "num": topk}
@@ -1041,7 +1041,7 @@ def google_search_sync(query: str, topk: int = 10, serper_key: str = "") -> str:
     headers = {"X-API-KEY": serper_key, "Content-Type": "application/json"}
     url = "https://google.serper.dev/search"
 
-    # 使用 requests 库，超时控制更可靠
+    # Use requests for more reliable timeout control.
     if not requests:
         return "[Search Error] requests library not installed."
     
@@ -1052,12 +1052,12 @@ def google_search_sync(query: str, topk: int = 10, serper_key: str = "") -> str:
             r = requests.post(url, json=payload, headers=headers, timeout=serper_timeout)
             r.raise_for_status()
             results = r.json()
-            last_error = None  # 重试成功，清除之前的错误
+            last_error = None  # Retry succeeded; clear the previous error.
             break
         except requests.exceptions.Timeout as e:
             last_error = e
             if attempt < max_retries:
-                wait = 1.0 * (attempt + 1)  # 退避：1s, 2s
+                wait = 1.0 * (attempt + 1)  # Backoff: 1s, 2s.
                 logger.debug("[serper] timeout (attempt %s/%s), retry in %.1fs", attempt + 1, max_retries + 1, wait)
                 time.sleep(wait)
             else:
@@ -1113,7 +1113,7 @@ class DeepResearchSearchTool(BaseTool):
         super().__init__(config, tool_schema)
         self._instance_dict = {}
 
-        # 若配置了 search_service_url / search_nodes_conf，则只做 HTTP 转发，不建本地 cache/FAISS
+        # If search_service_url or search_nodes_conf is configured, only forward HTTP requests and do not build local cache/FAISS.
         # search_nodes_conf: path to a hot-reloadable conf file (re-read every call, like eval_llm_nodes.conf)
         self._search_nodes_conf = (
             config.get("search_nodes_conf") or os.environ.get("SEARCH_NODES_CONF") or ""
@@ -1233,7 +1233,7 @@ class DeepResearchSearchTool(BaseTool):
         return instance_id, ToolResponse()
 
     def _search_with_cache(self, query: str) -> Tuple[str, str, Optional[float]]:
-        """返回 (结果文本, 渠道, similarity)。query 会 strip 后作为 cache/FAISS 的 key。"""
+        """Return (result_text, channel, similarity). The stripped query is used as the cache/FAISS key."""
         q = (query or "").strip()
         if not q:
             return "[Tool Error] Search query cannot be empty.", "serper", None
@@ -1286,7 +1286,7 @@ class DeepResearchSearchTool(BaseTool):
         return self._search_service_url_static
 
     def _search_via_service(self, queries: list[str]) -> tuple[str, dict]:
-        """Sync: POST to search service, return (text, metrics). 超时/连接错误/5xx 时自动重试。"""
+        """Sync: POST to search service, return (text, metrics). Automatically retry on timeout, connection errors, or 5xx responses."""
         if not requests:
             return "[Search Error] requests not installed; cannot call search service.", {"error_count": len(queries), "status": "error"}
         url = f"{self._get_search_service_url()}/search"

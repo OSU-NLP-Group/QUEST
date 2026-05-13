@@ -5,6 +5,9 @@ the fully async Megatron launcher. It includes the agent loop, tools, reward
 logic, task evaluators, data files, service launchers, and configuration used by
 training.
 
+> **Status note:** The RL training code is still under active testing and may
+> contain bugs. We are working to complete testing within the next two weeks.
+
 Run commands from the RL root unless noted otherwise:
 
 ```bash
@@ -39,10 +42,10 @@ Runtime configuration files:
 
 `data/`
 
-Training and validation parquet files. The default launcher uses:
-
-- `data/train_v4.parquet`
-- `data/val_v4.parquet`
+Local directory for training and validation parquet files. Download the released
+`train_parquet` data from the QUEST Hugging Face collection, place the parquet
+files here or in another local directory, and set `TRAIN_FILE` / `VAL_FILE`
+accordingly before launching training.
 
 `eval_scripts/`
 
@@ -309,11 +312,17 @@ The launcher forwards the relevant variables into Ray runtime environments.
 
 ## Data
 
-The default train/validation files are:
+Download the released RL training parquet files from the QUEST Hugging Face
+collection:
+
+https://huggingface.co/collections/osunlp/quest
+
+The released training data is provided under `train_parquet`. After downloading
+the parquet files, point the launcher to the local paths:
 
 ```bash
-recipe/deepresearch/data/train_v4.parquet
-recipe/deepresearch/data/val_v4.parquet
+export TRAIN_FILE=/path/to/train.parquet
+export VAL_FILE=/path/to/val.parquet
 ```
 
 The task type is stored in the parquet `reward_model` / `extra_info` metadata.
@@ -464,8 +473,8 @@ Useful launcher overrides:
 export PROJECT_NAME=DeepResearch
 export EXP_NAME=my-run
 export MODEL_PATH=/path/to/model
-export TRAIN_FILE=recipe/deepresearch/data/train_v4.parquet
-export VAL_FILE=recipe/deepresearch/data/val_v4.parquet
+export TRAIN_FILE=/path/to/train.parquet
+export VAL_FILE=/path/to/val.parquet
 export DATA_KIND=both
 export TOTAL_ROLLOUT_STEPS=12800
 export TARGET_TRAIN_STEPS=200

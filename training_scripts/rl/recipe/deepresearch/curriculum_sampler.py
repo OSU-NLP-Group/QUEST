@@ -13,16 +13,16 @@
 # limitations under the License.
 
 """
-Dynamic Curriculum Learning Sampler for DeepResearch。
+Dynamic Curriculum Learning Sampler for DeepResearch.
 
-Obj 和 Sub 题统一使用 C1-C9 分级，共享同一个 Boltzmann Bandit。
+Objective and subjective tasks share the C1-C9 categories and one Boltzmann bandit.
 
-- Q-value 更新：Q = (1 - lr) * Q + lr * new_Q
-- 采样：Boltzmann (softmax over Q-values / temperature)
-- objective='adv'（默认）：masked_mean(|advantage|, response_mask)
-- objective='progress'：reward[t] - reward[t-1]
+- Q-value update: Q = (1 - lr) * Q + lr * new_Q
+- Sampling: Boltzmann (softmax over Q-values / temperature)
+- objective='adv' (default): masked_mean(|advantage|, response_mask)
+- objective='progress': reward[t] - reward[t-1]
 
-用法（run script 已默认开启）：
+Usage (enabled by default in the run script):
     data.sampler.class_path='recipe/deepresearch/curriculum_sampler.py'
     data.sampler.class_name='DynamicCurriculumSampler'
     data.dataloader_num_workers=0
@@ -48,7 +48,7 @@ from verl import DataProto
 from verl.experimental.dataset.sampler import AbstractCurriculumSampler
 
 # -------------------------------------------------------------------------
-# Category 定义（C1-C9，obj 和 sub 统一使用）
+# Category definitions (C1-C9 shared by objective and subjective tasks)
 # -------------------------------------------------------------------------
 _CATEGORY_RE = re.compile(r"_(C\d)_")
 CATEGORIES = [f"C{i}" for i in range(1, 10)]
@@ -81,15 +81,15 @@ def _extract_category_from_item(item: dict) -> Optional[str]:
 
 
 # -------------------------------------------------------------------------
-# CurriculumState：Ray 命名 Actor，在 Trainer 和 Rollouter 之间共享状态
+# CurriculumState: named Ray actor shared between trainer and rollout workers
 # -------------------------------------------------------------------------
 @ray.remote(num_cpus=0)
 class CurriculumState:
     """
-    轻量 Ray Actor，持有每个 category 的 Q-value 及 Boltzmann 采样权重。
+    Lightweight Ray actor that stores each category Q-value and Boltzmann sampling weight.
 
-    Rollouter 侧的 DynamicCurriculumSampler 读取权重；
-    Trainer 侧每个训练步结束后调用 update() 更新 Q-value。
+    The rollout-side DynamicCurriculumSampler reads the weights;
+    The trainer calls update() after each training step to update Q-values.
     """
 
     def __init__(
@@ -108,39 +108,39 @@ class CurriculumState:
         self.temperature = temperature
         self.min_weight = min_weight
 
-        # Q-values，初始化为 0（对应均匀采样）
+        # Q-values initialized to 0, which corresponds to uniform sampling.
         self.q_values = np.zeros(self.num_arms)
 
-        # 用于 'progress' objective：记录上一步的 reward
+        # For the 'progress' objective: record the previous reward.
         self.last_reward: dict[str, float] = {cat: 0.0 for cat in categories}
 
         self.update_count: dict[str, int] = {cat: 0 for cat in categories}
         self.total_updates = 0
 
-        # 初始化均匀权重
+        # Initialize uniform weights.
         self._weights: dict[str, float] = {cat: 1.0 / self.num_arms for cat in categories}
 
     def get_objective(self) -> str:
         return self.objective
 
     # ------------------------------------------------------------------
-    # 核心更新：从 Trainer 接收 per-sample (category, signal) 对
+    # Core update: receive per-sample (category, signal) pairs from the trainer.
     # ------------------------------------------------------------------
     def update(
         self,
         categories: list[str],
-        signals: list[float],       # |advantage| or reward，取决于 objective
+        signals: list[float],       # |advantage| or reward，depends on the objective
     ) -> None:
         """
-        更新 Q-values。
+        Update Q-values.
 
         Args:
-            categories: 每条样本对应的 category 标签
-            signals:    每条样本对应的信号值
+            categories: Category label for each sample
+            signals:    Signal value for each sample
                         - objective='adv':      masked_mean(|advantage|, mask) per sample
                         - objective='progress': sequence reward per sample
         """
-        # 按 category 汇总信号
+        # Aggregate signals by category.
         cat_signals: dict[str, list[float]] = defaultdict(list)
         for cat, sig in zip(categories, signals):
             if cat in self.cat_to_arm:
@@ -154,7 +154,7 @@ class CurriculumState:
                 self.update_count[cat] += 1
 
         elif self.objective == "progress":
-            # 计算 reward 相对于上一步的提升量
+            # Compute reward improvement relative to the previous step.
             new_q = np.zeros(self.num_arms)
             for cat, sigs in cat_signals.items():
                 arm = self.cat_to_arm[cat]
@@ -165,7 +165,7 @@ class CurriculumState:
         else:
             raise ValueError(f"Unknown objective: {self.objective}")
 
-        # EMA 更新
+        # EMA update.
         self.q_values = (1 - self.lr) * self.q_values + self.lr * new_q
         self.total_updates += 1
         self._recompute_weights()
@@ -186,13 +186,13 @@ class CurriculumState:
 
     # ------------------------------------------------------------------
     def _recompute_weights(self):
-        """Boltzmann (softmax over Q-values / temperature)，带 min_weight 下限。"""
+        """Boltzmann sampling (softmax over Q-values / temperature) with a min_weight floor."""
         q = self.q_values / self.temperature
-        q = q - q.max()                      # 数值稳定
+        q = q - q.max()                      # Numerical stability.
         exp_q = np.exp(q)
         raw = exp_q / exp_q.sum()
 
-        # 施加 min_weight 下限并重新归一化
+        # Apply the min_weight floor and renormalize.
         n = self.num_arms
         total_floor = self.min_weight * n
         if total_floor >= 1.0:
@@ -211,25 +211,25 @@ class CurriculumState:
 
 
 # -------------------------------------------------------------------------
-# 从 DataProto batch 中提取 (categories, signals)
+# Extract (categories, signals) from a DataProto batch.
 #
-# 关键：一个 prompt 可能被 session expansion 拆成多行（多个 session），
-# 同一 uid 的多行共享同一个 task_id / category。我们按 uid 先聚合
-# （取各 session 的均值），使得每个 prompt 只贡献一个信号值，
-# 避免 session 数量多的类别信号被放大。
+# Key detail: one prompt can be expanded into multiple rows by session expansion,
+# and rows with the same uid share the same task_id/category. Aggregate by uid first
+# (using the mean across sessions), so each prompt contributes only one signal value,
+# which avoids over-weighting categories with more sessions.
 # -------------------------------------------------------------------------
 
 def _get_uid(item) -> str:
-    """提取样本的唯一 prompt 标识（uid），用于 session 聚合。"""
+    """Extract the unique prompt identifier (uid) for session aggregation."""
     uid = item.non_tensor_batch.get("uid", None)
     if uid is not None:
         return str(uid.item() if hasattr(uid, "item") else uid)
-    # fallback: 无 uid 则用 index
+    # fallback: Use the index as a fallback when uid is unavailable.
     return str(id(item))
 
 
 def _get_category(item) -> Optional[str]:
-    """从单条样本中提取 category（C1-C9）。"""
+    """Extract the category (C1-C9) from one sample."""
     rm = item.non_tensor_batch.get("reward_model", {})
     task_id = rm.get("task_id", "") if isinstance(rm, dict) else ""
     cat = _extract_category(task_id)
@@ -251,8 +251,8 @@ def _aggregate_by_uid(
     per_sample_values: list[float],
 ) -> tuple[list[str], list[float]]:
     """
-    按 uid 聚合 per_sample_values：同一 uid 的多行取均值，
-    返回 (categories, signals)，每个 uid 只出现一次。
+    Aggregate per_sample_values by uid: average rows with the same uid,
+    and return (categories, signals), with each uid appearing once.
     """
     # uid → (category, [values])
     uid_data: dict[str, tuple[str, list[float]]] = {}
@@ -279,7 +279,7 @@ def _aggregate_by_uid(
 def _extract_adv_signals(batch: DataProto) -> tuple[list[str], list[float]]:
     """
     objective='adv'：masked_mean(|advantage|, response_mask) per sample，
-    按 uid 聚合后输出。
+    Return output after uid aggregation.
     """
     if "advantages" not in batch.batch or "response_mask" not in batch.batch:
         return [], []
@@ -296,7 +296,7 @@ def _extract_adv_signals(batch: DataProto) -> tuple[list[str], list[float]]:
 
 def _extract_progress_signals(batch: DataProto) -> tuple[list[str], list[float]]:
     """
-    objective='progress'：sequence reward per sample，按 uid 聚合后输出。
+    objective='progress'：sequence reward per sample，Return output after uid aggregation.
     """
     if "token_level_scores" in batch.batch:
         per_sample = batch.batch["token_level_scores"].sum(-1).cpu().tolist()
@@ -313,13 +313,13 @@ def _extract_progress_signals(batch: DataProto) -> tuple[list[str], list[float]]
 # -------------------------------------------------------------------------
 class DynamicCurriculumSampler(AbstractCurriculumSampler):
     """
-    动态课程学习 Sampler，obj 和 sub 统一使用 C1-C9 分级，共享 Boltzmann Bandit。
+    Dynamic curriculum sampler. Objective and subjective tasks share C1-C9 categories and one Boltzmann bandit.
 
-    - objective='adv'（默认）：|advantage| 越大的类别越优先
-    - objective='progress'：reward 提升越快的类别越优先
+    - objective='adv' (default): prioritize categories with larger |advantage|.
+    - objective='progress': prioritize categories whose reward improves faster.
 
-    同步模式：trainer 每步结束后调用 sampler.update(batch)
-    全异步模式：trainer 调用 update_curriculum_from_batch(batch)
+    Synchronous mode: the trainer calls sampler.update(batch) after each step.
+    Fully asynchronous mode: the trainer calls update_curriculum_from_batch(batch).
     """
 
     def __init__(self, data_source, data_config: DictConfig):
@@ -334,7 +334,7 @@ class DynamicCurriculumSampler(AbstractCurriculumSampler):
         self.min_weight  = float(curriculum_cfg.get("min_weight", 0.02))
         self.replacement = bool(curriculum_cfg.get("replacement", False))
 
-        # category → indices 映射
+        # category-to-indices mapping
         self.category_to_indices: dict[str, list[int]] = {cat: [] for cat in CATEGORIES}
         self.uncategorized_indices: list[int] = []
 
@@ -377,7 +377,7 @@ class DynamicCurriculumSampler(AbstractCurriculumSampler):
             pass
 
     def __iter__(self):
-        # 先输出无法归类的样本
+        # Emit uncategorized samples first.
         uncategorized = list(self.uncategorized_indices)
         random.shuffle(uncategorized)
         yield from uncategorized
@@ -385,7 +385,7 @@ class DynamicCurriculumSampler(AbstractCurriculumSampler):
         self._sample_counter = 0
 
         if self.replacement:
-            # ---- 放回采样 ----
+            # ---- Sampling with replacement ----
             avail = [c for c in CATEGORIES if self.category_to_indices[c]]
             total = sum(len(v) for v in self.category_to_indices.values())
 
@@ -401,7 +401,7 @@ class DynamicCurriculumSampler(AbstractCurriculumSampler):
                 yield random.choice(self.category_to_indices[cat])
 
         else:
-            # ---- 不放回采样（默认） ----
+            # ---- Sampling without replacement (default) ----
             remaining = {c: list(v) for c, v in self.category_to_indices.items()}
             for lst in remaining.values():
                 random.shuffle(lst)
@@ -424,7 +424,7 @@ class DynamicCurriculumSampler(AbstractCurriculumSampler):
                 total -= 1
 
     def update(self, batch: DataProto) -> None:
-        """同步训练模式：trainer 每步结束后调用。"""
+        """Synchronous training mode: called by the trainer after each step."""
         categories, signals = _get_signals(batch, self.objective)
         if not categories:
             return
@@ -465,12 +465,12 @@ def compute_category_score_metrics(
 
 
 # -------------------------------------------------------------------------
-# 全异步模式专用：Trainer 侧调用的独立函数
+# Fully asynchronous mode only: standalone function called by the trainer.
 # -------------------------------------------------------------------------
 def update_curriculum_from_batch(batch: DataProto) -> dict[str, float]:
     """
-    全异步 Trainer 每步结束后调用此函数，更新 CurriculumState。
-    返回 curriculum metrics dict（若未启用课程学习则返回 {}）。
+    The fully asynchronous trainer calls this function after each step to update CurriculumState.
+    Return the curriculum metrics dict, or {} if curriculum learning is disabled.
     """
     try:
         state = ray.get_actor(CURRICULUM_STATE_ACTOR_NAME, namespace="curriculum")
@@ -491,7 +491,7 @@ def update_curriculum_from_batch(batch: DataProto) -> dict[str, float]:
 
 
 # -------------------------------------------------------------------------
-# 内部工具
+# Internal utilities
 # -------------------------------------------------------------------------
 def _get_signals(batch: DataProto, objective: str) -> tuple[list[str], list[float]]:
     if objective == "adv":

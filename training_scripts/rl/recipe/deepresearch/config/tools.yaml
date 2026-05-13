@@ -4,13 +4,13 @@ tools:
   - class_name: recipe.deepresearch.tools.search_tool.DeepResearchSearchTool
     config:
       type: native
-      search_service_max_retries: 3   # 最多重试次数
-      search_service_timeout: 120   # 客户端超时时间（恢复 120s，服务端不主动超时）
-      # 使用独立 HTTP 搜索服务时填写，留空则本进程内 cache+FAISS+Serper
+      search_service_max_retries: 3   # Maximum retry count
+      search_service_timeout: 120   # Client timeout (120s; the server does not proactively time out)
+      # Set this when using a separate HTTP search service. Leave empty to use in-process cache+FAISS+Serper.
       # Hot-reloadable conf file (re-read on every call); or set SEARCH_NODES_CONF env var.
       search_nodes_conf: ${oc.env:SEARCH_NODES_CONF,recipe/deepresearch/config/search_nodes.conf}
       # search_service_url: http://a0015:8000   # static fallback; or SEARCH_SERVICE_URL env var
-      # Serper API key (或 SERPER_KEY_ID；使用 search_service_url 时可不配)
+      # Serper API key (or SERPER_KEY_ID; optional when search_service_url is set)
       serper_key: ${oc.env:SERPER_KEY_ID,}
       topk: 10
       num_workers: 120

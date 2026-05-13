@@ -1788,9 +1788,9 @@ async def _compute_hle_score(
 
     # Parse true/false
     normalized = judgment.strip().lower()
-    if normalized in {"true", "一致"} or ("true" in normalized and "false" not in normalized):
+    if normalized in {"true", "consistent"} or ("true" in normalized and "false" not in normalized):
         is_correct = True
-    elif normalized in {"false", "不一致"} or ("false" in normalized and "true" not in normalized):
+    elif normalized in {"false", "inconsistent"} or ("false" in normalized and "true" not in normalized):
         is_correct = False
     else:
         logger.warning("HLE judge parse failure; raw: %s", judgment[:100])

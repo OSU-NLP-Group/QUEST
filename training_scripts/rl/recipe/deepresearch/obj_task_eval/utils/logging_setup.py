@@ -126,7 +126,7 @@ class HumanReadableFormatter(logging.Formatter):
         # Timestamp - second precision
         timestamp = self.formatTime(record, '%Y-%m-%d %H:%M:%S')
 
-        # 基本信息 - 只在重要级别显示level
+        # Basic information: show level only for important records.
         level_prefix = ""
         if record.levelname in ['ERROR', 'WARNING']:
             level_prefix = f"[{record.levelname}] "

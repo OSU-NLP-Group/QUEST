@@ -14,7 +14,7 @@ class LLMClient():
         elif provider == 'openai':
             if is_async:
                 from obj_task_eval.llm_client.openai_client import AsyncOpenAIClient
-                self.client = AsyncOpenAIClient()   #走的是这个！！！！！！！！！！！！！！！！！！！！！！
+                self.client = AsyncOpenAIClient()   #Use this path.！！！！！！！！！！！！！！！！！！！！！！
             else:
                 from obj_task_eval.llm_client.openai_client import OpenAIClient
                 self.client = OpenAIClient()

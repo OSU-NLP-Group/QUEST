@@ -1,7 +1,7 @@
 # Copyright 2025 DeepResearch authors
 # Worker for multi-GPU FAISS build.
-# 用法: python _faiss_build_worker.py <cache_file> <start> <end> <embedding_model> <output_npy> [batch_size]
-# 子进程启动时 CUDA_VISIBLE_DEVICES 已由父进程在 env 中设好，本模块顶层不 import torch。
+# Usage: python _faiss_build_worker.py <cache_file> <start> <end> <embedding_model> <output_npy> [batch_size]
+# CUDA_VISIBLE_DEVICES is set by the parent process before the child starts; this module does not import torch at top level.
 
 import os
 import sys

@@ -1023,7 +1023,7 @@ class DeepResearchAgentLoop(AgentLoopBase):
         for tc, (response, reward, metrics) in zip(agent_data.tool_calls[:self.max_parallel_calls], responses):
             tool_response_texts.append(response.text or "")
             agent_data.tool_rewards.append(reward)
-            # 仅打印 retrieval tools 的 query + 渠道与 similarity，上游只用 content
+            # Only log retrieval-tool query, channel, and similarity; upstream uses content only.
             normalized_tool_name = self._normalize_tool_name(tc.get("name"))
             if normalized_tool_name in {"search", "google_scholar"} and metrics and metrics.get("sources"):
                 args = tc.get("arguments")
