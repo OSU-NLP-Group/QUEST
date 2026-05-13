@@ -1,15 +1,10 @@
 # QUEST
 
-<p align="center">
-  <strong>QUEST</strong>
-</p>
-
 <div align="center" style="line-height: 1; margin-top: 16px;">
   <a href="#"><img src="https://img.shields.io/badge/Paper-B31B1B?style=for-the-badge&logo=arXiv&logoColor=white" alt="Paper"></a>
   <a href="https://github.com/OSU-NLP-Group/QUEST"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"></a>
   <a href="https://huggingface.co/collections/osunlp/quest"><img src="https://img.shields.io/badge/HF%20Collection-FFB7B2?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Hugging Face Collection"></a>
   <a href="https://huggingface.co/osunlp/QUEST-35B-RL"><img src="https://img.shields.io/badge/Model-FFD966?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Model"></a>
-  <a href="#documentation-map"><img src="https://img.shields.io/badge/Docs-2563EB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
 </div>
 
 ## Introduction
@@ -142,6 +137,9 @@ The exact environment variables depend on the workflow. Common groups include:
 For inference, see [`inference/api_config.yaml`](inference/api_config.yaml) for
 the default configuration template. For the full RL backend environment list,
 see the [DeepResearch recipe README](training_scripts/rl/recipe/deepresearch/README.md#secrets-and-environment).
+Any `<HOST_IP>` or `[PLACEHOLDER]` values in committed configs are
+examples only. Replace them with the real host IPs, ports, model paths, and
+credentials for your own inference, evaluation, or training deployment.
 
 ## Benchmark Replication
 
