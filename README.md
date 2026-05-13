@@ -32,8 +32,8 @@ report synthesis.
   - [Objective Verifier Scripts](#objective-verifier-scripts)
   - [Open-Ended Tasks](#open-ended-tasks)
   - [Open-Ended Evaluation](#open-ended-evaluation)
-- [Citation 📝](#citation)
 - [Documentation Map 🗺️](#documentation-map)
+- [Citation 📝](#citation)
 
 ## Updates 🚀
 
@@ -321,20 +321,6 @@ bash run_eval.sh
 It compares an answer against a reference answer across criteria such as
 comprehensiveness, insight, instruction following, and readability.
 
-## Citation 📝
-
-If our paper or related resources prove valuable to your research, we kindly ask
-for a citation.
-
-```bibtex
-@misc{xie2026quest,
-  title={QUEST: Training Frontier Deep Research Agents with Fully Synthetic Tasks},
-  author={Xie, Jian and Lin, Tianhe and Wang, Zilu and Ning, Yuting and Yao, Yuekun and Xue, Tianci and Zhang, Zhehao and Li, Zhongyang and Zhang, Kai and Wu, Yufan and Chen, Shijie and Gou, Boyu and Han, Mingzhe and Su, Yu and Sun, Huan},
-  journal={arXiv preprint arXiv:XXXX.XXXXX},
-  year={2026}
-}
-```
-
 ## Documentation Map 🗺️
 
 We provide details of each component in the READMEs below.
@@ -349,3 +335,18 @@ We provide details of each component in the READMEs below.
 | Open-ended task generation | [`task/open_ended_task/`](task/open_ended_task/) | [`task/open_ended_task/README.md`](task/open_ended_task/README.md) | Open-ended task generation pipeline |
 | Open-ended evaluation | [`task/open_ended_eval/`](task/open_ended_eval/) | [`task/open_ended_eval/README.md`](task/open_ended_eval/README.md) | Open-ended task evaluation pipeline |
 | Evaluation | [`evaluation/`](evaluation/) | [`evaluation/README.md`](evaluation/README.md) | Benchmark evaluation scripts |
+
+## Citation 📝
+
+If our paper or related resources prove valuable to your research, we kindly ask
+for a citation.
+
+```bibtex
+@misc{xie2026quest,
+  title={QUEST: Training Frontier Deep Research Agents with Fully Synthetic Tasks},
+  author={Xie, Jian and Lin, Tianhe and Wang, Zilu and Ning, Yuting and Yao, Yuekun and Xue, Tianci and Zhang, Zhehao and Li, Zhongyang and Zhang, Kai and Wu, Yufan and Chen, Shijie and Gou, Boyu and Han, Mingzhe and Su, Yu and Sun, Huan},
+  journal={arXiv preprint arXiv:XXXX.XXXXX},
+  year={2026}
+}
+```
+
