@@ -16,30 +16,30 @@ report synthesis.
 ## Table of Contents
 
 - [Introduction](#introduction)
-- [Updates](#updates)
-- [Resources](#resources)
-- [Results Snapshot](#results-snapshot)
-- [Environment Setup](#environment-setup)
-- [Runtime Configuration](#runtime-configuration)
-- [Benchmark Replication](#benchmark-replication)
+- [Updates 🚀](#updates)
+- [Resources 🔗](#resources)
+- [Results Snapshot 📊](#results-snapshot)
+- [Environment Setup 🛠️](#environment-setup)
+- [Runtime Configuration ⚙️](#runtime-configuration)
+- [Benchmark Replication 🧪](#benchmark-replication)
   - [Inference](#inference)
   - [Evaluation](#evaluation)
-- [Mid-training / SFT Training](#mid-training--sft-training)
-- [Run Training](#run-training)
+- [Mid-training / SFT Training 🎯](#mid-training--sft-training)
+- [Run Training 🏃](#run-training)
   - [RL Backend](#rl-backend)
-- [Data Generation](#data-generation)
+- [Data Generation 🧬](#data-generation)
   - [Objective Tasks](#objective-tasks)
   - [Objective Verifier Scripts](#objective-verifier-scripts)
   - [Open-Ended Tasks](#open-ended-tasks)
   - [Open-Ended Evaluation](#open-ended-evaluation)
-- [Citation](#citation)
-- [Documentation Map](#documentation-map)
+- [Citation 📝](#citation)
+- [Documentation Map 🗺️](#documentation-map)
 
-## Updates
+## Updates 🚀
 
 - **14/05/2026**: We released QUEST, including model checkpoints, data, and code.
 
-## Resources
+## Resources 🔗
 
 <img src="assets/readme/hf-logo.png" alt="" width="18"> All released models and
 datasets are organized in the
@@ -62,7 +62,7 @@ Release note: cached databases and mid-training data are still under legal
 review. We will release them only after confirming that their release is legally
 compliant.
 
-## Results Snapshot
+## Results Snapshot 📊
 
 **Overall benchmark snapshot.** QUEST-35B is compared with leading proprietary
 and open deep research agents across eight benchmarks covering fact seeking,
@@ -95,7 +95,7 @@ performance.
   <img src="assets/readme/quest-training-stages.png" alt="QUEST training stage comparison" width="100%">
 </p>
 
-## Environment Setup
+## Environment Setup 🛠️
 
 Create an environment and install the shared runtime dependencies:
 
@@ -121,7 +121,7 @@ Providing prebuilt databases is useful when you want to reuse cached results,
 reduce external requests, or run workflows that require prepared search/scholar
 indexes.
 
-## Runtime Configuration
+## Runtime Configuration ⚙️
 
 The exact environment variables depend on the workflow. Common groups include:
 
@@ -141,7 +141,7 @@ Any `<HOST_IP>` or `[PLACEHOLDER]` values in committed configs are
 examples only. Replace them with the real host IPs, ports, model paths, and
 credentials for your own inference, evaluation, or training deployment.
 
-## Benchmark Replication
+## Benchmark Replication 🧪
 
 ### Inference
 
@@ -195,7 +195,7 @@ name, judge model, worker count, and judge credentials.
 See [`evaluation/README.md`](evaluation/README.md) for benchmark-specific
 commands and notes.
 
-## Mid-training / SFT Training
+## Mid-training / SFT Training 🎯
 
 Use `training_scripts/sft` for mid-training and supervised fine-tuning workflows.
 Before training, prepare the mid-training/SFT datasets and convert them to the
@@ -206,7 +206,7 @@ The SFT backend is based on LlamaFactory. Use its data configuration and trainin
 entrypoints under `training_scripts/sft/LlamaFactory/` after the datasets are
 prepared.
 
-## Run Training
+## Run Training 🏃
 
 ### RL Backend
 
@@ -271,7 +271,7 @@ The full runbook, including environment variables and FAISS setup, is in:
 training_scripts/rl/recipe/deepresearch/README.md
 ```
 
-## Data Generation
+## Data Generation 🧬
 
 ### Objective Tasks
 
@@ -321,7 +321,7 @@ bash run_eval.sh
 It compares an answer against a reference answer across criteria such as
 comprehensiveness, insight, instruction following, and readability.
 
-## Citation
+## Citation 📝
 
 If our paper or related resources prove valuable to your research, we kindly ask
 for a citation.
@@ -335,7 +335,7 @@ for a citation.
 }
 ```
 
-## Documentation Map
+## Documentation Map 🗺️
 
 We provide details of each component in the READMEs below.
 
