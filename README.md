@@ -13,6 +13,10 @@ Quest is a general-purpose Deep Search Agent designed to handle a wide range of
 search tasks, with strong capabilities in fact seeking, citation grounding, and
 report synthesis.
 
+## 🚀 Updates
+
+- **14/05/2026**: We released QUEST, including model checkpoints, data, and code.
+
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -34,10 +38,6 @@ report synthesis.
   - [Open-Ended Evaluation](#open-ended-evaluation)
 - [🗺️ Documentation Map](#documentation-map)
 - [📝 Citation](#citation)
-
-## 🚀 Updates
-
-- **14/05/2026**: We released QUEST, including model checkpoints, data, and code.
 
 ## 🔗 Resources
 
