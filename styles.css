@@ -2944,3 +2944,13 @@ sup.val-dagger {
   border-color: #60A5FA;
   background-color: #FFFFFF;
 }
+
+@media (max-width: 760px) {
+  .quest-chat-input {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .quest-chat-input button {
+    width: 100%;
+  }
+}
