@@ -40,38 +40,26 @@ report synthesis.
 
 ## Resources
 
-<p>
-  <a href="https://huggingface.co/collections/osunlp/quest"><img src="assets/readme/hf-logo.png" alt="" width="18"> Hugging Face Collection</a> ·
-  <a href="https://huggingface.co/spaces/osunlp/QUEST"><img src="assets/readme/hf-logo.png" alt="" width="18"> Demo</a>
-</p>
+<img src="assets/readme/hf-logo.png" alt="" width="18"> All released models and
+datasets are organized in the
+[Hugging Face collection](https://huggingface.co/collections/osunlp/quest).
+You can also try the hosted [demo](https://huggingface.co/spaces/osunlp/QUEST).
 
-**Model Checkpoints**
-
-<p>
-  <a href="https://huggingface.co/osunlp/QUEST-35B-RL"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-35B-RL</a> ·
-  <a href="https://huggingface.co/osunlp/QUEST-35B-MT-Plus-SFT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-35B-MT-Plus-SFT</a> ·
-  <a href="https://huggingface.co/osunlp/QUEST-35B-MT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-35B-MT</a> ·
-  <a href="https://huggingface.co/osunlp/QUEST-35B-SFT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-35B-SFT</a> ·
-  <a href="https://huggingface.co/osunlp/QUEST-30B-RL"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-30B-RL</a> ·
-  <a href="https://huggingface.co/osunlp/QUEST-30B-MT-Plus-SFT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-30B-MT-Plus-SFT</a> ·
-  <a href="https://huggingface.co/osunlp/QUEST-30B-SFT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-30B-SFT</a> ·
-  <a href="https://huggingface.co/osunlp/QUEST-9B"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-9B</a> ·
-  <a href="https://huggingface.co/osunlp/QUEST-4B"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-4B</a> ·
-  <a href="https://huggingface.co/osunlp/QUEST-2B"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-2B</a>
-</p>
-
-**Datasets**
-
-<p>
-  <a href="https://huggingface.co/datasets/osunlp/QUEST-RL-Data"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-RL-Data</a> ·
-  <a href="https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Objective"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-SFT-Data-Objective</a> ·
-  <a href="https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Open-ended"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-SFT-Data-Open-ended</a>
-</p>
+| Type | Resources |
+| --- | --- |
+| 35B checkpoints | [RL](https://huggingface.co/osunlp/QUEST-35B-RL), [MT+SFT](https://huggingface.co/osunlp/QUEST-35B-MT-Plus-SFT), [MT](https://huggingface.co/osunlp/QUEST-35B-MT), [SFT](https://huggingface.co/osunlp/QUEST-35B-SFT) |
+| 30B checkpoints | [RL](https://huggingface.co/osunlp/QUEST-30B-RL), [MT+SFT](https://huggingface.co/osunlp/QUEST-30B-MT-Plus-SFT), [SFT](https://huggingface.co/osunlp/QUEST-30B-SFT) |
+| Smaller checkpoints | [9B](https://huggingface.co/osunlp/QUEST-9B), [4B](https://huggingface.co/osunlp/QUEST-4B), [2B](https://huggingface.co/osunlp/QUEST-2B) |
+| Training data | [RL data](https://huggingface.co/datasets/osunlp/QUEST-RL-Data), [SFT objective data](https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Objective), [SFT open-ended data](https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Open-ended) |
 
 Model selection note: if you only need to evaluate objective tasks and do not
 need open-ended task evaluation, we recommend the MT+SFT checkpoints because
 they perform better on objective benchmarks. For more comprehensive evaluation
 across both objective and open-ended tasks, we recommend the RL checkpoints.
+
+Release note: cached databases and mid-training data are still under legal
+review. We will release them only after confirming that their release is legally
+compliant.
 
 ## Results Snapshot
 
