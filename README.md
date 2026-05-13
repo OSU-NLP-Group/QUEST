@@ -2,7 +2,6 @@
 
 <div align="center" style="line-height: 1; margin-top: 16px;">
   <a href="#"><img src="https://img.shields.io/badge/Paper-B31B1B?style=for-the-badge&logo=arXiv&logoColor=white" alt="Paper"></a>
-  <a href="https://github.com/OSU-NLP-Group/QUEST"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"></a>
   <a href="https://huggingface.co/collections/osunlp/quest"><img src="https://img.shields.io/badge/HF%20Collection-FFB7B2?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Hugging Face Collection"></a>
   <a href="https://huggingface.co/osunlp/QUEST-35B-RL"><img src="https://img.shields.io/badge/Model-FFD966?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Model"></a>
 </div>
