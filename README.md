@@ -7,19 +7,10 @@
 <div align="center" style="line-height: 1; margin-top: 16px;">
   <a href="#"><img src="https://img.shields.io/badge/Paper-B31B1B?style=for-the-badge&logo=arXiv&logoColor=white" alt="Paper"></a>
   <a href="https://github.com/OSU-NLP-Group/QUEST"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"></a>
-  <a href="https://huggingface.co/datasets/osunlp/QUEST"><img src="https://img.shields.io/badge/Dataset-FFB7B2?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Dataset"></a>
+  <a href="https://huggingface.co/collections/osunlp/quest"><img src="https://img.shields.io/badge/HF%20Collection-FFB7B2?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Hugging Face Collection"></a>
   <a href="https://huggingface.co/osunlp/QUEST-35B-RL"><img src="https://img.shields.io/badge/Model-FFD966?style=for-the-badge&logo=huggingface&logoColor=ffffff" alt="Model"></a>
   <a href="#documentation-map"><img src="https://img.shields.io/badge/Docs-2563EB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
 </div>
-
-<br>
-
-<p align="center">
-  <a href="https://huggingface.co/spaces/osunlp/QUEST">Demo</a> |
-  <a href="https://huggingface.co/datasets/osunlp/QUEST">Dataset</a> |
-  <a href="https://huggingface.co/osunlp/QUEST-35B-RL">Model Weights</a> |
-  <a href="#documentation-map">Documentation</a>
-</p>
 
 ## Introduction
 
@@ -30,6 +21,8 @@ report synthesis.
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Resources](#resources)
+- [Results Snapshot](#results-snapshot)
 - [Environment Setup](#environment-setup)
 - [Runtime Configuration](#runtime-configuration)
 - [Benchmark Replication](#benchmark-replication)
@@ -44,6 +37,47 @@ report synthesis.
   - [Open-Ended Tasks](#open-ended-tasks)
   - [Open-Ended Evaluation](#open-ended-evaluation)
 - [Documentation Map](#documentation-map)
+
+## Resources
+
+- [Hugging Face collection](https://huggingface.co/collections/osunlp/quest)
+- [Demo: `osunlp/QUEST`](https://huggingface.co/spaces/osunlp/QUEST)
+- [Model: `osunlp/QUEST-35B-RL`](https://huggingface.co/osunlp/QUEST-35B-RL)
+- [Model: `osunlp/QUEST-35B-MT-Plus-SFT`](https://huggingface.co/osunlp/QUEST-35B-MT-Plus-SFT)
+- [Model: `osunlp/QUEST-35B-MT`](https://huggingface.co/osunlp/QUEST-35B-MT)
+- [Model: `osunlp/QUEST-35B-SFT`](https://huggingface.co/osunlp/QUEST-35B-SFT)
+- [Model: `osunlp/QUEST-30B-RL`](https://huggingface.co/osunlp/QUEST-30B-RL)
+- [Model: `osunlp/QUEST-30B-MT-Plus-SFT`](https://huggingface.co/osunlp/QUEST-30B-MT-Plus-SFT)
+- [Model: `osunlp/QUEST-30B-SFT`](https://huggingface.co/osunlp/QUEST-30B-SFT)
+- [Model: `osunlp/QUEST-9B`](https://huggingface.co/osunlp/QUEST-9B)
+- [Model: `osunlp/QUEST-4B`](https://huggingface.co/osunlp/QUEST-4B)
+- [Model: `osunlp/QUEST-2B`](https://huggingface.co/osunlp/QUEST-2B)
+- [Dataset: `osunlp/QUEST-RL-Data`](https://huggingface.co/datasets/osunlp/QUEST-RL-Data)
+- [Dataset: `osunlp/QUEST-SFT-Data-Objective`](https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Objective)
+- [Dataset: `osunlp/QUEST-SFT-Data-Open-ended`](https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Open-ended)
+
+Model selection note: if you only need to evaluate objective tasks and do not
+need open-ended task evaluation, we recommend the MT+SFT checkpoints because
+they perform better on objective benchmarks. For more comprehensive evaluation
+across both objective and open-ended tasks, we recommend the RL checkpoints.
+
+## Results Snapshot
+
+<p align="center">
+  <img src="assets/readme/quest-benchmark-snapshot.png" alt="QUEST benchmark snapshot" width="100%">
+</p>
+
+<p align="center">
+  <img src="assets/readme/quest-30b-comparison.png" alt="QUEST 30B comparison" width="100%">
+</p>
+
+<p align="center">
+  <img src="assets/readme/quest-small-models.png" alt="QUEST smaller model comparison" width="100%">
+</p>
+
+<p align="center">
+  <img src="assets/readme/quest-training-stages.png" alt="QUEST training stage comparison" width="100%">
+</p>
 
 ## Environment Setup
 
@@ -146,13 +180,8 @@ commands and notes.
 
 Use `training_scripts/sft` for mid-training and supervised fine-tuning workflows.
 Before training, prepare the mid-training/SFT datasets and convert them to the
-format expected by LlamaFactory.
-
-Dataset release:
-
-```text
-https://huggingface.co/datasets/<org>/<quest-midtraining-sft-data>
-```
+format expected by LlamaFactory. See [Resources](#resources) for released model
+checkpoints and datasets.
 
 The SFT backend is based on LlamaFactory. Use its data configuration and training
 entrypoints under `training_scripts/sft/LlamaFactory/` after the datasets are
