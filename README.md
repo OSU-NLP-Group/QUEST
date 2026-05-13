@@ -40,21 +40,33 @@ report synthesis.
 
 ## Resources
 
-- [Hugging Face collection](https://huggingface.co/collections/osunlp/quest)
-- [Demo: `osunlp/QUEST`](https://huggingface.co/spaces/osunlp/QUEST)
-- [Model: `osunlp/QUEST-35B-RL`](https://huggingface.co/osunlp/QUEST-35B-RL)
-- [Model: `osunlp/QUEST-35B-MT-Plus-SFT`](https://huggingface.co/osunlp/QUEST-35B-MT-Plus-SFT)
-- [Model: `osunlp/QUEST-35B-MT`](https://huggingface.co/osunlp/QUEST-35B-MT)
-- [Model: `osunlp/QUEST-35B-SFT`](https://huggingface.co/osunlp/QUEST-35B-SFT)
-- [Model: `osunlp/QUEST-30B-RL`](https://huggingface.co/osunlp/QUEST-30B-RL)
-- [Model: `osunlp/QUEST-30B-MT-Plus-SFT`](https://huggingface.co/osunlp/QUEST-30B-MT-Plus-SFT)
-- [Model: `osunlp/QUEST-30B-SFT`](https://huggingface.co/osunlp/QUEST-30B-SFT)
-- [Model: `osunlp/QUEST-9B`](https://huggingface.co/osunlp/QUEST-9B)
-- [Model: `osunlp/QUEST-4B`](https://huggingface.co/osunlp/QUEST-4B)
-- [Model: `osunlp/QUEST-2B`](https://huggingface.co/osunlp/QUEST-2B)
-- [Dataset: `osunlp/QUEST-RL-Data`](https://huggingface.co/datasets/osunlp/QUEST-RL-Data)
-- [Dataset: `osunlp/QUEST-SFT-Data-Objective`](https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Objective)
-- [Dataset: `osunlp/QUEST-SFT-Data-Open-ended`](https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Open-ended)
+<p>
+  <a href="https://huggingface.co/collections/osunlp/quest"><img src="assets/readme/hf-logo.png" alt="" width="18"> Hugging Face Collection</a> ·
+  <a href="https://huggingface.co/spaces/osunlp/QUEST"><img src="assets/readme/hf-logo.png" alt="" width="18"> Demo</a>
+</p>
+
+**Model Checkpoints**
+
+<p>
+  <a href="https://huggingface.co/osunlp/QUEST-35B-RL"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-35B-RL</a> ·
+  <a href="https://huggingface.co/osunlp/QUEST-35B-MT-Plus-SFT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-35B-MT-Plus-SFT</a> ·
+  <a href="https://huggingface.co/osunlp/QUEST-35B-MT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-35B-MT</a> ·
+  <a href="https://huggingface.co/osunlp/QUEST-35B-SFT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-35B-SFT</a> ·
+  <a href="https://huggingface.co/osunlp/QUEST-30B-RL"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-30B-RL</a> ·
+  <a href="https://huggingface.co/osunlp/QUEST-30B-MT-Plus-SFT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-30B-MT-Plus-SFT</a> ·
+  <a href="https://huggingface.co/osunlp/QUEST-30B-SFT"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-30B-SFT</a> ·
+  <a href="https://huggingface.co/osunlp/QUEST-9B"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-9B</a> ·
+  <a href="https://huggingface.co/osunlp/QUEST-4B"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-4B</a> ·
+  <a href="https://huggingface.co/osunlp/QUEST-2B"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-2B</a>
+</p>
+
+**Datasets**
+
+<p>
+  <a href="https://huggingface.co/datasets/osunlp/QUEST-RL-Data"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-RL-Data</a> ·
+  <a href="https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Objective"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-SFT-Data-Objective</a> ·
+  <a href="https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Open-ended"><img src="assets/readme/hf-logo.png" alt="" width="18"> QUEST-SFT-Data-Open-ended</a>
+</p>
 
 Model selection note: if you only need to evaluate objective tasks and do not
 need open-ended task evaluation, we recommend the MT+SFT checkpoints because
@@ -63,17 +75,32 @@ across both objective and open-ended tasks, we recommend the RL checkpoints.
 
 ## Results Snapshot
 
+**Overall benchmark snapshot.** QUEST-35B is compared with leading proprietary
+and open deep research agents across eight benchmarks covering fact seeking,
+citation grounding, and report synthesis.
+
 <p align="center">
   <img src="assets/readme/quest-benchmark-snapshot.png" alt="QUEST benchmark snapshot" width="100%">
 </p>
+
+**30B-scale comparison.** QUEST-30B is compared against other open research
+agents of similar scale, highlighting its performance across objective and
+open-ended benchmarks.
 
 <p align="center">
   <img src="assets/readme/quest-30b-comparison.png" alt="QUEST 30B comparison" width="100%">
 </p>
 
+**Scaling across QUEST checkpoints.** Smaller QUEST models show consistent
+gains as model size increases from 2B to 35B on representative benchmarks.
+
 <p align="center">
   <img src="assets/readme/quest-small-models.png" alt="QUEST smaller model comparison" width="100%">
 </p>
+
+**Training-stage ablation.** The training recipe is broken down across vanilla,
+SFT, mid-training, and RL stages to show where each stage improves final
+performance.
 
 <p align="center">
   <img src="assets/readme/quest-training-stages.png" alt="QUEST training stage comparison" width="100%">
