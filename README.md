@@ -35,8 +35,7 @@ report synthesis.
 
 ## Updates
 
-- **14/05/2026**: We released QUEST, including model checkpoints, data, code,
-  and documentation.
+- **14/05/2026**: We released QUEST, including model checkpoints, data, and code.
 
 ## Resources
 
