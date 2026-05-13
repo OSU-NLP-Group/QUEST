@@ -41,6 +41,8 @@
 html {
   scroll-behavior: smooth;
   font-size: 13px;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 body {
@@ -198,6 +200,7 @@ a { color: inherit; text-decoration: none; }
 /* ─── Article Card ───────────────────────────────────── */
 .article {
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -1148,6 +1151,8 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--line);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.62);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .stage-kicker {
