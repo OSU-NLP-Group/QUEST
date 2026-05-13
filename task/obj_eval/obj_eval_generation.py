@@ -292,7 +292,32 @@ def main():
     else:
         print(f"❌ Input path is neither a JSON file nor a directory: {input_path}")
         return
-    
+
+    # Filter by verification results - only process files with decision "YES"
+    verification_results_path = base_dir.parent / "obj_task" / "outputs" / "objective_trajectories" / "formatted" / "refined" / "verifier" / "rubrc-tree-verification-results.json"
+    if verification_results_path.exists():
+        print(f"\n🔍 Loading verification results from: {verification_results_path}")
+        try:
+            with open(verification_results_path, 'r', encoding='utf-8') as f:
+                verification_results = json.load(f)
+            # Build set of approved file paths (decision == "YES")
+            approved_files = set()
+            for item in verification_results:
+                if item.get("decision", "").upper() == "YES":
+                    task_file = item.get("task_file", "")
+                    if task_file:
+                        approved_files.add(Path(task_file).name)
+            # Filter json_files to only include approved ones
+            original_count = len(json_files)
+            json_files = [f for f in json_files if f.name in approved_files]
+            print(f"   Filtered: {original_count} -> {len(json_files)} files (only decision='YES')")
+        except Exception as e:
+            print(f"⚠️ Failed to load verification results: {e}")
+            print("   Proceeding without filtering...")
+    else:
+        print(f"⚠️ Verification results file not found: {verification_results_path}")
+        print("   Proceeding without filtering...")
+
     # Sort by filename index
     json_files_sorted = sorted(json_files, key=lambda x: extract_file_number(x.name))
     
