@@ -330,8 +330,8 @@ for a citation.
 @misc{xie2026quest,
   title={QUEST: Training Frontier Deep Research Agents with Fully Synthetic Tasks},
   author={Xie, Jian and Lin, Tianhe and Wang, Zilu and Ning, Yuting and Yao, Yuekun and Xue, Tianci and Zhang, Zhehao and Li, Zhongyang and Zhang, Kai and Wu, Yufan and Chen, Shijie and Gou, Boyu and Han, Mingzhe and Su, Yu and Sun, Huan},
-  year={2026},
-  howpublished={\url{https://osu-nlp-group.github.io/QUEST/}}
+  journal={arXiv preprint arXiv:XXXX.XXXXX},
+  year={2026}
 }
 ```
 
