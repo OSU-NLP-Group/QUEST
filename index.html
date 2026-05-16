@@ -232,6 +232,7 @@
                 Send a question to
                 <a href="https://huggingface.co/spaces/osunlp/QUEST" target="_blank" rel="noopener" style="text-decoration: underline;">QUEST HuggingFace Space</a>.
                 The first request may take 30–60 seconds while the Space wakes up.
+                If you see a connection error, please wait a moment and retry.
               </p>
             </div>
 
@@ -1809,10 +1810,22 @@
         }
       });
 
+      // Track in-flight state with a flag (not the button's disabled prop),
+      // and arm a watchdog so the UI can never get permanently wedged when
+      // a streaming connection aborts without cleanly ending the for-await.
+      let inFlight = false;
+      let watchdog = null;
+      function endRun() {
+        inFlight = false;
+        sendBtn.disabled = false;
+        if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+      }
+
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const question = textarea.value.trim();
-        if (!question || sendBtn.disabled) return;
+        if (!question || inFlight) return;
+        inFlight = true;
 
         textarea.value = '';
         sendBtn.disabled = true;
@@ -1823,6 +1836,16 @@
         );
         statusEl.textContent =
           'Connecting to Hugging Face Space (cold start may take 30–60s)…';
+
+        // hard failsafe: never stay locked longer than 3 minutes
+        watchdog = setTimeout(() => {
+          if (!inFlight) return;
+          bubble.innerHTML =
+            '<span class="qc-error">Response timed out. Please wait a moment and retry.</span>';
+          statusEl.textContent = 'Timed out.';
+          appPromise = null;
+          endRun();
+        }, 180000);
 
         try {
           const app = await getApp();
@@ -1848,16 +1871,16 @@
           }
           if (!lastAnswer) {
             bubble.innerHTML =
-              '<span class="qc-error">No response received. Please retry.</span>';
+              '<span class="qc-error">No response received. Please wait a moment and retry.</span>';
           }
           statusEl.textContent = '';
         } catch (err) {
           bubble.innerHTML =
-            '<span class="qc-error">Service temporarily unavailable. Please retry.</span>';
+            '<span class="qc-error">Service temporarily unavailable. Please wait a moment and retry.</span>';
           statusEl.textContent = err?.message || 'Request failed.';
           appPromise = null; // allow reconnect on next attempt
         } finally {
-          sendBtn.disabled = false;
+          endRun();
         }
       });
       }
