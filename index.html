@@ -1810,15 +1810,22 @@
         }
       });
 
-      // Track in-flight state with a flag (not the button's disabled prop),
-      // and arm a watchdog so the UI can never get permanently wedged when
-      // a streaming connection aborts without cleanly ending the for-await.
+      // Track in-flight state with a flag (not the button's disabled prop)
+      // so a hung streaming connection can never permanently block Q2.
+      // Two timers protect us:
+      //   stallTimer: armed/reset on every data msg; if no data for 15s
+      //               after first response, we consider the run "done"
+      //               and unblock the UI (the for-await may still be
+      //               waiting forever — we just stop caring).
+      //   watchdog:   absolute 180s ceiling in case nothing arrives at all.
       let inFlight = false;
+      let stallTimer = null;
       let watchdog = null;
       function endRun() {
         inFlight = false;
         sendBtn.disabled = false;
-        if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+        if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
+        if (watchdog)   { clearTimeout(watchdog);   watchdog = null;   }
       }
 
       form.addEventListener('submit', async (e) => {
@@ -1837,7 +1844,7 @@
         statusEl.textContent =
           'Connecting to Hugging Face Space (cold start may take 30–60s)…';
 
-        // hard failsafe: never stay locked longer than 3 minutes
+        // absolute 3-minute ceiling
         watchdog = setTimeout(() => {
           if (!inFlight) return;
           bubble.innerHTML =
@@ -1846,6 +1853,17 @@
           appPromise = null;
           endRun();
         }, 180000);
+
+        // (re)arm the "no more data for 15s = treat as done" timer
+        function armStall() {
+          if (stallTimer) clearTimeout(stallTimer);
+          stallTimer = setTimeout(() => {
+            if (!inFlight) return;
+            statusEl.textContent = '';
+            appPromise = null;   // force a fresh reconnect next time
+            endRun();
+          }, 15000);
+        }
 
         try {
           const app = await getApp();
@@ -1861,6 +1879,7 @@
           let lastAnswer = '';
           for await (const msg of job) {
             if (msg.type === 'data' && Array.isArray(msg.data)) {
+              armStall();
               const [answer] = msg.data;
               if (typeof answer === 'string' && answer !== lastAnswer) {
                 lastAnswer = answer;
