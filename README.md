@@ -18,6 +18,7 @@
 We release **QUEST**, a family of open models (ranging from 2B to 35B) that serve as ***general-purpose*** deep research agents designed to handle a wide range of long-horizon search tasks, with strong capabilities in ***fact seeking***, ***citation grounding***, and ***report synthesis***.
 
 ## 🚀 Updates
+- **07/08/2026**: All the rubric trees for the objective tasks have now been included in the [RL](https://huggingface.co/datasets/osunlp/QUEST-RL-Data) and [SFT](https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Objective-Script)⁠ datasets. You can find them in the extra_info column under the "rubric_tree" key.
 - **06/30/2026**: We released the [scripts](https://huggingface.co/datasets/osunlp/QUEST-SFT-Data-Objective-Script) for a subset of our SFT objective tasks (4.6K in total).
 - **06/22/2026**: We released the [Context Summarization](https://huggingface.co/datasets/osunlp/QUEST-Mid-Training-Data) data used for mid-training.
 - **05/26/2026**: We released QUEST, including model checkpoints, data, and code.
