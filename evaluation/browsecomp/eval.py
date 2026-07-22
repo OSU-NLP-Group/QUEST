@@ -51,6 +51,9 @@ Now consider the following statements about the sample answer:
 "I don't know"
 
 Which statement do you think is more likely: (A), (B), or (C)?
+End your response with a final line exactly like:
+Verdict: A
+where A is replaced by A, B, or C.
 """.strip()
 
 _ANSWER_TAG_RE = re.compile(r"<answer>\s*(.*?)\s*</answer>", re.DOTALL | re.IGNORECASE)
@@ -223,33 +226,39 @@ def _extract_statement_choice(text: str) -> Optional[str]:
     """Parse judge reply for (A), (B), or (C) after ABC-style grading prompt."""
     if not text or not text.strip():
         return None
+
+    verdict = re.search(r"\bVerdict:\s*([ABC])\b", text)
+    if verdict:
+        return verdict.group(1)
+
     tail = "\n".join(text.strip().splitlines()[-20:])
 
     for pat in (
-        r"(?:more likely|most likely)[^\n.:]{0,80}?(?:\(|\s)([ABC])\)",
-        r"(?:choose|prefer|would (?:say|pick|select)|answer is)[^\n.:]{0,40}?\(?([ABC])\)?",
-        r"(?:statement|option)[^\n.:]{0,20}?\(?([ABC])\)?",
-        r"\(([ABC])\)",
+        r"(?:correct statement is|statement is|answer is|choose|prefer|would (?:say|pick|select))"
+        r"[^\n.:]{0,80}?\(([ABC])\)",
+        r"(?:more likely|most likely)[^\n.:]{0,80}?\(([ABC])\)",
+        r"(?:statement|option)[^\n.:]{0,40}?\(([ABC])\)",
     ):
-        matches = list(re.finditer(pat, tail, flags=re.IGNORECASE))
-        if matches:
-            return matches[-1].group(1).upper()
-    last_line = tail.splitlines()[-1] if tail else ""
-    lone = re.search(r"\b([ABC])\b(?![\da-z])\s*\.?$", last_line.strip(), re.IGNORECASE)
+        match = re.search(pat, tail)
+        if match:
+            return match.group(1)
+
+    last_line = tail.splitlines()[-1].strip() if tail else ""
+    lone = re.fullmatch(r"\(?([ABC])\)?\.?", last_line)
     if lone:
-        return lone.group(1).upper()
+        return lone.group(1)
     return None
 
 
 def parse_verdict(grader_output: str) -> Optional[str]:
     """Extract a yes/no verdict from ABC-style or legacy judge output."""
-    choice = _extract_statement_choice(grader_output)
-    if choice in ("A", "B", "C"):
-        return "yes" if choice == "A" else "no"
-
     m = re.search(r"correct:\s*(yes|no)\b", grader_output, flags=re.IGNORECASE)
     if m:
         return m.group(1).lower()
+
+    choice = _extract_statement_choice(grader_output)
+    if choice in ("A", "B", "C"):
+        return "yes" if choice == "A" else "no"
     return None
 
 

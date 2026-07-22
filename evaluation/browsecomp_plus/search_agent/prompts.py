@@ -62,6 +62,9 @@ Now consider the following statements about the sample answer:
 "I don't know"
 
 Which statement do you think is more likely: (A), (B), or (C)?
+End your response with a final line exactly like:
+Verdict: A
+where A is replaced by A, B, or C.
 """.strip()
 
 WEBSAILOR_SYSTEM_PROMPT_MULTI = """You are a Web Information Seeking Master. Your task is to thoroughly seek the internet for information and provide accurate answers to questions. No matter how complex the query, you will not give up until you find the corresponding information.
