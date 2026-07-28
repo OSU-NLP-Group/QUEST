@@ -7,6 +7,7 @@ from typing import List, Union, Tuple, Optional, Dict
 import requests
 from qwen_agent.tools.base import BaseTool, register_tool
 from prompt import (
+    EXTRACTOR_PROMPT,
     build_visit_extractor_messages,
     choose_local_openai_base_url,
     get_local_served_model_name,
