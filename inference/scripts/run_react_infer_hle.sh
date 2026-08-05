@@ -72,15 +72,15 @@ export ROLLOUT_COUNT=3
 export TEMPERATURE=1
 export PRESENCE_PENALTY=1.1
 export MAX_WORKERS="${MAX_WORKERS:-150}"
-export MAX_TURN="${MAX_TURN:-200}"
+export MAX_TURN="${MAX_TURN:-400}"
 
 # API and external service configuration
 export API_CONFIG_FILE="${API_CONFIG_FILE:-${INFERENCE_DIR}/api_config.yaml}"
 load_api_config "$API_CONFIG_FILE"
 echo "Loaded API config from ${API_CONFIG_FILE}"
 
-export MEMORY_THRESHOLD="${MEMORY_THRESHOLD:-96000}"
-export LLM_MAX_TOKENS="${LLM_MAX_TOKENS:-32000}"
+export MEMORY_THRESHOLD="${MEMORY_THRESHOLD:-40000}"
+export LLM_MAX_TOKENS="${LLM_MAX_TOKENS:-20000}"
 export SANDBOX_FUSION_ENDPOINT="${SANDBOX_FUSION_ENDPOINT:-your_sandbox_endpoint}"
 
 # Multi-Worker Configuration (Optional)
