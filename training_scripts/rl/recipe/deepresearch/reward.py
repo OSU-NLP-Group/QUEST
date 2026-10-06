@@ -2102,16 +2102,16 @@ async def compute_score(
     )
     openended_eval_llm_address = kwargs.pop(
         "openended_eval_llm_address",
-        kwargs.pop("openended_eval_llm_addresses", openended_eval_llm_addresses),
+        kwargs.pop("openended_eval_llm_addresses", None),
     )
     openended_eval_llm_ips = kwargs.pop("openended_eval_llm_ips", None)
     openended_eval_llm_ports = kwargs.pop("openended_eval_llm_ports", eval_llm_ports)
     openended_eval_llm_model = str(
         kwargs.pop(
             "openended_eval_llm_model",
-            os.environ.get("OPENENDED_EVAL_LLM_MODEL_NAME", openended_eval_llm_model),
+            os.environ.get("OPENENDED_EVAL_LLM_MODEL_NAME", eval_llm_model),
         )
-    ).strip() or openended_eval_llm_model
+    ).strip() or eval_llm_model
 
     if ground_truth is None:
         ground_truth = {}
