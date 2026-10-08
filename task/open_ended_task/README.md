@@ -41,7 +41,7 @@ DATASET=/path/to/openended_outputs/proposed_qa.jsonl \
 OUTPUT_PATH=/path/to/openended_outputs/reference_answers \
 bash ref_gen/run.sh
 python polish_answer.py \
-  --files_to_polish /path/to/teacher_model_logs \
+  --files_to_polish /path/to/ref_gen_output_dir \
   --output_dir /path/to/openended_outputs/refined_answers
 python extract_polished_answer.py \
   --output_dir /path/to/openended_outputs/refined_answers \
