@@ -66,5 +66,31 @@ class TestComputeScoreEvalFallbacks(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["base_score"], 1.0)
 
 
+class TestDefaultScoringFuzzyMatch(unittest.IsolatedAsyncioTestCase):
+    async def _base_score(self, answer, gold="Paris"):
+        result = await reward.compute_score(
+            data_source="quest_obj",
+            solution_str=f"<answer>{answer}</answer>",
+            ground_truth={"answer": gold},
+            enable_inline_citation_score=False,
+        )
+        return result["base_score"]
+
+    async def test_answer_that_normalizes_to_empty_gets_no_credit(self):
+        # normalize_answer() drops punctuation and articles, so these all become "".
+        for answer in [".", "the", "A", "?!"]:
+            with self.subTest(answer=answer):
+                self.assertEqual(await self._base_score(answer), 0.0)
+
+    async def test_gold_that_normalizes_to_empty_does_not_match_every_answer(self):
+        self.assertEqual(await self._base_score("B", gold="A"), 0.0)
+        self.assertEqual(await self._base_score("A", gold="A"), 1.0)
+
+    async def test_partial_answers_still_get_fuzzy_credit(self):
+        self.assertEqual(await self._base_score("Paris"), 1.0)
+        self.assertEqual(await self._base_score("Paris, France"), 0.5)
+        self.assertEqual(await self._base_score("London"), 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()

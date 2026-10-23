@@ -311,8 +311,14 @@ def fuzzy_match(prediction: str, golden_answers: List[str]) -> bool:
         golden_answers = [golden_answers]
 
     normalized_prediction = normalize_answer(prediction)
+    # "" is a substring of every string, so an answer that normalizes to ""
+    # (e.g. ".", "the", "A") would otherwise match every gold answer.
+    if not normalized_prediction:
+        return False
     for golden_answer in golden_answers:
         normalized_gold = normalize_answer(golden_answer)
+        if not normalized_gold:
+            continue
         if normalized_gold in normalized_prediction or normalized_prediction in normalized_gold:
             return True
     return False
